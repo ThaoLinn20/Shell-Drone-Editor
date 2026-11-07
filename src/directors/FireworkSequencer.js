@@ -464,6 +464,13 @@ export class FireworkSequencer {
         || config.darkPhase !== undefined
         || config['dark-phase'] !== undefined
         || config.dark_phase !== undefined
+        || config.terminalFlare !== undefined
+        || config['terminal-flare'] !== undefined
+        || config.terminal_flare !== undefined
+        || config.terminalFlareTriggerRatio !== undefined
+        || config.terminalFlareDuration !== undefined
+        || config.terminalFlareIntensity !== undefined
+        || config.terminalFlareSizeMultiplier !== undefined
         || config.textWord !== undefined
         || config.textScale !== undefined
         || config.letterSpacing !== undefined
@@ -547,6 +554,13 @@ export class FireworkSequencer {
         if (config.darkPhase !== undefined) overrides.darkPhase = config.darkPhase;
         if (config['dark-phase'] !== undefined) overrides.darkPhase = config['dark-phase'];
         if (config.dark_phase !== undefined) overrides.darkPhase = config.dark_phase;
+        if (config.terminalFlare !== undefined) overrides.terminalFlare = config.terminalFlare;
+        if (config['terminal-flare'] !== undefined) overrides.terminalFlare = config['terminal-flare'];
+        if (config.terminal_flare !== undefined) overrides.terminalFlare = config.terminal_flare;
+        if (config.terminalFlareTriggerRatio !== undefined) overrides.terminalFlareTriggerRatio = config.terminalFlareTriggerRatio;
+        if (config.terminalFlareDuration !== undefined) overrides.terminalFlareDuration = config.terminalFlareDuration;
+        if (config.terminalFlareIntensity !== undefined) overrides.terminalFlareIntensity = config.terminalFlareIntensity;
+        if (config.terminalFlareSizeMultiplier !== undefined) overrides.terminalFlareSizeMultiplier = config.terminalFlareSizeMultiplier;
         if (config.sound || config.launchSound || config.burstSound || config.crackleSound || config.soundVolume !== undefined) {
           overrides.sound = {
             launch: config.sound?.launch || config.launchSound || undefined,
@@ -1013,6 +1027,13 @@ export class FireworkSequencer {
         || config.darkPhase !== undefined
         || config['dark-phase'] !== undefined
         || config.dark_phase !== undefined
+        || config.terminalFlare !== undefined
+        || config['terminal-flare'] !== undefined
+        || config.terminal_flare !== undefined
+        || config.terminalFlareTriggerRatio !== undefined
+        || config.terminalFlareDuration !== undefined
+        || config.terminalFlareIntensity !== undefined
+        || config.terminalFlareSizeMultiplier !== undefined
         || config.textWord !== undefined
         || config.textScale !== undefined
         || config.letterSpacing !== undefined
@@ -1070,6 +1091,13 @@ export class FireworkSequencer {
         if (config.darkPhase !== undefined) overrides.darkPhase = config.darkPhase;
         if (config['dark-phase'] !== undefined) overrides.darkPhase = config['dark-phase'];
         if (config.dark_phase !== undefined) overrides.darkPhase = config.dark_phase;
+        if (config.terminalFlare !== undefined) overrides.terminalFlare = config.terminalFlare;
+        if (config['terminal-flare'] !== undefined) overrides.terminalFlare = config['terminal-flare'];
+        if (config.terminal_flare !== undefined) overrides.terminalFlare = config.terminal_flare;
+        if (config.terminalFlareTriggerRatio !== undefined) overrides.terminalFlareTriggerRatio = config.terminalFlareTriggerRatio;
+        if (config.terminalFlareDuration !== undefined) overrides.terminalFlareDuration = config.terminalFlareDuration;
+        if (config.terminalFlareIntensity !== undefined) overrides.terminalFlareIntensity = config.terminalFlareIntensity;
+        if (config.terminalFlareSizeMultiplier !== undefined) overrides.terminalFlareSizeMultiplier = config.terminalFlareSizeMultiplier;
         if (config.sound || config.launchSound || config.burstSound || config.crackleSound || config.soundVolume !== undefined) {
           overrides.sound = {
             launch: config.sound?.launch || config.launchSound || undefined,

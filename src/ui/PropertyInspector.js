@@ -123,6 +123,10 @@ export const TOGGLE_MODIFIER_TAGS = [
   {
     key: 'cascade-wave',
     labelKey: 'cascadeWave'
+  },
+  {
+    key: 'terminal-flare',
+    labelKey: 'terminalFlare'
   }
 ];
 
@@ -1581,6 +1585,17 @@ export class PropertyInspector {
             || (Array.isArray(evt.effects) && evt.effects.some((e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) === 'cascade-wave'))
           );
         }
+        if (mod.key === 'terminal-flare') {
+          return Boolean(
+            evt.terminalFlare
+            || evt['terminal-flare']
+            || evt.terminal_flare
+            || (Array.isArray(evt.effects) && evt.effects.some((e) => {
+              const k = (typeof e === 'object' && e !== null ? (e.type || e.key) : e);
+              return k === 'terminal-flare' || k === 'terminal_flare' || k === 'burnout-flash' || k === 'burnout_flash';
+            }))
+          );
+        }
         return Boolean(evt[mod.key]);
       };
 
@@ -1678,6 +1693,19 @@ export class PropertyInspector {
               delete evt['cascade-wave'];
               delete evt.cascade_wave;
             }
+          } else if (mod.key === 'terminal-flare') {
+            if (nextState) {
+              evt.terminalFlare = true;
+              evt['terminal-flare'] = true;
+            } else {
+              delete evt.terminalFlare;
+              delete evt['terminal-flare'];
+              delete evt.terminal_flare;
+              delete evt.terminalFlareTriggerRatio;
+              delete evt.terminalFlareDuration;
+              delete evt.terminalFlareIntensity;
+              delete evt.terminalFlareSizeMultiplier;
+            }
           }
 
           if (!Array.isArray(evt.effects)) {
@@ -1705,6 +1733,15 @@ export class PropertyInspector {
 
     const targets = this.getBatchTargets();
     this.renderCascadeWaveControls(
+      wrapper,
+      targetEvent,
+      (prop, val) => {
+        targets.forEach((evt) => {
+          evt[prop] = val;
+        });
+      }
+    );
+    this.renderTerminalFlareControls(
       wrapper,
       targetEvent,
       (prop, val) => {
@@ -1942,6 +1979,188 @@ export class PropertyInspector {
     container.appendChild(row);
   }
 
+  renderTerminalFlareControls(container, target, onBatchUpdate = null) {
+    const isFlareActive = Boolean(
+      target.terminalFlare
+      || target['terminal-flare']
+      || target.terminal_flare
+      || (Array.isArray(target.effects) && target.effects.some((e) => {
+        const k = (typeof e === 'object' && e !== null ? (e.type || e.key) : e);
+        return k === 'terminal-flare' || k === 'terminal_flare' || k === 'burnout-flash' || k === 'burnout_flash';
+      }))
+    );
+    if (!isFlareActive) return;
+
+    const row = document.createElement('div');
+    row.className = 'inspector-terminal-flare-controls';
+    row.style.display = 'flex';
+    row.style.flexDirection = 'column';
+    row.style.gap = '6px';
+    row.style.marginTop = '6px';
+    row.style.padding = '8px 10px';
+    row.style.background = 'rgba(245, 158, 11, 0.08)';
+    row.style.border = '1px solid rgba(245, 158, 11, 0.25)';
+    row.style.borderRadius = '6px';
+
+    // 1. Trigger Point Slider
+    const triggerRow = document.createElement('div');
+    triggerRow.style.display = 'flex';
+    triggerRow.style.alignItems = 'center';
+    triggerRow.style.justifyContent = 'space-between';
+    triggerRow.style.gap = '8px';
+
+    const triggerLabel = document.createElement('label');
+    triggerLabel.style.fontSize = '11px';
+    triggerLabel.style.color = '#94a3b8';
+    triggerLabel.style.whiteSpace = 'nowrap';
+    triggerLabel.textContent = t('editor.inspector.fields.terminalFlareTriggerRatio')
+      || en?.editor?.inspector?.fields?.terminalFlareTriggerRatio
+      || 'Flare Trigger Point';
+
+    const currentTrigger = (target.terminalFlareTriggerRatio !== undefined && !isNaN(Number(target.terminalFlareTriggerRatio)))
+      ? Number(target.terminalFlareTriggerRatio)
+      : (FIREWORK_CONFIG?.TERMINAL_FLARE?.defaultTriggerRatio ?? 0.85);
+
+    const triggerVal = document.createElement('span');
+    triggerVal.style.fontSize = '11px';
+    triggerVal.style.color = '#fbbf24';
+    triggerVal.style.fontFamily = 'monospace';
+    triggerVal.style.minWidth = '42px';
+    triggerVal.style.textAlign = 'right';
+    triggerVal.textContent = `${Math.round(currentTrigger * 100)}%`;
+
+    const triggerSlider = document.createElement('input');
+    triggerSlider.type = 'range';
+    triggerSlider.min = '0.70';
+    triggerSlider.max = '0.95';
+    triggerSlider.step = '0.01';
+    triggerSlider.value = currentTrigger.toString();
+    triggerSlider.style.flex = '1';
+    triggerSlider.style.cursor = 'pointer';
+
+    triggerSlider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 0.85;
+      triggerVal.textContent = `${Math.round(val * 100)}%`;
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('terminalFlareTriggerRatio', val);
+      } else {
+        target.terminalFlareTriggerRatio = val;
+      }
+      this.triggerUpdate();
+    });
+
+    triggerRow.appendChild(triggerLabel);
+    triggerRow.appendChild(triggerSlider);
+    triggerRow.appendChild(triggerVal);
+    row.appendChild(triggerRow);
+
+    // 2. Intensity Slider
+    const intensityRow = document.createElement('div');
+    intensityRow.style.display = 'flex';
+    intensityRow.style.alignItems = 'center';
+    intensityRow.style.justifyContent = 'space-between';
+    intensityRow.style.gap = '8px';
+
+    const intensityLabel = document.createElement('label');
+    intensityLabel.style.fontSize = '11px';
+    intensityLabel.style.color = '#94a3b8';
+    intensityLabel.style.whiteSpace = 'nowrap';
+    intensityLabel.textContent = t('editor.inspector.fields.terminalFlareIntensity')
+      || en?.editor?.inspector?.fields?.terminalFlareIntensity
+      || 'Flare Intensity';
+
+    const currentIntensity = (target.terminalFlareIntensity !== undefined && !isNaN(Number(target.terminalFlareIntensity)))
+      ? Number(target.terminalFlareIntensity)
+      : (FIREWORK_CONFIG?.TERMINAL_FLARE?.defaultIntensity ?? 2.2);
+
+    const intensityVal = document.createElement('span');
+    intensityVal.style.fontSize = '11px';
+    intensityVal.style.color = '#fbbf24';
+    intensityVal.style.fontFamily = 'monospace';
+    intensityVal.style.minWidth = '42px';
+    intensityVal.style.textAlign = 'right';
+    intensityVal.textContent = `${currentIntensity.toFixed(1)}x`;
+
+    const intensitySlider = document.createElement('input');
+    intensitySlider.type = 'range';
+    intensitySlider.min = '1.0';
+    intensitySlider.max = '3.5';
+    intensitySlider.step = '0.1';
+    intensitySlider.value = currentIntensity.toString();
+    intensitySlider.style.flex = '1';
+    intensitySlider.style.cursor = 'pointer';
+
+    intensitySlider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 2.2;
+      intensityVal.textContent = `${val.toFixed(1)}x`;
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('terminalFlareIntensity', val);
+      } else {
+        target.terminalFlareIntensity = val;
+      }
+      this.triggerUpdate();
+    });
+
+    intensityRow.appendChild(intensityLabel);
+    intensityRow.appendChild(intensitySlider);
+    intensityRow.appendChild(intensityVal);
+    row.appendChild(intensityRow);
+
+    // 3. Size Multiplier (Growth) Slider
+    const sizeRow = document.createElement('div');
+    sizeRow.style.display = 'flex';
+    sizeRow.style.alignItems = 'center';
+    sizeRow.style.justifyContent = 'space-between';
+    sizeRow.style.gap = '8px';
+
+    const sizeLabel = document.createElement('label');
+    sizeLabel.style.fontSize = '11px';
+    sizeLabel.style.color = '#94a3b8';
+    sizeLabel.style.whiteSpace = 'nowrap';
+    sizeLabel.textContent = t('editor.inspector.fields.terminalFlareSizeMultiplier')
+      || en?.editor?.inspector?.fields?.terminalFlareSizeMultiplier
+      || 'Flare Growth';
+
+    const currentSize = (target.terminalFlareSizeMultiplier !== undefined && !isNaN(Number(target.terminalFlareSizeMultiplier)))
+      ? Number(target.terminalFlareSizeMultiplier)
+      : (FIREWORK_CONFIG?.TERMINAL_FLARE?.defaultSizeMultiplier ?? 1.25);
+
+    const sizeVal = document.createElement('span');
+    sizeVal.style.fontSize = '11px';
+    sizeVal.style.color = '#fbbf24';
+    sizeVal.style.fontFamily = 'monospace';
+    sizeVal.style.minWidth = '42px';
+    sizeVal.style.textAlign = 'right';
+    sizeVal.textContent = `${currentSize.toFixed(2)}x`;
+
+    const sizeSlider = document.createElement('input');
+    sizeSlider.type = 'range';
+    sizeSlider.min = '1.00';
+    sizeSlider.max = '1.80';
+    sizeSlider.step = '0.05';
+    sizeSlider.value = currentSize.toString();
+    sizeSlider.style.flex = '1';
+    sizeSlider.style.cursor = 'pointer';
+
+    sizeSlider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 1.25;
+      sizeVal.textContent = `${val.toFixed(2)}x`;
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('terminalFlareSizeMultiplier', val);
+      } else {
+        target.terminalFlareSizeMultiplier = val;
+      }
+      this.triggerUpdate();
+    });
+
+    sizeRow.appendChild(sizeLabel);
+    sizeRow.appendChild(sizeSlider);
+    sizeRow.appendChild(sizeVal);
+    row.appendChild(sizeRow);
+
+    container.appendChild(row);
+  }
+
   renderEffectChips(parent, field) {
     const targetEvent = this.selectedEvent;
     if (!targetEvent) return;
@@ -2157,6 +2376,17 @@ export class PropertyInspector {
           || target.cascade_wave
         );
       }
+      if (modKey === 'terminal-flare') {
+        return Boolean(
+          target.terminalFlare
+          || target['terminal-flare']
+          || target.terminal_flare
+          || (Array.isArray(target.effects) && target.effects.some((e) => {
+            const k = (typeof e === 'object' && e !== null ? (e.type || e.key) : e);
+            return k === 'terminal-flare' || k === 'terminal_flare' || k === 'burnout-flash' || k === 'burnout_flash';
+          }))
+        );
+      }
       return false;
     };
 
@@ -2239,6 +2469,19 @@ export class PropertyInspector {
               delete subTarget['cascade-wave'];
               delete subTarget.cascade_wave;
             }
+          } else if (mod.key === 'terminal-flare') {
+            if (nextState) {
+              subTarget.terminalFlare = true;
+              subTarget['terminal-flare'] = true;
+            } else {
+              delete subTarget.terminalFlare;
+              delete subTarget['terminal-flare'];
+              delete subTarget.terminal_flare;
+              delete subTarget.terminalFlareTriggerRatio;
+              delete subTarget.terminalFlareDuration;
+              delete subTarget.terminalFlareIntensity;
+              delete subTarget.terminalFlareSizeMultiplier;
+            }
           }
 
           if (!Array.isArray(subTarget.effects)) {
@@ -2264,6 +2507,10 @@ export class PropertyInspector {
 
     modWrapper.appendChild(chipsRow);
     this.renderCascadeWaveControls(
+      modWrapper,
+      subTarget
+    );
+    this.renderTerminalFlareControls(
       modWrapper,
       subTarget
     );
