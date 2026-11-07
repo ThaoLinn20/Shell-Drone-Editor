@@ -1766,8 +1766,8 @@ export class PropertyInspector {
 
     const slider = document.createElement('input');
     slider.type = 'range';
-    slider.min = '0.10';
-    slider.max = '2.00';
+    slider.min = (FIREWORK_CONFIG?.CASCADE_WAVE?.minDuration ?? 0.10).toString();
+    slider.max = (FIREWORK_CONFIG?.CASCADE_WAVE?.maxDuration ?? 6.00).toString();
     slider.step = '0.05';
     slider.value = currentDur.toString();
     slider.style.flex = '1';
