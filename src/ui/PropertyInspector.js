@@ -2071,7 +2071,7 @@ export class PropertyInspector {
 
     const currentIntensity = (target.terminalFlareIntensity !== undefined && !isNaN(Number(target.terminalFlareIntensity)))
       ? Number(target.terminalFlareIntensity)
-      : (FIREWORK_CONFIG?.TERMINAL_FLARE?.defaultIntensity ?? 2.2);
+      : (FIREWORK_CONFIG?.TERMINAL_FLARE?.defaultIntensity ?? 2.5);
 
     const intensityVal = document.createElement('span');
     intensityVal.style.fontSize = '11px';
@@ -2084,14 +2084,14 @@ export class PropertyInspector {
     const intensitySlider = document.createElement('input');
     intensitySlider.type = 'range';
     intensitySlider.min = '1.0';
-    intensitySlider.max = '3.5';
+    intensitySlider.max = '4.5';
     intensitySlider.step = '0.1';
     intensitySlider.value = currentIntensity.toString();
     intensitySlider.style.flex = '1';
     intensitySlider.style.cursor = 'pointer';
 
     intensitySlider.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value) || 2.2;
+      const val = parseFloat(e.target.value) || 2.5;
       intensityVal.textContent = `${val.toFixed(1)}x`;
       if (typeof onBatchUpdate === 'function') {
         onBatchUpdate('terminalFlareIntensity', val);
@@ -2123,7 +2123,7 @@ export class PropertyInspector {
 
     const currentSize = (target.terminalFlareSizeMultiplier !== undefined && !isNaN(Number(target.terminalFlareSizeMultiplier)))
       ? Number(target.terminalFlareSizeMultiplier)
-      : (FIREWORK_CONFIG?.TERMINAL_FLARE?.defaultSizeMultiplier ?? 1.25);
+      : (FIREWORK_CONFIG?.TERMINAL_FLARE?.defaultSizeMultiplier ?? 1.35);
 
     const sizeVal = document.createElement('span');
     sizeVal.style.fontSize = '11px';
@@ -2136,14 +2136,14 @@ export class PropertyInspector {
     const sizeSlider = document.createElement('input');
     sizeSlider.type = 'range';
     sizeSlider.min = '1.00';
-    sizeSlider.max = '1.80';
+    sizeSlider.max = '2.20';
     sizeSlider.step = '0.05';
     sizeSlider.value = currentSize.toString();
     sizeSlider.style.flex = '1';
     sizeSlider.style.cursor = 'pointer';
 
     sizeSlider.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value) || 1.25;
+      const val = parseFloat(e.target.value) || 1.35;
       sizeVal.textContent = `${val.toFixed(2)}x`;
       if (typeof onBatchUpdate === 'function') {
         onBatchUpdate('terminalFlareSizeMultiplier', val);
