@@ -1013,9 +1013,26 @@ code {
   color: #3498db;
   background: rgba(52, 152, 219, 0.12);
   padding: 1px 6px;
-  border-radius: 3px;
+  border-radius: 4px;
   font-family: monospace;
   white-space: nowrap;
+  border: 1px solid transparent;
+  width: 52px;
+  text-align: right;
+  outline: none;
+  cursor: text;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+.inspector-slider-value:hover {
+  background: rgba(52, 152, 219, 0.22);
+  border-color: rgba(52, 152, 219, 0.4);
+}
+.inspector-slider-value:focus {
+  background: rgba(18, 28, 40, 0.95);
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
+  color: #ffffff;
 }
 .inspector-slider {
   width: 100%;

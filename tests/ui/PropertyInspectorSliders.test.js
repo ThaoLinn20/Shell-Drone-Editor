@@ -340,6 +340,48 @@ describe('PropertyInspector Sliders and Star Lifetime Multiplier', () => {
     fireworkSystem.clear();
   });
 
+  it('should scale burst particle count proportionally down to 0.01x without clamping to 0.25x floor in FireworkSystem', () => {
+    const scene = new THREE.Scene();
+    const fireworkSystem = new FireworkSystem(scene);
+
+    // Burst with standard 1.0x particleCountMultiplier
+    fireworkSystem.createBurst(
+      new THREE.Vector3(0, 100, 0),
+      new THREE.Color(0xffaa00),
+      'sphere',
+      { particleCountMultiplier: 1.0 },
+      'test-std-count'
+    );
+    const standardCount = fireworkSystem.burstParticles.length;
+    fireworkSystem.clear();
+
+    // Burst with 0.25x particleCountMultiplier
+    fireworkSystem.createBurst(
+      new THREE.Vector3(0, 100, 0),
+      new THREE.Color(0xffaa00),
+      'sphere',
+      { particleCountMultiplier: 0.25 },
+      'test-025-count'
+    );
+    const count025 = fireworkSystem.burstParticles.length;
+    fireworkSystem.clear();
+
+    // Burst with 0.01x particleCountMultiplier (user soft limits)
+    fireworkSystem.createBurst(
+      new THREE.Vector3(0, 100, 0),
+      new THREE.Color(0xffaa00),
+      'sphere',
+      { particleCountMultiplier: 0.01 },
+      'test-001-count'
+    );
+    const count001 = fireworkSystem.burstParticles.length;
+    fireworkSystem.clear();
+
+    expect(count025).toBeLessThan(standardCount);
+    expect(count001).toBeLessThan(count025);
+    expect(count001).toBe(1);
+  });
+
   it('should configure soundVolume as slider before launchSound in soundSettings group', () => {
     const mockContainer = createMockElement('div');
     const inspector = new PropertyInspector(mockContainer, vi.fn());
@@ -403,5 +445,104 @@ describe('PropertyInspector Sliders and Star Lifetime Multiplier', () => {
     vi.advanceTimersByTime(300);
     expect(onUpdate).toHaveBeenCalledWith();
     vi.useRealTimers();
+  });
+
+  it('should allow typing custom value directly into valueBadge and commit on Enter or blur', () => {
+    vi.useFakeTimers();
+    const mockContainer = createMockElement('div');
+    const onUpdate = vi.fn();
+    const inspector = new PropertyInspector(mockContainer, onUpdate);
+
+    const event = { shellSize: 1.5 };
+    inspector.selectedEvent = event;
+
+    const parentDiv = createMockElement('div');
+    inspector.renderSlider(parentDiv, {
+      name: 'shellSize',
+      labelKey: 'shellSize',
+      type: 'slider',
+      min: '0.5',
+      max: '3.0',
+      step: '0.1',
+      defaultValue: 1.0,
+      formatValue: (v) => `${Number(v).toFixed(1)}x`
+    });
+
+    const badge = parentDiv.querySelector('.inspector-slider-value');
+    const slider = parentDiv.querySelector('.inspector-slider');
+
+    expect(badge.value).toBe('1.5x');
+    expect(slider.value).toBe('1.5');
+
+    // Simulate focus: should strip 'x'
+    badge.dispatchEvent({ type: 'focus' });
+    expect(badge.value).toBe('1.5');
+
+    // Type 2.2 and press Enter
+    badge.value = '2.2';
+    badge.dispatchEvent({ type: 'keydown', key: 'Enter', preventDefault: vi.fn() });
+
+    expect(badge.value).toBe('2.2x');
+    expect(slider.value).toBe('2.2');
+    expect(event.shellSize).toBe(2.2);
+
+    // Type with comma and suffix "2,8x" and blur
+    badge.value = '2,8x';
+    badge.dispatchEvent({ type: 'blur' });
+
+    expect(badge.value).toBe('2.8x');
+    expect(slider.value).toBe('2.8');
+    expect(event.shellSize).toBe(2.8);
+
+    vi.useRealTimers();
+  });
+
+  it('should allow typing values exceeding slider max (soft bounds) and revert on Escape or invalid input', () => {
+    const mockContainer = createMockElement('div');
+    const onUpdate = vi.fn();
+    const inspector = new PropertyInspector(mockContainer, onUpdate);
+
+    const event = { starLifeMultiplier: 1.0 };
+    inspector.selectedEvent = event;
+
+    const parentDiv = createMockElement('div');
+    inspector.renderSlider(parentDiv, {
+      name: 'starLifeMultiplier',
+      labelKey: 'starLifeMultiplier',
+      type: 'slider',
+      min: '0.2',
+      max: '2.5',
+      step: '0.05',
+      defaultValue: 1.0,
+      formatValue: (v) => `${Number(v).toFixed(2)}x`
+    });
+
+    const badge = parentDiv.querySelector('.inspector-slider-value');
+    const slider = parentDiv.querySelector('.inspector-slider');
+
+    // Focus then type value exceeding max (5.0) -> soft bounds: badge and event get 5.0, slider thumb rests at max (2.5)
+    badge.dispatchEvent({ type: 'focus' });
+    badge.value = '5.0';
+    badge.dispatchEvent({ type: 'blur' });
+
+    expect(badge.value).toBe('5.00x');
+    expect(slider.value).toBe('2.5');
+    expect(event.starLifeMultiplier).toBe(5.0);
+
+    // Focus then type invalid characters -> revert to previous valid (5.0)
+    badge.dispatchEvent({ type: 'focus' });
+    badge.value = 'invalid';
+    badge.dispatchEvent({ type: 'blur' });
+
+    expect(badge.value).toBe('5.00x');
+    expect(slider.value).toBe('2.5');
+
+    // Focus then type 1.2 and press Escape -> cancel and revert
+    badge.dispatchEvent({ type: 'focus' });
+    badge.value = '1.2';
+    badge.dispatchEvent({ type: 'keydown', key: 'Escape', preventDefault: vi.fn() });
+
+    expect(badge.value).toBe('5.00x');
+    expect(slider.value).toBe('2.5');
   });
 });

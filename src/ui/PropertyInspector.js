@@ -1350,14 +1350,21 @@ export class PropertyInspector {
     label.textContent = t(`editor.inspector.fields.${field.labelKey}`);
     header.appendChild(label);
 
-    const valueBadge = document.createElement('span');
-    valueBadge.className = 'inspector-slider-value';
+    const valueBadge = document.createElement('input');
+    valueBadge.type = 'text';
+    valueBadge.className = 'inspector-slider-value inspector-slider-input';
+    valueBadge.dataset.fieldName = field.name;
+    valueBadge.spellcheck = false;
+    valueBadge.autocomplete = 'off';
     const formatFn = typeof field.formatValue === 'function'
       ? field.formatValue
       : (v) => String(Number(v).toFixed(1));
-    valueBadge.textContent = isMixed
+
+    const initialBadgeText = isMixed
       ? (t('editor.inspector.mixed') || 'Mixed')
       : formatFn(currentVal);
+    valueBadge.value = initialBadgeText;
+    valueBadge.textContent = initialBadgeText;
     header.appendChild(valueBadge);
 
     parent.appendChild(header);
@@ -1369,7 +1376,9 @@ export class PropertyInspector {
     slider.min = field.min || '0';
     slider.max = field.max || '100';
     slider.step = field.step || '1';
-    slider.value = String(currentVal);
+    const minVal = parseFloat(slider.min) || 0;
+    const maxVal = parseFloat(slider.max) || 100;
+    slider.value = String(Math.max(minVal, Math.min(maxVal, currentVal)));
 
     slider.addEventListener('pointerdown', () => {
       this.triggerUpdate('beforeChange');
@@ -1389,15 +1398,97 @@ export class PropertyInspector {
 
     slider.addEventListener('input', (e) => {
       const liveVal = parseFloat(e.target.value);
-      valueBadge.textContent = formatFn(liveVal);
+      previousValidVal = liveVal;
+      const formatted = formatFn(liveVal);
+      valueBadge.value = formatted;
+      valueBadge.textContent = formatted;
       applySliderValue(liveVal);
       this.triggerUpdate();
     });
 
     slider.addEventListener('change', (e) => {
       const finalVal = parseFloat(e.target.value);
+      previousValidVal = finalVal;
       applySliderValue(finalVal);
       this.triggerUpdate();
+    });
+
+    // Inline typing interaction for valueBadge
+    let previousValidVal = currentVal;
+    valueBadge.addEventListener('focus', () => {
+      this.triggerUpdate('beforeChange');
+      let latestVal = targetEvent[field.name];
+      if (latestVal === undefined && field.name === 'soundVolume' && targetEvent.sound) {
+        latestVal = targetEvent.sound.volumeMultiplier;
+      }
+      previousValidVal = (latestVal !== undefined && !isNaN(Number(latestVal)))
+        ? Number(latestVal)
+        : (parseFloat(slider.value) || defVal);
+      const currentText = String(valueBadge.value || valueBadge.textContent || '');
+      if (currentText.endsWith('x') || currentText.endsWith('X')) {
+        const rawNum = currentText.slice(0, -1).trim();
+        valueBadge.value = rawNum;
+        valueBadge.textContent = rawNum;
+      }
+      if (typeof valueBadge.select === 'function') {
+        valueBadge.select();
+      }
+    });
+
+    const commitInput = () => {
+      let raw = String(valueBadge.value || valueBadge.textContent || '').trim();
+      if (raw.endsWith('x') || raw.endsWith('X')) {
+        raw = raw.slice(0, -1).trim();
+      }
+      raw = raw.replace(',', '.');
+      const parsed = parseFloat(raw);
+      const min = parseFloat(field.min) || 0;
+      const max = parseFloat(field.max) || 100;
+      const step = parseFloat(field.step) || 0.05;
+
+      if (isNaN(parsed)) {
+        const fallbackText = formatFn(previousValidVal);
+        valueBadge.value = fallbackText;
+        valueBadge.textContent = fallbackText;
+        const sliderClamped = Math.max(min, Math.min(max, previousValidVal));
+        slider.value = String(sliderClamped);
+        return;
+      }
+
+      // Soft bounds: slider bounds [min, max] are visual suggestions. Direct numeric input allows exceeding bounds.
+      const safeFloor = (min >= 0 || field.name === 'soundVolume') ? 0 : -Infinity;
+      const finalVal = Math.max(safeFloor, parseFloat(parsed.toFixed(4)));
+      previousValidVal = finalVal;
+
+      const sliderClamped = Math.max(min, Math.min(max, finalVal));
+      slider.value = String(sliderClamped);
+      const formatted = formatFn(finalVal);
+      valueBadge.value = formatted;
+      valueBadge.textContent = formatted;
+      applySliderValue(finalVal);
+      this.triggerUpdate();
+    };
+
+    valueBadge.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        commitInput();
+        if (typeof valueBadge.blur === 'function') valueBadge.blur();
+      } else if (e.key === 'Escape') {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        const fallbackText = formatFn(previousValidVal);
+        valueBadge.value = fallbackText;
+        valueBadge.textContent = fallbackText;
+        const min = parseFloat(field.min) || 0;
+        const max = parseFloat(field.max) || 100;
+        const sliderClamped = Math.max(min, Math.min(max, previousValidVal));
+        slider.value = String(sliderClamped);
+        if (typeof valueBadge.blur === 'function') valueBadge.blur();
+      }
+    });
+
+    valueBadge.addEventListener('blur', () => {
+      commitInput();
     });
 
     parent.appendChild(slider);
@@ -2007,21 +2098,33 @@ export class PropertyInspector {
         const isMixed = this.isMixedValue(fieldName);
         const parentWrapper = slider.closest('.inspector-field-span-2') || slider.parentElement;
         const badge = parentWrapper?.querySelector('.inspector-slider-value');
+        if (badge && document.activeElement === badge) {
+          return;
+        }
         if (isMixed) {
           if (badge) {
-            badge.textContent = t('mixed') || 'Mixed';
+            const mixedTxt = t('mixed') || 'Mixed';
+            badge.value = mixedTxt;
+            badge.textContent = mixedTxt;
           }
         } else {
           let currentVal = this.selectedEvent[fieldName];
           if (currentVal === undefined && fieldName === 'soundVolume' && this.selectedEvent.sound) {
             currentVal = this.selectedEvent.sound.volumeMultiplier;
           }
-          if (currentVal !== undefined && slider.value != currentVal && document.activeElement !== slider) {
-            slider.value = currentVal;
+          if (currentVal !== undefined && document.activeElement !== slider) {
+            const min = parseFloat(slider.min) || 0;
+            const max = parseFloat(slider.max) || 100;
+            const sliderClamped = Math.max(min, Math.min(max, Number(currentVal)));
+            if (slider.value != sliderClamped) {
+              slider.value = sliderClamped;
+            }
             if (badge) {
-              badge.textContent = fieldName === 'shellSize'
+              const formattedTxt = fieldName === 'shellSize'
                 ? `${Number(currentVal).toFixed(1)}x`
                 : `${Number(currentVal).toFixed(2)}x`;
+              badge.value = formattedTxt;
+              badge.textContent = formattedTxt;
             }
           }
         }
@@ -3212,11 +3315,12 @@ export class PropertyInspector {
       particleNum.addEventListener(
         'change',
         (e) => {
-          let val = parseFloat(e.target.value) || 1.0;
-          val = Math.max(0.25, Math.min(3.0, Math.round(val / 0.25) * 0.25));
+          let val = parseFloat(e.target.value);
+          if (isNaN(val)) val = 1.0;
+          val = Math.max(0, val);
           this.triggerUpdate('beforeChange');
           stage.particleCountMultiplier = val;
-          particleSlider.value = val;
+          particleSlider.value = Math.max(0.25, Math.min(3.0, val));
           particleNum.value = val;
           particleValText.textContent = `${val.toFixed(2)}x`;
           this.triggerUpdate();
