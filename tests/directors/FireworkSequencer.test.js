@@ -386,5 +386,26 @@ describe('FireworkSequencer', () => {
       expect(task.options.effectOverrides.crossette).toBe(true);
     }
   });
+
+  it('should forward cascadeWave, cascadeMode, cascadeRings, and cascadeAngle in effectOverrides', () => {
+    sequencer.playPattern('sweep-left', {
+      count: 2,
+      duration: 1.0,
+      cascadeWave: true,
+      cascadeMode: 'custom-angle',
+      cascadeAngle: 75,
+      cascadeRings: 6
+    });
+
+    expect(sequencer.activeTasks.length).toBe(2);
+    for (const task of sequencer.activeTasks) {
+      expect(task.options.effectOverrides).toBeDefined();
+      expect(task.options.effectOverrides.cascadeWave).toBe(true);
+      expect(task.options.effectOverrides.cascadeMode).toBe('custom-angle');
+      expect(task.options.effectOverrides.cascadeAngle).toBe(75);
+      expect(task.options.effectOverrides.cascadeRings).toBe(6);
+      expect(task.options.effectOverrides.ringCount).toBe(6);
+    }
+  });
 });
 

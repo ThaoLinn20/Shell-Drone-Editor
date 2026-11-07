@@ -563,6 +563,11 @@ export default {
         longBurn: "Long Burn",
         apexHang: "Apex Hang",
         slowBurst: "Slow Burst",
+        cascadeWave: "Cascade Wave",
+        cascadeDuration: "Cascade Duration",
+        cascadeMode: "Wave Direction",
+        cascadeRings: "Ring Count",
+        cascadeAngle: "Wave Angle",
         activeEffects: "Active Effects",
         launchSound: "Launch Sound",
         burstSound: "Burst Sound",
@@ -592,6 +597,15 @@ export default {
           finale: "Finale",
           audio: "Audio",
           group: "Group"
+        },
+        cascadeMode: {
+          "parallel-rings": "Parallel Rings",
+          "random-shuffle": "Random Shuffled Rings",
+          "parallel-rings-equator-out": "Equator Outward",
+          "radial-outward": "Radial Outward",
+          "radial-inward": "Radial Inward",
+          clockwise: "Clockwise",
+          "counter-clockwise": "Counter Clockwise"
         },
         shapeType: {
           sphere: "Sphere",

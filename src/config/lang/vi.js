@@ -563,6 +563,11 @@ export default {
         longBurn: "Cháy lâu",
         apexHang: "Dừng không trung",
         slowBurst: "Nổ chậm bồng bềnh",
+        cascadeWave: "Sóng lan truyền",
+        cascadeDuration: "Thời lượng sóng",
+        cascadeMode: "Hướng lan truyền",
+        cascadeRings: "Số lượng vòng song song",
+        cascadeAngle: "Góc quét sóng",
         activeEffects: "Hiệu ứng kích hoạt",
         launchSound: "Âm thanh phóng",
         burstSound: "Âm thanh nổ bung",
@@ -592,6 +597,15 @@ export default {
           finale: "Đại kết cục Finale",
           audio: "Âm thanh",
           group: "Nhóm"
+        },
+        cascadeMode: {
+          "parallel-rings": "Vành đai song song",
+          "random-shuffle": "Thứ tự vòng ngẫu nhiên",
+          "parallel-rings-equator-out": "Từ xích đạo ra hai cực",
+          "radial-outward": "Từ tâm ra ngoài",
+          "radial-inward": "Từ ngoài vào tâm",
+          clockwise: "Theo chiều kim đồng hồ",
+          "counter-clockwise": "Ngược chiều kim đồng hồ"
         },
         shapeType: {
           sphere: "Hình cầu",

@@ -25,7 +25,10 @@ export const EFFECT_COLORS = {
   'syncStrobe': { bg: 'rgba(217, 119, 6, 0.45)', border: '#fde047', text: '#fef08a' },
   'dark-phase': { bg: 'rgba(30, 41, 59, 0.65)', border: '#6366f1', text: '#cbd5e1' },
   'dark_phase': { bg: 'rgba(30, 41, 59, 0.65)', border: '#6366f1', text: '#cbd5e1' },
-  'darkPhase': { bg: 'rgba(30, 41, 59, 0.65)', border: '#6366f1', text: '#cbd5e1' }
+  'darkPhase': { bg: 'rgba(30, 41, 59, 0.65)', border: '#6366f1', text: '#cbd5e1' },
+  'cascade-wave': { bg: 'rgba(20, 184, 166, 0.45)', border: '#14b8a6', text: '#99f6e4' },
+  'cascade_wave': { bg: 'rgba(20, 184, 166, 0.45)', border: '#14b8a6', text: '#99f6e4' },
+  'cascadeWave': { bg: 'rgba(20, 184, 166, 0.45)', border: '#14b8a6', text: '#99f6e4' }
 };
 
 export function createSvgIcon(type, size = 14) {

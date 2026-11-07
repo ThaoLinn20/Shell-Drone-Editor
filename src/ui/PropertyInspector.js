@@ -119,6 +119,10 @@ export const TOGGLE_MODIFIER_TAGS = [
   {
     key: 'slow-burst',
     labelKey: 'slowBurst'
+  },
+  {
+    key: 'cascade-wave',
+    labelKey: 'cascadeWave'
   }
 ];
 
@@ -437,6 +441,23 @@ export class PropertyInspector {
                 event?.shapeType === 'text_word'
                 || event?.preset === 'text_word'
                 || event?.shellType === 'text_word'
+              )
+            },
+            {
+              name: 'ringCount',
+              labelKey: 'cascadeRings',
+              type: 'slider',
+              min: '3',
+              max: '16',
+              step: '1',
+              defaultValue: 5,
+              formatValue: (v) => `${Number(v)}`,
+              span: 2,
+              visibleIf: (event) => (
+                event?.shapeType === 'sphere_rings'
+                || event?.shape === 'sphere_rings'
+                || event?.shapeType === 'sphere-rings'
+                || event?.shape === 'sphere-rings'
               )
             },
             {
@@ -1552,6 +1573,14 @@ export class PropertyInspector {
         if (mod.key === 'apex-hang') return Boolean(evt.apexHang || evt['apex-hang']);
         if (mod.key === 'long-burn') return Boolean(evt.longBurn || evt['long-burn']);
         if (mod.key === 'slow-burst') return Boolean(evt.slowBurst || evt['slow-burst'] || evt.slow_burst);
+        if (mod.key === 'cascade-wave') {
+          return Boolean(
+            evt.cascadeWave
+            || evt['cascade-wave']
+            || evt.cascade_wave
+            || (Array.isArray(evt.effects) && evt.effects.some((e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) === 'cascade-wave'))
+          );
+        }
         return Boolean(evt[mod.key]);
       };
 
@@ -1640,18 +1669,28 @@ export class PropertyInspector {
               delete evt['slow-burst'];
               delete evt.slow_burst;
             }
+          } else if (mod.key === 'cascade-wave') {
+            if (nextState) {
+              evt.cascadeWave = true;
+              evt['cascade-wave'] = true;
+            } else {
+              delete evt.cascadeWave;
+              delete evt['cascade-wave'];
+              delete evt.cascade_wave;
+            }
           }
 
-          if (Array.isArray(evt.effects)) {
-            if (nextState) {
-              if (!evt.effects.some((e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) === mod.key)) {
-                evt.effects.push(mod.key);
-              }
-            } else {
-              evt.effects = evt.effects.filter(
-                (e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) !== mod.key
-              );
+          if (!Array.isArray(evt.effects)) {
+            evt.effects = [];
+          }
+          if (nextState) {
+            if (!evt.effects.some((e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) === mod.key)) {
+              evt.effects.push(mod.key);
             }
+          } else {
+            evt.effects = evt.effects.filter(
+              (e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) !== mod.key
+            );
           }
         });
 
@@ -1663,7 +1702,244 @@ export class PropertyInspector {
     });
 
     wrapper.appendChild(chipsRow);
+
+    const targets = this.getBatchTargets();
+    this.renderCascadeWaveControls(
+      wrapper,
+      targetEvent,
+      (prop, val) => {
+        targets.forEach((evt) => {
+          evt[prop] = val;
+        });
+      }
+    );
+
     parent.appendChild(wrapper);
+  }
+
+  renderCascadeWaveControls(container, target, onBatchUpdate = null) {
+    const isCascadeActive = Boolean(
+      target.cascadeWave
+      || target['cascade-wave']
+      || target.cascade_wave
+      || (Array.isArray(target.effects) && target.effects.some((e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) === 'cascade-wave'))
+    );
+    if (!isCascadeActive) return;
+
+    const row = document.createElement('div');
+    row.className = 'inspector-cascade-wave-controls';
+    row.style.display = 'flex';
+    row.style.flexDirection = 'column';
+    row.style.gap = '6px';
+    row.style.marginTop = '6px';
+    row.style.padding = '8px 10px';
+    row.style.background = 'rgba(20, 184, 166, 0.08)';
+    row.style.border = '1px solid rgba(20, 184, 166, 0.25)';
+    row.style.borderRadius = '6px';
+
+    // 1. Duration Slider
+    const durationRow = document.createElement('div');
+    durationRow.style.display = 'flex';
+    durationRow.style.alignItems = 'center';
+    durationRow.style.justifyContent = 'space-between';
+    durationRow.style.gap = '8px';
+
+    const durationLabel = document.createElement('label');
+    durationLabel.style.fontSize = '11px';
+    durationLabel.style.color = '#94a3b8';
+    durationLabel.style.whiteSpace = 'nowrap';
+    durationLabel.textContent = t('editor.inspector.fields.cascadeDuration')
+      || en?.editor?.inspector?.fields?.cascadeDuration
+      || 'Cascade Duration';
+
+    const currentDur = (target.cascadeDuration !== undefined && !isNaN(Number(target.cascadeDuration)))
+      ? Number(target.cascadeDuration)
+      : (FIREWORK_CONFIG?.CASCADE_WAVE?.defaultDuration ?? 0.60);
+
+    const durationVal = document.createElement('span');
+    durationVal.style.fontSize = '11px';
+    durationVal.style.color = '#5eead4';
+    durationVal.style.fontFamily = 'monospace';
+    durationVal.style.minWidth = '42px';
+    durationVal.style.textAlign = 'right';
+    durationVal.textContent = `${currentDur.toFixed(2)}s`;
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = '0.10';
+    slider.max = '2.00';
+    slider.step = '0.05';
+    slider.value = currentDur.toString();
+    slider.style.flex = '1';
+    slider.style.cursor = 'pointer';
+
+    slider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 0.60;
+      durationVal.textContent = `${val.toFixed(2)}s`;
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('cascadeDuration', val);
+      } else {
+        target.cascadeDuration = val;
+      }
+      this.triggerUpdate();
+    });
+
+    durationRow.appendChild(durationLabel);
+    durationRow.appendChild(slider);
+    durationRow.appendChild(durationVal);
+    row.appendChild(durationRow);
+
+    // 2. Mode / Direction Dropdown
+    const modeRow = document.createElement('div');
+    modeRow.style.display = 'flex';
+    modeRow.style.alignItems = 'center';
+    modeRow.style.justifyContent = 'space-between';
+    modeRow.style.gap = '8px';
+
+    const modeLabel = document.createElement('label');
+    modeLabel.style.fontSize = '11px';
+    modeLabel.style.color = '#94a3b8';
+    modeLabel.style.whiteSpace = 'nowrap';
+    modeLabel.textContent = t('editor.inspector.fields.cascadeMode')
+      || en?.editor?.inspector?.fields?.cascadeMode
+      || 'Wave Direction';
+
+    const select = document.createElement('select');
+    select.className = 'inspector-input';
+    select.style.fontSize = '11px';
+    select.style.padding = '2px 6px';
+    select.style.flex = '1';
+    select.style.maxWidth = '160px';
+    select.style.background = '#1e293b';
+    select.style.color = '#f8fafc';
+    select.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+    select.style.borderRadius = '4px';
+
+    const modeOptions = [
+      {
+        value: 'parallel-rings',
+        labelKey: 'parallel-rings',
+        defaultLabel: 'Parallel Rings'
+      },
+      {
+        value: 'random-shuffle',
+        labelKey: 'random-shuffle',
+        defaultLabel: 'Random Shuffled Rings'
+      },
+      {
+        value: 'parallel-rings-equator-out',
+        labelKey: 'parallel-rings-equator-out',
+        defaultLabel: 'Equator Outward'
+      },
+      {
+        value: 'radial-outward',
+        labelKey: 'radial-outward',
+        defaultLabel: 'Radial Outward'
+      },
+      {
+        value: 'radial-inward',
+        labelKey: 'radial-inward',
+        defaultLabel: 'Radial Inward'
+      },
+      {
+        value: 'clockwise',
+        labelKey: 'clockwise',
+        defaultLabel: 'Clockwise'
+      },
+      {
+        value: 'counter-clockwise',
+        labelKey: 'counter-clockwise',
+        defaultLabel: 'Counter Clockwise'
+      }
+    ];
+
+    modeOptions.forEach((opt) => {
+      const optionEl = document.createElement('option');
+      optionEl.value = opt.value;
+      optionEl.textContent = t(`editor.inspector.options.cascadeMode.${opt.labelKey}`)
+        || en?.editor?.inspector?.options?.cascadeMode?.[opt.labelKey]
+        || opt.defaultLabel;
+      select.appendChild(optionEl);
+    });
+
+    const activeMode = target.cascadeMode || (FIREWORK_CONFIG?.CASCADE_WAVE?.defaultMode ?? 'parallel-rings');
+    select.value = activeMode;
+
+    select.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('cascadeMode', val);
+      } else {
+        target.cascadeMode = val;
+      }
+      this.triggerUpdate();
+      this.render();
+    });
+
+    modeRow.appendChild(modeLabel);
+    modeRow.appendChild(select);
+    row.appendChild(modeRow);
+
+    // 3. Ring Count Slider (Shown when in ring sweep modes)
+    const isRingsMode = !activeMode
+      || activeMode.startsWith('parallel-rings')
+      || activeMode === 'random'
+      || activeMode === 'random-shuffle';
+
+    if (isRingsMode) {
+      const ringsRow = document.createElement('div');
+      ringsRow.style.display = 'flex';
+      ringsRow.style.alignItems = 'center';
+      ringsRow.style.justifyContent = 'space-between';
+      ringsRow.style.gap = '8px';
+
+      const ringsLabel = document.createElement('label');
+      ringsLabel.style.fontSize = '11px';
+      ringsLabel.style.color = '#94a3b8';
+      ringsLabel.style.whiteSpace = 'nowrap';
+      ringsLabel.textContent = t('editor.inspector.fields.cascadeRings')
+        || en?.editor?.inspector?.fields?.cascadeRings
+        || 'Ring Count';
+
+      const currentRings = (target.cascadeRings !== undefined && !isNaN(Number(target.cascadeRings)))
+        ? Number(target.cascadeRings)
+        : (FIREWORK_CONFIG?.CASCADE_WAVE?.defaultRings ?? 8);
+
+      const ringsVal = document.createElement('span');
+      ringsVal.style.fontSize = '11px';
+      ringsVal.style.color = '#5eead4';
+      ringsVal.style.fontFamily = 'monospace';
+      ringsVal.style.minWidth = '42px';
+      ringsVal.style.textAlign = 'right';
+      ringsVal.textContent = `${currentRings}`;
+
+      const ringsSlider = document.createElement('input');
+      ringsSlider.type = 'range';
+      ringsSlider.min = '3';
+      ringsSlider.max = '16';
+      ringsSlider.step = '1';
+      ringsSlider.value = currentRings.toString();
+      ringsSlider.style.flex = '1';
+      ringsSlider.style.cursor = 'pointer';
+
+      ringsSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10) || 8;
+        ringsVal.textContent = `${val}`;
+        if (typeof onBatchUpdate === 'function') {
+          onBatchUpdate('cascadeRings', val);
+        } else {
+          target.cascadeRings = val;
+        }
+        this.triggerUpdate();
+      });
+
+      ringsRow.appendChild(ringsLabel);
+      ringsRow.appendChild(ringsSlider);
+      ringsRow.appendChild(ringsVal);
+      row.appendChild(ringsRow);
+    }
+
+    container.appendChild(row);
   }
 
   renderEffectChips(parent, field) {
@@ -1874,6 +2150,13 @@ export class PropertyInspector {
           || target.slow_burst
         );
       }
+      if (modKey === 'cascade-wave') {
+        return Boolean(
+          target.cascadeWave
+          || target['cascade-wave']
+          || target.cascade_wave
+        );
+      }
       return false;
     };
 
@@ -1947,6 +2230,15 @@ export class PropertyInspector {
               delete subTarget['slow-burst'];
               delete subTarget.slow_burst;
             }
+          } else if (mod.key === 'cascade-wave') {
+            if (nextState) {
+              subTarget.cascadeWave = true;
+              subTarget['cascade-wave'] = true;
+            } else {
+              delete subTarget.cascadeWave;
+              delete subTarget['cascade-wave'];
+              delete subTarget.cascade_wave;
+            }
           }
 
           if (!Array.isArray(subTarget.effects)) {
@@ -1971,6 +2263,10 @@ export class PropertyInspector {
     });
 
     modWrapper.appendChild(chipsRow);
+    this.renderCascadeWaveControls(
+      modWrapper,
+      subTarget
+    );
     card.appendChild(modWrapper);
 
     // 2. Active Effects Timeline Component

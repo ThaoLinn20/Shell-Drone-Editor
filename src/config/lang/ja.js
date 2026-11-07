@@ -532,6 +532,11 @@ export default {
         longBurn: "ロングバーン",
         apexHang: "エイペックスハング",
         slowBurst: "スローバースト浮遊",
+        cascadeWave: "カスケードウェーブ",
+        cascadeDuration: "ウェーブ持続時間",
+        cascadeMode: "伝播方向",
+        cascadeRings: "平行リング数",
+        cascadeAngle: "ウェーブ角度",
         activeEffects: "有効エフェクト",
         launchSound: "発射サウンド",
         burstSound: "炸裂サウンド",
@@ -580,6 +585,15 @@ export default {
           cometsequence: "Comet シーケンス",
           finale: "フィナーレ",
           audio: "音声"
+        },
+        cascadeMode: {
+          "parallel-rings": "平行リング",
+          "random-shuffle": "ランダムシャッフルリング",
+          "parallel-rings-equator-out": "赤道から外側へ",
+          "radial-outward": "中心から外側へ",
+          "radial-inward": "外側から中心へ",
+          clockwise: "時計回り",
+          "counter-clockwise": "反時計回り"
         },
         shapeType: {
           sphere: "球体",

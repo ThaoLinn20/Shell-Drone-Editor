@@ -552,6 +552,11 @@ export default {
         longBurn: "长效滞空燃烧",
         apexHang: "滞空定格",
         slowBurst: "缓慢漂移绽放",
+        cascadeWave: "级联波浪",
+        cascadeDuration: "波浪持续时间",
+        cascadeMode: "传播方向",
+        cascadeRings: "平行环数量",
+        cascadeAngle: "波浪角度",
         activeEffects: "已启用效果",
         launchSound: "发射音效",
         burstSound: "爆炸音效",
@@ -580,6 +585,15 @@ export default {
           cometsequence: "Comet 序列",
           finale: "谢幕 Finale",
           audio: "音频"
+        },
+        cascadeMode: {
+          "parallel-rings": "平行圆环",
+          "random-shuffle": "随机乱序环",
+          "parallel-rings-equator-out": "赤道向外",
+          "radial-outward": "从中心向外",
+          "radial-inward": "从外向中心",
+          clockwise: "顺时针",
+          "counter-clockwise": "逆时针"
         },
         shapeType: {
           sphere: "球形",

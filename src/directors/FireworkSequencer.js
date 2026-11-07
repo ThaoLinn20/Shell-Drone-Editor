@@ -446,6 +446,24 @@ export class FireworkSequencer {
         || config.multiNested !== undefined
         || config.secondBurst !== undefined
         || config.secondBurstEnabled !== undefined
+        || config.cascadeWave !== undefined
+        || config['cascade-wave'] !== undefined
+        || config.cascade_wave !== undefined
+        || config.cascadeDuration !== undefined
+        || config.cascadeMode !== undefined
+        || config.cascadeRings !== undefined
+        || config['cascade-rings'] !== undefined
+        || config.cascade_rings !== undefined
+        || config.cascadeAngle !== undefined
+        || config['cascade-angle'] !== undefined
+        || config.cascade_angle !== undefined
+        || config.ringCount !== undefined
+        || config.syncStrobe !== undefined
+        || config['sync-strobe'] !== undefined
+        || config.sync_strobe !== undefined
+        || config.darkPhase !== undefined
+        || config['dark-phase'] !== undefined
+        || config.dark_phase !== undefined
         || config.textWord !== undefined
         || config.textScale !== undefined
         || config.letterSpacing !== undefined
@@ -499,6 +517,36 @@ export class FireworkSequencer {
         if (config.multiNested !== undefined) overrides.multiNested = config.multiNested;
         if (config.secondBurst !== undefined) overrides.secondBurst = config.secondBurst;
         if (config.secondBurstEnabled !== undefined) overrides.secondBurstEnabled = config.secondBurstEnabled;
+        if (config.cascadeWave !== undefined) overrides.cascadeWave = config.cascadeWave;
+        if (config['cascade-wave'] !== undefined) overrides.cascadeWave = config['cascade-wave'];
+        if (config.cascade_wave !== undefined) overrides.cascadeWave = config.cascade_wave;
+        if (config.cascadeDuration !== undefined) overrides.cascadeDuration = config.cascadeDuration;
+        if (config.cascadeMode !== undefined) overrides.cascadeMode = config.cascadeMode;
+        if (config.cascadeRings !== undefined) {
+          overrides.cascadeRings = config.cascadeRings;
+          overrides.ringCount = config.cascadeRings;
+        }
+        if (config['cascade-rings'] !== undefined) {
+          overrides.cascadeRings = config['cascade-rings'];
+          overrides.ringCount = config['cascade-rings'];
+        }
+        if (config.cascade_rings !== undefined) {
+          overrides.cascadeRings = config.cascade_rings;
+          overrides.ringCount = config.cascade_rings;
+        }
+        if (config.ringCount !== undefined) {
+          overrides.cascadeRings = config.ringCount;
+          overrides.ringCount = config.ringCount;
+        }
+        if (config.cascadeAngle !== undefined) overrides.cascadeAngle = config.cascadeAngle;
+        if (config['cascade-angle'] !== undefined) overrides.cascadeAngle = config['cascade-angle'];
+        if (config.cascade_angle !== undefined) overrides.cascadeAngle = config.cascade_angle;
+        if (config.syncStrobe !== undefined) overrides.syncStrobe = config.syncStrobe;
+        if (config['sync-strobe'] !== undefined) overrides.syncStrobe = config['sync-strobe'];
+        if (config.sync_strobe !== undefined) overrides.syncStrobe = config.sync_strobe;
+        if (config.darkPhase !== undefined) overrides.darkPhase = config.darkPhase;
+        if (config['dark-phase'] !== undefined) overrides.darkPhase = config['dark-phase'];
+        if (config.dark_phase !== undefined) overrides.darkPhase = config.dark_phase;
         if (config.sound || config.launchSound || config.burstSound || config.crackleSound || config.soundVolume !== undefined) {
           overrides.sound = {
             launch: config.sound?.launch || config.launchSound || undefined,
@@ -947,6 +995,24 @@ export class FireworkSequencer {
         || config.launchTrail !== undefined
         || config.secondBurst !== undefined
         || config.secondBurstEnabled !== undefined
+        || config.cascadeWave !== undefined
+        || config['cascade-wave'] !== undefined
+        || config.cascade_wave !== undefined
+        || config.cascadeDuration !== undefined
+        || config.cascadeMode !== undefined
+        || config.cascadeRings !== undefined
+        || config['cascade-rings'] !== undefined
+        || config.cascade_rings !== undefined
+        || config.cascadeAngle !== undefined
+        || config['cascade-angle'] !== undefined
+        || config.cascade_angle !== undefined
+        || config.ringCount !== undefined
+        || config.syncStrobe !== undefined
+        || config['sync-strobe'] !== undefined
+        || config.sync_strobe !== undefined
+        || config.darkPhase !== undefined
+        || config['dark-phase'] !== undefined
+        || config.dark_phase !== undefined
         || config.textWord !== undefined
         || config.textScale !== undefined
         || config.letterSpacing !== undefined
@@ -974,6 +1040,36 @@ export class FireworkSequencer {
         if (config.flow !== undefined) overrides.flow = config.flow;
         if (config.secondBurst !== undefined) overrides.secondBurst = config.secondBurst;
         if (config.secondBurstEnabled !== undefined) overrides.secondBurstEnabled = config.secondBurstEnabled;
+        if (config.cascadeWave !== undefined) overrides.cascadeWave = config.cascadeWave;
+        if (config['cascade-wave'] !== undefined) overrides.cascadeWave = config['cascade-wave'];
+        if (config.cascade_wave !== undefined) overrides.cascadeWave = config.cascade_wave;
+        if (config.cascadeDuration !== undefined) overrides.cascadeDuration = config.cascadeDuration;
+        if (config.cascadeMode !== undefined) overrides.cascadeMode = config.cascadeMode;
+        if (config.cascadeRings !== undefined) {
+          overrides.cascadeRings = config.cascadeRings;
+          overrides.ringCount = config.cascadeRings;
+        }
+        if (config['cascade-rings'] !== undefined) {
+          overrides.cascadeRings = config['cascade-rings'];
+          overrides.ringCount = config['cascade-rings'];
+        }
+        if (config.cascade_rings !== undefined) {
+          overrides.cascadeRings = config.cascade_rings;
+          overrides.ringCount = config.cascade_rings;
+        }
+        if (config.ringCount !== undefined) {
+          overrides.cascadeRings = config.ringCount;
+          overrides.ringCount = config.ringCount;
+        }
+        if (config.cascadeAngle !== undefined) overrides.cascadeAngle = config.cascadeAngle;
+        if (config['cascade-angle'] !== undefined) overrides.cascadeAngle = config['cascade-angle'];
+        if (config.cascade_angle !== undefined) overrides.cascadeAngle = config.cascade_angle;
+        if (config.syncStrobe !== undefined) overrides.syncStrobe = config.syncStrobe;
+        if (config['sync-strobe'] !== undefined) overrides.syncStrobe = config['sync-strobe'];
+        if (config.sync_strobe !== undefined) overrides.syncStrobe = config.sync_strobe;
+        if (config.darkPhase !== undefined) overrides.darkPhase = config.darkPhase;
+        if (config['dark-phase'] !== undefined) overrides.darkPhase = config['dark-phase'];
+        if (config.dark_phase !== undefined) overrides.darkPhase = config.dark_phase;
         if (config.sound || config.launchSound || config.burstSound || config.crackleSound || config.soundVolume !== undefined) {
           overrides.sound = {
             launch: config.sound?.launch || config.launchSound || undefined,
