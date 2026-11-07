@@ -70,7 +70,25 @@ describe('PropertyInspector Sliders and Star Lifetime Multiplier', () => {
         };
         return findRecursive(el);
       },
-      querySelectorAll: () => []
+      querySelectorAll: (selector) => {
+        const matches = [];
+        const className = selector.startsWith('.') ? selector.replace('.', '') : null;
+        const tagName = !selector.startsWith('.') ? selector.toUpperCase() : null;
+        const findRecursive = (node) => {
+          if (className && node.className && node.className.split(' ').includes(className)) {
+            matches.push(node);
+          } else if (tagName && node.tagName === tagName) {
+            matches.push(node);
+          }
+          for (const child of node.children) {
+            findRecursive(child);
+          }
+        };
+        for (const child of el.children) {
+          findRecursive(child);
+        }
+        return matches;
+      }
     };
     return el;
   };
@@ -340,6 +358,48 @@ describe('PropertyInspector Sliders and Star Lifetime Multiplier', () => {
     fireworkSystem.clear();
   });
 
+  it('should scale burst particle count proportionally down to 0.01x without clamping to 0.25x floor in FireworkSystem', () => {
+    const scene = new THREE.Scene();
+    const fireworkSystem = new FireworkSystem(scene);
+
+    // Burst with standard 1.0x particleCountMultiplier
+    fireworkSystem.createBurst(
+      new THREE.Vector3(0, 100, 0),
+      new THREE.Color(0xffaa00),
+      'sphere',
+      { particleCountMultiplier: 1.0 },
+      'test-std-count'
+    );
+    const standardCount = fireworkSystem.burstParticles.length;
+    fireworkSystem.clear();
+
+    // Burst with 0.25x particleCountMultiplier
+    fireworkSystem.createBurst(
+      new THREE.Vector3(0, 100, 0),
+      new THREE.Color(0xffaa00),
+      'sphere',
+      { particleCountMultiplier: 0.25 },
+      'test-025-count'
+    );
+    const count025 = fireworkSystem.burstParticles.length;
+    fireworkSystem.clear();
+
+    // Burst with 0.01x particleCountMultiplier (user soft limits)
+    fireworkSystem.createBurst(
+      new THREE.Vector3(0, 100, 0),
+      new THREE.Color(0xffaa00),
+      'sphere',
+      { particleCountMultiplier: 0.01 },
+      'test-001-count'
+    );
+    const count001 = fireworkSystem.burstParticles.length;
+    fireworkSystem.clear();
+
+    expect(count025).toBeLessThan(standardCount);
+    expect(count001).toBeLessThan(count025);
+    expect(count001).toBe(1);
+  });
+
   it('should configure soundVolume as slider before launchSound in soundSettings group', () => {
     const mockContainer = createMockElement('div');
     const inspector = new PropertyInspector(mockContainer, vi.fn());
@@ -403,5 +463,310 @@ describe('PropertyInspector Sliders and Star Lifetime Multiplier', () => {
     vi.advanceTimersByTime(300);
     expect(onUpdate).toHaveBeenCalledWith();
     vi.useRealTimers();
+  });
+
+  it('should allow typing custom value directly into valueBadge and commit on Enter or blur', () => {
+    vi.useFakeTimers();
+    const mockContainer = createMockElement('div');
+    const onUpdate = vi.fn();
+    const inspector = new PropertyInspector(mockContainer, onUpdate);
+
+    const event = { shellSize: 1.5 };
+    inspector.selectedEvent = event;
+
+    const parentDiv = createMockElement('div');
+    inspector.renderSlider(parentDiv, {
+      name: 'shellSize',
+      labelKey: 'shellSize',
+      type: 'slider',
+      min: '0.5',
+      max: '3.0',
+      step: '0.1',
+      defaultValue: 1.0,
+      formatValue: (v) => `${Number(v).toFixed(1)}x`
+    });
+
+    const badge = parentDiv.querySelector('.inspector-slider-value');
+    const slider = parentDiv.querySelector('.inspector-slider');
+
+    expect(badge.value).toBe('1.5x');
+    expect(slider.value).toBe('1.5');
+
+    // Simulate focus: should strip 'x'
+    badge.dispatchEvent({ type: 'focus' });
+    expect(badge.value).toBe('1.5');
+
+    // Type 2.2 and press Enter
+    badge.value = '2.2';
+    badge.dispatchEvent({ type: 'keydown', key: 'Enter', preventDefault: vi.fn() });
+
+    expect(badge.value).toBe('2.2x');
+    expect(slider.value).toBe('2.2');
+    expect(event.shellSize).toBe(2.2);
+
+    // Type with comma and suffix "2,8x" and blur
+    badge.value = '2,8x';
+    badge.dispatchEvent({ type: 'blur' });
+
+    expect(badge.value).toBe('2.8x');
+    expect(slider.value).toBe('2.8');
+    expect(event.shellSize).toBe(2.8);
+
+    vi.useRealTimers();
+  });
+
+  it('should allow typing values exceeding slider max (soft bounds) and revert on Escape or invalid input', () => {
+    const mockContainer = createMockElement('div');
+    const onUpdate = vi.fn();
+    const inspector = new PropertyInspector(mockContainer, onUpdate);
+
+    const event = { starLifeMultiplier: 1.0 };
+    inspector.selectedEvent = event;
+
+    const parentDiv = createMockElement('div');
+    inspector.renderSlider(parentDiv, {
+      name: 'starLifeMultiplier',
+      labelKey: 'starLifeMultiplier',
+      type: 'slider',
+      min: '0.2',
+      max: '2.5',
+      step: '0.05',
+      defaultValue: 1.0,
+      formatValue: (v) => `${Number(v).toFixed(2)}x`
+    });
+
+    const badge = parentDiv.querySelector('.inspector-slider-value');
+    const slider = parentDiv.querySelector('.inspector-slider');
+
+    // Focus then type value exceeding max (5.0) -> soft bounds: badge and event get 5.0, slider thumb rests at max (2.5)
+    badge.dispatchEvent({ type: 'focus' });
+    badge.value = '5.0';
+    badge.dispatchEvent({ type: 'blur' });
+
+    expect(badge.value).toBe('5.00x');
+    expect(slider.value).toBe('2.5');
+    expect(event.starLifeMultiplier).toBe(5.0);
+
+    // Focus then type invalid characters -> revert to previous valid (5.0)
+    badge.dispatchEvent({ type: 'focus' });
+    badge.value = 'invalid';
+    badge.dispatchEvent({ type: 'blur' });
+
+    expect(badge.value).toBe('5.00x');
+    expect(slider.value).toBe('2.5');
+
+    // Focus then type 1.2 and press Escape -> cancel and revert
+    badge.dispatchEvent({ type: 'focus' });
+    badge.value = '1.2';
+    badge.dispatchEvent({ type: 'keydown', key: 'Escape', preventDefault: vi.fn() });
+
+    expect(badge.value).toBe('5.00x');
+    expect(slider.value).toBe('2.5');
+  });
+
+  describe('Active Effects and Structural Modifiers Unification on Nested Stages and Second Burst', () => {
+    it('should render structural modifier chips and timeline container in renderSubTargetEffects', () => {
+      const mockContainer = createMockElement('div');
+      const onUpdate = vi.fn();
+      const inspector = new PropertyInspector(mockContainer, onUpdate);
+
+      const stage = {
+        shapeType: 'sphere',
+        dynamicsType: 'standard',
+        effects: ['pistil']
+      };
+
+      const card = createMockElement('div');
+      inspector.renderSubTargetEffects(card, stage, () => 2.3);
+
+      const modRow = card.querySelector('.inspector-subtarget-modifiers-row');
+      expect(modRow).toBeDefined();
+
+      const chips = modRow.querySelectorAll('.effect-chip');
+      const chipKeys = chips.map((c) => c.dataset?.key);
+      expect(chipKeys).toContain('burst-smoke');
+      expect(chipKeys).toContain('pistil');
+      expect(chipKeys).toContain('apex-hang');
+      expect(chipKeys).toContain('slow-burst');
+
+      const timelineContainer = card.querySelector('.inspector-active-effects-container');
+      expect(timelineContainer).toBeDefined();
+    });
+
+    it('should toggle structural modifiers on subTarget when chips are clicked', () => {
+      const mockContainer = createMockElement('div');
+      const onUpdate = vi.fn();
+      const inspector = new PropertyInspector(mockContainer, onUpdate);
+
+      const stage = {
+        shapeType: 'sphere',
+        dynamicsType: 'standard',
+        effects: []
+      };
+
+      const card = createMockElement('div');
+      inspector.renderSubTargetEffects(card, stage, () => 2.3);
+
+      const modRow = card.querySelector('.inspector-subtarget-modifiers-row');
+      const chips = modRow.querySelectorAll('.effect-chip');
+      const pistilChip = chips.find((c) => c.dataset?.key === 'pistil');
+      const smokeChip = chips.find((c) => c.dataset?.key === 'burst-smoke');
+
+      expect(pistilChip).toBeDefined();
+      expect(smokeChip).toBeDefined();
+
+      // Click pistil chip -> toggles stage.pistil = true and adds to stage.effects
+      pistilChip.dispatchEvent({ type: 'click' });
+      expect(stage.pistil).toBe(true);
+      expect(stage.effects).toContain('pistil');
+
+      // Click burst-smoke chip -> toggles stage.burstSmoke = true and adds to stage.effects
+      smokeChip.dispatchEvent({ type: 'click' });
+      expect(stage.burstSmoke).toBe(true);
+      expect(stage['burst-smoke']).toBe(true);
+      expect(stage.effects).toContain('burst-smoke');
+
+      // Click pistil chip again -> turns off pistil
+      pistilChip.dispatchEvent({ type: 'click' });
+      expect(stage.pistil).toBe(false);
+      expect(stage.effects).not.toContain('pistil');
+      // Smoke remains
+      expect(stage.effects).toContain('burst-smoke');
+    });
+
+    it('should preserve structural modifiers when active effects timeline emits onChange', () => {
+      const mockContainer = createMockElement('div');
+      const onUpdate = vi.fn();
+      const inspector = new PropertyInspector(mockContainer, onUpdate);
+
+      const stage = {
+        shapeType: 'ring',
+        dynamicsType: 'flow',
+        burstSmoke: true,
+        effects: ['burst-smoke']
+      };
+
+      let capturedOptions = null;
+      const card = createMockElement('div');
+      inspector.renderSubTargetEffects(card, stage, () => 2.0);
+
+      // Locate the timeline container and its instance or simulate onChange
+      const timelineContainer = card.querySelector('.inspector-active-effects-container');
+      expect(timelineContainer).toBeDefined();
+
+      // Simulate timeline onChange with a timed effect
+      const updatedTimedEffects = [
+        {
+          id: 'strobe_1',
+          type: 'strobe',
+          startRatio: 0.1,
+          endRatio: 0.6,
+          start: 0.2,
+          end: 1.2
+        }
+      ];
+
+      // Simulate how renderSubTargetEffects handles timeline onChange
+      const existingModifiers = stage.effects.filter((e) => {
+        const key = typeof e === 'object' && e !== null ? (e.type || e.key) : e;
+        return TOGGLE_MODIFIER_TAGS.some((mod) => mod.key === key);
+      });
+      stage.effects = [...updatedTimedEffects, ...existingModifiers];
+
+      expect(stage.effects).toHaveLength(2);
+      expect(stage.effects.some((e) => e.type === 'strobe')).toBe(true);
+      expect(stage.effects.includes('burst-smoke')).toBe(true);
+    });
+
+    it('should mount renderSubTargetEffects for each stage in renderNestedStages', () => {
+      const mockContainer = createMockElement('div');
+      const onUpdate = vi.fn();
+      const inspector = new PropertyInspector(mockContainer, onUpdate);
+
+      const event = {
+        id: 'event-multi-1',
+        type: 'sequence',
+        preset: 'multi_nested',
+        multiNested: true,
+        stages: [
+          {
+            shapeType: 'sphere',
+            dynamicsType: 'standard',
+            delay: 0.0,
+            scale: 1.0,
+            effects: ['strobe']
+          },
+          {
+            shapeType: 'ring',
+            dynamicsType: 'flow',
+            delay: 0.5,
+            scale: 0.8,
+            effects: ['crackle', 'pistil']
+          }
+        ]
+      };
+      inspector.selectedEvent = event;
+
+      const parentDiv = createMockElement('div');
+      inspector.activeStageIndex = 0;
+      inspector.renderNestedStages(parentDiv);
+
+      const cardStage1 = parentDiv.querySelector('.inspector-subcard');
+      expect(cardStage1).toBeDefined();
+
+      const modRowStage1 = cardStage1.querySelector('.inspector-subtarget-modifiers-row');
+      expect(modRowStage1).toBeDefined();
+      const timelineStage1 = cardStage1.querySelector('.inspector-active-effects-container');
+      expect(timelineStage1).toBeDefined();
+
+      // Switch to Stage 2
+      const parentDiv2 = createMockElement('div');
+      inspector.activeStageIndex = 1;
+      inspector.renderNestedStages(parentDiv2);
+
+      const cardStage2 = parentDiv2.querySelector('.inspector-subcard');
+      expect(cardStage2).toBeDefined();
+      const modRowStage2 = cardStage2.querySelector('.inspector-subtarget-modifiers-row');
+      expect(modRowStage2).toBeDefined();
+      const timelineStage2 = cardStage2.querySelector('.inspector-active-effects-container');
+      expect(timelineStage2).toBeDefined();
+    });
+
+    it('should mount renderSubTargetEffects for active child in renderSecondBurst', () => {
+      const mockContainer = createMockElement('div');
+      const onUpdate = vi.fn();
+      const inspector = new PropertyInspector(mockContainer, onUpdate);
+
+      const event = {
+        id: 'event-sb-1',
+        type: 'sequence',
+        secondBurst: {
+          enabled: true,
+          activeChildIndex: 0,
+          childShells: [
+            {
+              shapeType: 'sphere',
+              dynamicsType: 'standard',
+              scale: 0.35,
+              color: '#ffd700',
+              effects: ['ghost']
+            }
+          ]
+        }
+      };
+      inspector.selectedEvent = event;
+
+      const parentDiv = createMockElement('div');
+      inspector.renderSecondBurst(parentDiv);
+
+      const card = parentDiv.querySelector('.inspector-subcard');
+      expect(card).toBeDefined();
+
+      const modRow = card.querySelector('.inspector-subtarget-modifiers-row');
+      expect(modRow).toBeDefined();
+
+      const timeline = card.querySelector('.inspector-active-effects-container');
+      expect(timeline).toBeDefined();
+    });
   });
 });

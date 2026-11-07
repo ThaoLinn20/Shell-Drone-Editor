@@ -109,3 +109,17 @@
     - GPU simulation enabled by default in browser environments for locked 60 FPS performance.
     - CPU zero-allocation pool mode maintained as a fallback for automated unit testing (Vitest/Node.js) and low-power hardware, controllable via the centralized settings toggle (`gpu_trail_simulation`).
 
+## Parameter Contracts, Soft Limits vs Hard Limits, and Anti-Silent-Clamping
+- **Decouple Soft Limits (UI Ergonomics) from Hard Limits (Engine Physics Safety)**:
+  - **Soft Limits** (e.g. `min: 0.25`, `max: 3.0` on range sliders) are purely visual suggestions for the timeline UI. They MUST NOT be hardcoded into the physics simulation, particle generators, or calculation logic as hard constraints.
+  - **Hard Limits** (e.g. `hardMin: 0.0`, `hardMax: 20.0`) represent actual runtime safety boundaries (preventing division by zero, negative durations, or GPU memory overflow). They MUST be defined centrally in `firework-engine/src/config/parameterDescriptors.js`.
+- **Zero Scattered Clamping & No Silent Clamping Anti-Pattern**:
+  - Subsystems (such as `FireworkSystem`, `BurstShapeGenerator`, `BurstEffectProcessor`, `TrailSystem`, particle pools) MUST NEVER scatter arbitrary defensive clamping like `Math.max(0.25, Math.min(3.0, val))` across internal calculation branches.
+  - Silent clamping masks bugs and silently swallows user customizations.
+  - Sizing and scaling floors (such as `minParticles` or `effectiveMin`) MUST scale proportionally when user explicitly inputs fractional multipliers (`< 1.0`), allowing down to 1 particle rather than artificially clamping to a high floor.
+- **Single Ingestion Normalization**:
+  - Parameters entering the simulation must be normalized at a single boundary point (via `normalizePresetParameters()` or `normalizeParameter()` from `@shell-drone/firework-engine`). Once validated at the boundary, downstream subsystems must honor the contract without secondary re-clamping.
+- **Boundary Condition Testing**:
+  - Whenever supporting a numeric multiplier, write unit tests asserting that boundary values (e.g. `0.01x`, `5.0x`) flow untouched to the simulation and produce proportionally scaled particles or lifetimes.
+
+

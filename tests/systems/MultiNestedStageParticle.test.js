@@ -106,7 +106,7 @@ describe('Multi Nested Shell Stage Particle Multiplier', () => {
     });
   });
 
-  it('should scale and clamp resolveBurstParticleCount with multiplier between 0.25 and 3.0', () => {
+  it('should scale resolveBurstParticleCount with multiplier and allow values outside 0.25 to 3.0', () => {
     const scene = new THREE.Scene();
     const system = new FireworkSystem(scene);
 
@@ -131,20 +131,20 @@ describe('Multi Nested Shell Stage Particle Multiplier', () => {
     expect(lowCount).toBeLessThan(baseCount);
     expect(highCount).toBeGreaterThan(baseCount);
 
-    // Clamping checks
-    const clampedBelow = system.resolveBurstParticleCount(
+    // Soft bounds checks: multipliers below 0.25 scale down, and above 3.0 scale up
+    const belowCount = system.resolveBurstParticleCount(
       'sphere',
       'standard',
       { particleCountMultiplier: 0.05, shellSize: 1.0 }
     );
-    expect(clampedBelow).toBe(lowCount);
+    expect(belowCount).toBeLessThan(lowCount);
 
-    const clampedAbove = system.resolveBurstParticleCount(
+    const aboveCount = system.resolveBurstParticleCount(
       'sphere',
       'standard',
       { particleCountMultiplier: 10.0, shellSize: 1.0 }
     );
-    expect(clampedAbove).toBe(highCount);
+    expect(aboveCount).toBeGreaterThan(highCount);
   });
 
   it('should forward stage particleCountMultiplier to each sub-burst in triggerMultiNestedBurst', () => {
