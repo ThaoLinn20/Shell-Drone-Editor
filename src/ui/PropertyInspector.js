@@ -1795,6 +1795,274 @@ export class PropertyInspector {
     parent.appendChild(container);
   }
 
+  renderSubTargetEffects(card, subTarget, getDuration) {
+    if (!card || !subTarget) return;
+
+    // 1. Structural Modifiers Row (Triggered Effects: burst-smoke, pistil, apex-hang, slow-burst)
+    const modWrapper = document.createElement('div');
+    modWrapper.className = 'inspector-subtarget-modifiers-row';
+    modWrapper.style.display = 'flex';
+    modWrapper.style.flexDirection = 'column';
+    modWrapper.style.gap = '4px';
+    modWrapper.style.marginTop = '4px';
+
+    const modLabel = document.createElement('label');
+    modLabel.className = 'inspector-label';
+    modLabel.style.fontSize = '10px';
+    const rawModTitle = t('editor.inspector.triggeredEffects')
+      || t('editor.inspector.characteristics');
+    modLabel.textContent = (rawModTitle && rawModTitle !== 'editor.inspector.triggeredEffects')
+      ? rawModTitle
+      : 'Triggered Effects';
+    modWrapper.appendChild(modLabel);
+
+    const chipsRow = document.createElement('div');
+    chipsRow.className = 'inspector-chips-row';
+    chipsRow.style.display = 'flex';
+    chipsRow.style.flexWrap = 'wrap';
+    chipsRow.style.gap = '4px';
+
+    const checkKeyActive = (target, modKey) => {
+      if (Array.isArray(target.effects)) {
+        if (target.effects.some((e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) === modKey)) {
+          return true;
+        }
+      }
+      if (modKey === 'burst-smoke') {
+        return Boolean(
+          target.burstSmoke
+          || target['burst-smoke']
+          || target.burst_smoke
+        );
+      }
+      if (modKey === 'pistil') {
+        return Boolean(target.pistil);
+      }
+      if (modKey === 'apex-hang') {
+        return Boolean(target.apexHang || target['apex-hang']);
+      }
+      if (modKey === 'slow-burst') {
+        return Boolean(
+          target.slowBurst
+          || target['slow-burst']
+          || target.slow_burst
+        );
+      }
+      return false;
+    };
+
+    TOGGLE_MODIFIER_TAGS.forEach((mod) => {
+      const isActive = checkKeyActive(subTarget, mod.key);
+      const chip = document.createElement('span');
+      chip.className = 'effect-chip';
+      chip.dataset.key = mod.key;
+      chip.style.fontSize = '10px';
+      chip.style.padding = '3px 7px';
+      chip.style.borderRadius = '4px';
+      chip.style.cursor = 'pointer';
+      chip.style.userSelect = 'none';
+
+      if (isActive) {
+        chip.style.border = '1px solid #38bdf8';
+        chip.style.background = 'rgba(56, 189, 248, 0.25)';
+        chip.style.color = '#ffffff';
+        chip.style.fontWeight = '600';
+      } else {
+        chip.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+        chip.style.background = 'rgba(255, 255, 255, 0.05)';
+        chip.style.color = '#94a3b8';
+        chip.style.fontWeight = 'normal';
+      }
+      chip.style.transition = 'all 0.15s ease';
+
+      const label = t(`editor.inspector.fields.${mod.labelKey}`)
+        || en?.editor?.inspector?.fields?.[mod.labelKey]
+        || mod.key;
+      chip.textContent = label;
+
+      EffectPreviewTooltip.getInstance().bindElement(
+        chip,
+        mod.key,
+        PREVIEW_CATEGORIES.OPTICAL_EFFECT
+      );
+
+      chip.addEventListener(
+        'click',
+        () => {
+          this.triggerUpdate('beforeChange');
+          const currentActive = checkKeyActive(subTarget, mod.key);
+          const nextState = !currentActive;
+
+          if (mod.key === 'burst-smoke') {
+            if (nextState) {
+              subTarget.burstSmoke = true;
+              subTarget['burst-smoke'] = true;
+            } else {
+              delete subTarget.burstSmoke;
+              delete subTarget['burst-smoke'];
+              delete subTarget.burst_smoke;
+            }
+          } else if (mod.key === 'pistil') {
+            subTarget.pistil = nextState;
+          } else if (mod.key === 'apex-hang') {
+            if (nextState) {
+              subTarget.apexHang = true;
+              subTarget['apex-hang'] = true;
+            } else {
+              delete subTarget.apexHang;
+              delete subTarget['apex-hang'];
+            }
+          } else if (mod.key === 'slow-burst') {
+            if (nextState) {
+              subTarget.slowBurst = true;
+              subTarget['slow-burst'] = true;
+            } else {
+              delete subTarget.slowBurst;
+              delete subTarget['slow-burst'];
+              delete subTarget.slow_burst;
+            }
+          }
+
+          if (!Array.isArray(subTarget.effects)) {
+            subTarget.effects = [];
+          }
+          if (nextState) {
+            if (!subTarget.effects.some((e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) === mod.key)) {
+              subTarget.effects.push(mod.key);
+            }
+          } else {
+            subTarget.effects = subTarget.effects.filter(
+              (e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) !== mod.key
+            );
+          }
+
+          this.triggerUpdate();
+          this.render();
+        }
+      );
+
+      chipsRow.appendChild(chip);
+    });
+
+    modWrapper.appendChild(chipsRow);
+    card.appendChild(modWrapper);
+
+    // 2. Active Effects Timeline Component
+    const timelineContainer = document.createElement('div');
+    timelineContainer.className = 'inspector-active-effects-container';
+    timelineContainer.style.marginTop = '6px';
+    timelineContainer.style.marginBottom = '6px';
+
+    const getNormalizedEffects = () => {
+      const list = [];
+      const currentList = Array.isArray(subTarget.effects) ? subTarget.effects : [];
+      const duration = Math.max(0.5, Number(getDuration()) || 2.3);
+
+      currentList.forEach((item) => {
+        const itemType = typeof item === 'string' ? item : (item?.type || item?.key);
+        if (TOGGLE_MODIFIER_TAGS.some((mod) => mod.key === itemType)) {
+          return;
+        }
+
+        if (typeof item === 'string') {
+          list.push({
+            type: item,
+            startRatio: 0.1,
+            endRatio: 0.5,
+            start: Math.round(duration * 0.1 * 100) / 100,
+            end: Math.round(duration * 0.5 * 100) / 100
+          });
+        } else if (typeof item === 'object' && item !== null) {
+          const type = item.type || item.key;
+          let startRatio = item.startRatio !== undefined ? Number(item.startRatio) : undefined;
+          let endRatio = item.endRatio !== undefined ? Number(item.endRatio) : undefined;
+          let start = item.start !== undefined ? Number(item.start) : undefined;
+          let end = item.end !== undefined ? Number(item.end) : undefined;
+
+          if (startRatio === undefined) {
+            startRatio = start !== undefined ? Math.max(0, Math.min(1.0, start / duration)) : 0.1;
+          }
+          if (endRatio === undefined) {
+            endRatio = end !== undefined ? Math.max(0, Math.min(1.0, end / duration)) : 0.5;
+          }
+
+          start = Math.round(startRatio * duration * 100) / 100;
+          end = Math.round(endRatio * duration * 100) / 100;
+
+          list.push({
+            id: item.id || `${type}_${Math.random().toString(36).slice(2, 7)}`,
+            type,
+            startRatio: Math.round(startRatio * 100) / 100,
+            endRatio: Math.round(endRatio * 100) / 100,
+            start,
+            end
+          });
+        }
+      });
+
+      if (!Array.isArray(subTarget.effects)) {
+        TIMED_EFFECT_TAGS.forEach((tag) => {
+          const hasLegacy = Boolean(
+            subTarget[tag.key]
+            || (tag.key === 'no-trail' && (subTarget.noTrail || subTarget.notrail))
+          );
+          if (hasLegacy && !list.some((e) => e.type === tag.key)) {
+            list.push({
+              id: `${tag.key}_${Math.random().toString(36).slice(2, 7)}`,
+              type: tag.key,
+              startRatio: 0.1,
+              endRatio: 0.5,
+              start: Math.round(duration * 0.1 * 100) / 100,
+              end: Math.round(duration * 0.5 * 100) / 100
+            });
+            delete subTarget[tag.key];
+            if (tag.key === 'no-trail') {
+              delete subTarget.noTrail;
+              delete subTarget.notrail;
+            }
+          }
+        });
+      }
+
+      return list;
+    };
+
+    new ActiveEffectsTimeline(
+      timelineContainer,
+      {
+        getDuration: () => {
+          return getDuration();
+        },
+        getEffects: () => {
+          return getNormalizedEffects();
+        },
+        onChange: (updatedEffects) => {
+          this.triggerUpdate('beforeChange');
+          const existingModifiers = (Array.isArray(subTarget.effects) ? subTarget.effects : [])
+            .filter((e) => {
+              const key = typeof e === 'object' && e !== null ? (e.type || e.key) : e;
+              return TOGGLE_MODIFIER_TAGS.some((mod) => mod.key === key);
+            });
+          subTarget.effects = [
+            ...updatedEffects,
+            ...existingModifiers
+          ];
+          TIMED_EFFECT_TAGS.forEach((tag) => {
+            delete subTarget[tag.key];
+            if (tag.key === 'no-trail') {
+              delete subTarget.noTrail;
+              delete subTarget.notrail;
+            }
+          });
+          this.triggerUpdate();
+        },
+        availableEffectTags: TIMED_EFFECT_TAGS
+      }
+    );
+
+    card.appendChild(timelineContainer);
+  }
+
   renderColorBadges(parent) {
     const targetEvent = this.selectedEvent;
     if (!targetEvent) return;
@@ -2836,6 +3104,7 @@ export class PropertyInspector {
 
     if (stage) {
       const card = document.createElement('div');
+      card.className = 'inspector-subcard';
       card.style.background = 'rgba(255, 255, 255, 0.03)';
       card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
       card.style.borderRadius = '6px';
@@ -3332,74 +3601,28 @@ export class PropertyInspector {
       particleWrapper.appendChild(particleInputRow);
       card.appendChild(particleWrapper);
 
-      // Row 5: Active Optical Effects Chips
-      const effectsWrapper = document.createElement('div');
-      effectsWrapper.style.display = 'flex';
-      effectsWrapper.style.flexDirection = 'column';
-      effectsWrapper.style.gap = '4px';
-
-      const effLbl = document.createElement('label');
-      effLbl.className = 'inspector-label';
-      effLbl.style.fontSize = '10px';
-      effLbl.textContent =
-        t('editor.inspector.fields.activeEffects') ||
-        'Active Effects';
-
-      const chipsWrapper = document.createElement('div');
-      chipsWrapper.style.display = 'flex';
-      chipsWrapper.style.flexWrap = 'wrap';
-      chipsWrapper.style.gap = '4px';
-
-      const currentEffects = Array.isArray(stage.effects) ? stage.effects : [];
-      AVAILABLE_EFFECT_TAGS.forEach(eff => {
-        const isEffectActive = currentEffects.includes(eff.key);
-        const chip = document.createElement('span');
-        chip.className = 'effect-chip';
-        chip.style.fontSize = '10px';
-        chip.style.padding = '3px 7px';
-        chip.style.cursor = 'pointer';
-        chip.style.borderRadius = '4px';
-        chip.style.userSelect = 'none';
-        chip.style.border = isEffectActive
-          ? '1px solid #4a9eff'
-          : '1px solid rgba(255,255,255,0.12)';
-        chip.style.background = isEffectActive
-          ? 'rgba(74, 158, 255, 0.25)'
-          : 'rgba(255,255,255,0.04)';
-        chip.style.color = isEffectActive
-          ? '#ffffff'
-          : '#8a9ba8';
-        chip.style.fontWeight = isEffectActive
-          ? 'bold'
-          : 'normal';
-        chip.textContent =
-          t(`editor.inspector.fields.${eff.labelKey}`) ||
-          eff.key;
-
-        chip.addEventListener(
-          'click',
-          () => {
-            this.triggerUpdate('beforeChange');
-            if (!Array.isArray(stage.effects)) {
-              stage.effects = [];
-            }
-            const activeIdx = stage.effects.indexOf(eff.key);
-            if (activeIdx >= 0) {
-              stage.effects.splice(activeIdx, 1);
-            } else {
-              stage.effects.push(eff.key);
-            }
-            this.triggerUpdate();
-            this.render();
-          }
+      // Row 5: Active Effects (Timeline and Triggered Modifiers)
+      const calculateStageDuration = () => {
+        const baseLife = FIREWORK_CONFIG?.BURST?.baseLife ?? 2.3;
+        const stageMul = (stage.starLifeMultiplier !== undefined && !isNaN(Number(stage.starLifeMultiplier)))
+          ? Math.max(0.01, Number(stage.starLifeMultiplier))
+          : ((event.starLifeMultiplier !== undefined && !isNaN(Number(event.starLifeMultiplier)))
+              ? Math.max(0.01, Number(event.starLifeMultiplier))
+              : 1.0);
+        const stageScale = (stage.scale !== undefined && !isNaN(Number(stage.scale)))
+          ? Number(stage.scale)
+          : 1.0;
+        return Math.max(
+          0.5,
+          Math.round(baseLife * stageMul * stageScale * 10) / 10
         );
+      };
 
-        chipsWrapper.appendChild(chip);
-      });
-
-      effectsWrapper.appendChild(effLbl);
-      effectsWrapper.appendChild(chipsWrapper);
-      card.appendChild(effectsWrapper);
+      this.renderSubTargetEffects(
+        card,
+        stage,
+        calculateStageDuration
+      );
 
       container.appendChild(card);
     }
@@ -3620,6 +3843,7 @@ export class PropertyInspector {
 
     if (activeChild) {
       const card = document.createElement('div');
+      card.className = 'inspector-subcard';
       card.style.background = 'rgba(255, 255, 255, 0.03)';
       card.style.border = '1px solid rgba(255, 255, 255, 0.1)';
       card.style.borderRadius = '6px';
@@ -4137,69 +4361,25 @@ export class PropertyInspector {
       soundWrapper.appendChild(soundCustom.element);
       card.appendChild(soundWrapper);
 
-      // Row: Active Effects Chips
-      const effectsWrapper = document.createElement('div');
-      effectsWrapper.style.display = 'flex';
-      effectsWrapper.style.flexDirection = 'column';
-      effectsWrapper.style.gap = '4px';
-
-      const effLbl = document.createElement('label');
-      effLbl.className = 'inspector-label';
-      effLbl.style.fontSize = '10px';
-      effLbl.textContent = t('editor.inspector.fields.activeEffects') || 'Active Effects';
-
-      const chipsWrapper = document.createElement('div');
-      chipsWrapper.style.display = 'flex';
-      chipsWrapper.style.flexWrap = 'wrap';
-      chipsWrapper.style.gap = '4px';
-
-      const currentChildEffects = Array.isArray(activeChild.effects) ? activeChild.effects : [];
-      AVAILABLE_EFFECT_TAGS.forEach((eff) => {
-        const isEffectActive = currentChildEffects.includes(eff.key);
-        const chip = document.createElement('span');
-        chip.className = 'effect-chip';
-        chip.style.fontSize = '10px';
-        chip.style.padding = '3px 7px';
-        chip.style.cursor = 'pointer';
-        chip.style.borderRadius = '4px';
-        chip.style.userSelect = 'none';
-        chip.style.border = isEffectActive
-          ? '1px solid #3498db'
-          : '1px solid rgba(255, 255, 255, 0.15)';
-        chip.style.background = isEffectActive
-          ? 'rgba(52, 152, 219, 0.25)'
-          : 'rgba(255, 255, 255, 0.04)';
-        chip.style.color = isEffectActive ? '#ffffff' : '#8a9ba8';
-        chip.style.fontWeight = isEffectActive ? 'bold' : 'normal';
-        const labelKeyPath = `editor.inspector.fields.${eff.labelKey}`;
-        const translatedLabel = t(labelKeyPath);
-        chip.textContent =
-          translatedLabel && translatedLabel !== labelKeyPath
-            ? translatedLabel
-            : formatOptionLabelFallback(eff.key);
-
-        EffectPreviewTooltip.getInstance().bindElement(
-          chip,
-          eff.key,
-          PREVIEW_CATEGORIES.OPTICAL_EFFECT
+      // Row: Active Effects (Timeline and Triggered Modifiers)
+      const calculateChildDuration = () => {
+        const childBaseLife = FIREWORK_CONFIG?.SECOND_BURST?.defaultLife ?? 0.9;
+        const childMul = (activeChild.starLifeMultiplier !== undefined && !isNaN(Number(activeChild.starLifeMultiplier)))
+          ? Math.max(0.01, Number(activeChild.starLifeMultiplier))
+          : ((event.starLifeMultiplier !== undefined && !isNaN(Number(event.starLifeMultiplier)))
+              ? Math.max(0.01, Number(event.starLifeMultiplier))
+              : 1.0);
+        return Math.max(
+          0.5,
+          Math.round(childBaseLife * childMul * 10) / 10
         );
+      };
 
-        chip.addEventListener('click', () => {
-          this.triggerUpdate('beforeChange');
-          if (isEffectActive) {
-            activeChild.effects = currentChildEffects.filter((k) => k !== eff.key);
-          } else {
-            activeChild.effects = [...currentChildEffects, eff.key];
-          }
-          this.triggerUpdate();
-          this.render();
-        });
-        chipsWrapper.appendChild(chip);
-      });
-
-      effectsWrapper.appendChild(effLbl);
-      effectsWrapper.appendChild(chipsWrapper);
-      card.appendChild(effectsWrapper);
+      this.renderSubTargetEffects(
+        card,
+        activeChild,
+        calculateChildDuration
+      );
 
       container.appendChild(card);
     }
