@@ -19,7 +19,13 @@ export const EFFECT_COLORS = {
   'slow-burst': { bg: 'rgba(186, 230, 253, 0.38)', border: '#38bdf8', text: '#bae6fd' },
   'burst-smoke': { bg: 'rgba(148, 163, 184, 0.38)', border: '#94a3b8', text: '#cbd5e1' },
   'burst_smoke': { bg: 'rgba(148, 163, 184, 0.38)', border: '#94a3b8', text: '#cbd5e1' },
-  'burstSmoke': { bg: 'rgba(148, 163, 184, 0.38)', border: '#94a3b8', text: '#cbd5e1' }
+  'burstSmoke': { bg: 'rgba(148, 163, 184, 0.38)', border: '#94a3b8', text: '#cbd5e1' },
+  'sync-strobe': { bg: 'rgba(217, 119, 6, 0.45)', border: '#fde047', text: '#fef08a' },
+  'sync_strobe': { bg: 'rgba(217, 119, 6, 0.45)', border: '#fde047', text: '#fef08a' },
+  'syncStrobe': { bg: 'rgba(217, 119, 6, 0.45)', border: '#fde047', text: '#fef08a' },
+  'dark-phase': { bg: 'rgba(30, 41, 59, 0.65)', border: '#6366f1', text: '#cbd5e1' },
+  'dark_phase': { bg: 'rgba(30, 41, 59, 0.65)', border: '#6366f1', text: '#cbd5e1' },
+  'darkPhase': { bg: 'rgba(30, 41, 59, 0.65)', border: '#6366f1', text: '#cbd5e1' }
 };
 
 export function createSvgIcon(type, size = 14) {

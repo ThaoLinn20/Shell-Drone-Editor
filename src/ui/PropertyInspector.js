@@ -92,6 +92,14 @@ export const TIMED_EFFECT_TAGS = [
   {
     key: 'diamond-scintillation',
     labelKey: 'diamondScintillation'
+  },
+  {
+    key: 'sync_strobe',
+    labelKey: 'syncStrobe'
+  },
+  {
+    key: 'dark_phase',
+    labelKey: 'darkPhase'
   }
 ];
 
@@ -1745,6 +1753,12 @@ export class PropertyInspector {
               delete targetEvent.noTrail;
               delete targetEvent.notrail;
             }
+            if (tag.key === 'sync_strobe') {
+              delete targetEvent.syncStrobe;
+            }
+            if (tag.key === 'dark_phase') {
+              delete targetEvent.darkPhase;
+            }
           }
         });
       }
@@ -1758,6 +1772,12 @@ export class PropertyInspector {
         if (tag.key === 'no-trail') {
           delete targetEvent.noTrail;
           delete targetEvent.notrail;
+        }
+        if (tag.key === 'sync_strobe') {
+          delete targetEvent.syncStrobe;
+        }
+        if (tag.key === 'dark_phase') {
+          delete targetEvent.darkPhase;
         }
       });
     };
@@ -1784,6 +1804,12 @@ export class PropertyInspector {
             if (tag.key === 'no-trail') {
               delete evt.noTrail;
               delete evt.notrail;
+            }
+            if (tag.key === 'sync_strobe') {
+              delete evt.syncStrobe;
+            }
+            if (tag.key === 'dark_phase') {
+              delete evt.darkPhase;
             }
           });
         });
@@ -2020,6 +2046,12 @@ export class PropertyInspector {
               delete subTarget.noTrail;
               delete subTarget.notrail;
             }
+            if (tag.key === 'sync_strobe') {
+              delete subTarget.syncStrobe;
+            }
+            if (tag.key === 'dark_phase') {
+              delete subTarget.darkPhase;
+            }
           }
         });
       }
@@ -2052,6 +2084,12 @@ export class PropertyInspector {
             if (tag.key === 'no-trail') {
               delete subTarget.noTrail;
               delete subTarget.notrail;
+            }
+            if (tag.key === 'sync_strobe') {
+              delete subTarget.syncStrobe;
+            }
+            if (tag.key === 'dark_phase') {
+              delete subTarget.darkPhase;
             }
           });
           this.triggerUpdate();
