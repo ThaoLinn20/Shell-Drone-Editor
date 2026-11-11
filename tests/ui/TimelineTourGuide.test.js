@@ -264,4 +264,20 @@ describe('TimelineTourGuide Component', () => {
     tourGuide.scrollTargetIntoView(mockBlock);
     expect(mockTimelineEditor.trackContainer.scrollLeft).toBeGreaterThan(0);
   });
+
+  it('should initialize and run 3-step reuse_blocks tour', () => {
+    const steps = tourGuide.getReuseBlocksSteps();
+    expect(steps.length).toBe(3);
+    expect(steps[0].id).toBe('multiSelect');
+    expect(steps[1].id).toBe('exportSelected');
+    expect(steps[2].id).toBe('reimportEmptySpace');
+
+    tourGuide.startReuseBlocksTour();
+    expect(tourGuide.isActive).toBe(true);
+    expect(tourGuide.currentTourType).toBe('reuse_blocks');
+    expect(tourGuide.currentStepIndex).toBe(0);
+
+    tourGuide.finishTour('completed');
+    expect(store['reuse_blocks_tour_status']).toBe('completed');
+  });
 });

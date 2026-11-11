@@ -73,9 +73,13 @@ describe('GuideHubModal', () => {
       onboardingFlow: {
         restart: vi.fn()
       },
+      reuseBlocksGuide: {
+        start: vi.fn()
+      },
       tourGuide: {
         startTour: vi.fn(),
-        startInspectorTour: vi.fn()
+        startInspectorTour: vi.fn(),
+        startReuseBlocksTour: vi.fn()
       }
     };
 
@@ -91,7 +95,7 @@ describe('GuideHubModal', () => {
     vi.restoreAllMocks();
   });
 
-  it('should render all 3 default guides and support custom registered guides', () => {
+  it('should render all 4 default guides and support custom registered guides', () => {
     modal.registerGuide({
       id: 'custom_guide',
       title: 'Custom Guide',
@@ -105,11 +109,12 @@ describe('GuideHubModal', () => {
 
     expect(modal.isVisible).toBe(true);
     expect(modal.overlay.style.display).toBe('flex');
-    expect(modal.listContainer.children.length).toBe(4);
+    expect(modal.listContainer.children.length).toBe(5);
     expect(modal.listContainer.children[0].dataset.guideId).toBe('quick_start');
     expect(modal.listContainer.children[1].dataset.guideId).toBe('timeline_tour');
     expect(modal.listContainer.children[2].dataset.guideId).toBe('inspector_tour');
-    expect(modal.listContainer.children[3].dataset.guideId).toBe('custom_guide');
+    expect(modal.listContainer.children[3].dataset.guideId).toBe('reuse_blocks');
+    expect(modal.listContainer.children[4].dataset.guideId).toBe('custom_guide');
   });
 
   it('should close modal before executing guide action', () => {
@@ -132,7 +137,7 @@ describe('GuideHubModal', () => {
     expect(callOrder).toEqual(['close', 'startTour']);
   });
 
-  it('should trigger onboarding restart and inspector tour', () => {
+  it('should trigger onboarding restart, inspector tour, and reuse blocks tour', () => {
     modal.open();
 
     // Quick Start
@@ -143,6 +148,11 @@ describe('GuideHubModal', () => {
     modal.open();
     modal.listContainer.children[2].children[1].trigger('click');
     expect(mockTimelineEditor.tourGuide.startInspectorTour).toHaveBeenCalled();
+
+    // Reuse Blocks Interactive Guide
+    modal.open();
+    modal.listContainer.children[3].children[1].trigger('click');
+    expect(mockTimelineEditor.reuseBlocksGuide.start).toHaveBeenCalled();
   });
 
   it('should close when pressing Escape or clicking overlay backdrop', () => {

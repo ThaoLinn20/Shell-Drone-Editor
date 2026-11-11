@@ -19,12 +19,14 @@ export class ShowLibraryModal {
     this.selectFolderBtn = null;
     this.driveBtn = null;
     this.rescanBtn = null;
+    this.openSingleFileBtn = null;
     this.folderPathEl = null;
     this.listContainer = null;
     this.currentFolderPath = this.loadSavedFolderPath();
     this.lastScanResult = null;
 
     this.onKeyDown = this.onKeyDown.bind(this);
+    this.onShowLoaded = this.onShowLoaded.bind(this);
   }
 
   loadSavedFolderPath() {
@@ -114,9 +116,19 @@ export class ShowLibraryModal {
       this.rescanCurrentFolder();
     });
 
+    this.openSingleFileBtn = this.createButton(
+      t('editor.showLibrary.openSingleFileBtn') || 'Open JSON File',
+      'secondary'
+    );
+    this.openSingleFileBtn.className = 'show-library-open-file-btn';
+    this.openSingleFileBtn.addEventListener('click', () => {
+      this.handleOpenSingleFile();
+    });
+
     actionsRow.appendChild(this.driveBtn);
     actionsRow.appendChild(this.selectFolderBtn);
     actionsRow.appendChild(this.rescanBtn);
+    actionsRow.appendChild(this.openSingleFileBtn);
 
     this.folderPathEl = document.createElement('div');
     this.folderPathEl.style.fontSize = '12px';
@@ -142,8 +154,30 @@ export class ShowLibraryModal {
   }
 
   openDriveLink() {
+    if (
+      this.timelineEditor &&
+      typeof this.timelineEditor.openScriptsDrive === 'function'
+    ) {
+      this.timelineEditor.openScriptsDrive();
+      return;
+    }
     fileStorage.openExternal(DOCS_CONFIG.scriptsDriveUrl);
     globalEventBus.emit('onboarding:drive-opened');
+  }
+
+  handleOpenSingleFile() {
+    if (
+      this.timelineEditor &&
+      typeof this.timelineEditor.openSingleScriptFile === 'function'
+    ) {
+      this.timelineEditor.openSingleScriptFile();
+    }
+  }
+
+  onShowLoaded() {
+    if (this.isVisible) {
+      this.close();
+    }
   }
 
   async open() {
@@ -153,6 +187,10 @@ export class ShowLibraryModal {
     window.addEventListener(
       'keydown',
       this.onKeyDown
+    );
+    globalEventBus.on(
+      'timeline:show-loaded',
+      this.onShowLoaded
     );
     this.updateFolderLabel();
 
@@ -174,6 +212,10 @@ export class ShowLibraryModal {
     window.removeEventListener(
       'keydown',
       this.onKeyDown
+    );
+    globalEventBus.off(
+      'timeline:show-loaded',
+      this.onShowLoaded
     );
     globalEventBus.emit('show-library:closed');
   }

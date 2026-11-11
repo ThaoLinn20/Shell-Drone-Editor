@@ -197,6 +197,7 @@ export default {
       driveBtn: "Drive からダウンロード",
       selectFolderBtn: "フォルダを選択",
       rescanBtn: "再スキャン",
+      openSingleFileBtn: "JSONファイルを開く",
       openFolderBtn: "フォルダを開く",
       currentFolderLabel: "現在のフォルダ: {path}",
       noFolderSelected: "フォルダが未選択です",
@@ -223,7 +224,7 @@ export default {
       downloadedContinueBtn: "ダウンロード完了・フォルダ選択へ",
       openDriveAgainBtn: "Drive を再度開く",
       step1Title: "スクリプトをダウンロード",
-      step1Desc: "スクリプト取得ボタンをクリックして Google Drive を開き、サンプルショーをパソコンに保存してください。",
+      step1Desc: "Drive からダウンロードをクリックして Google Drive を開き、サンプルショーをパソコンに保存してください。",
       step1WaitingTitle: "ダウンロード待機中",
       step1WaitingDesc: "ブラウザでスクリプトを保存し、必要なら解凍した後、下のボタンを押してフォルダを選択してください。",
       step2Title: "スクリプトフォルダを選択",
@@ -233,7 +234,7 @@ export default {
       step3Desc: "一覧から好きなショーの読み込むボタンを押すと、花火・ドローン・音楽がタイムラインに配置されます。",
       step4Title: "ショーを再生",
       step4Desc: "準備が整いました。再生ボタンをクリックするか Space キーを押してショーを開始してください。",
-      completedToast: "ショーをお楽しみください。スクリプト庫はツールバーからいつでも開けます。"
+      completedToast: "ショーをお楽しみください。ツールバーのシナリオ読み込みからいつでも開けます。"
     },
     guideHub: {
       title: "ガイド一覧",
@@ -248,7 +249,36 @@ export default {
       timelineTourBadge: "6 ステップ",
       inspectorTourTitle: "プロパティパネル案内",
       inspectorTourDesc: "イベントパラメータ、花火の形状、ダイナミクス、エフェクト構成、パターン設定を確認します。",
-      inspectorTourBadge: "4 ステップ"
+      inspectorTourBadge: "4 ステップ",
+      reuseBlocksTitle: "複数ブロックの書き出しと再利用",
+      reuseBlocksDesc: "複数ブロックを選択して右クリックで書き出し、空白部分の右クリックメニューから再追加します。",
+      reuseBlocksBadge: "3 ステップ"
+    },
+    reuseBlocksTour: {
+      step1Title: "複数ブロックを選択する",
+      step1Desc: "Ctrl キーを押しながら各ブロックをクリックするか、トラックの空き領域をドラッグして範囲選択します。",
+      step1Shortcut: "ヒント: Ctrl + クリック または 空き領域をドラッグ選択",
+      step2Title: "右クリックして書き出す",
+      step2Desc: "選択中のブロック上で右クリックしてメニューを開き、選択したブロックをエクスポートをクリックして JSON ファイルを保存します。",
+      step2Shortcut: "操作: 選択ブロックを右クリック -> 選択したブロックをエクスポート",
+      step3Title: "空き領域の右クリックメニューから再追加",
+      step3Desc: "配置したいタイムライン上の空き領域を右クリックしてアンカーヘッドを移動し、ドローン/シェル追加から保存した JSON ファイルを読み込みます。",
+      step3Shortcut: "操作: 空き領域を右クリック -> ドローン/シェル追加"
+    },
+    reuseBlocksGuide: {
+      stepIndicator: "実践ガイド {current} / {total}",
+      selectionProgress: "選択中: {count} / 2 ブロック以上",
+      step1Title: "複数ブロックを選択",
+      step1Desc: "Ctrl を押しながら 2 つ以上のブロックをクリックするか、空白トラックをドラッグして範囲選択します。",
+      step2Title: "選択ブロックを右クリック",
+      step2Desc: "選択中のブロックを右クリックしてメニューを開き、選択したブロックをエクスポートをクリックします。",
+      step2MenuTitle: "エクスポートをクリック",
+      step2MenuDesc: "メニュー内の選択したブロックをエクスポートをクリックし、JSON ファイルを保存します。",
+      step3Title: "空き領域を右クリック",
+      step3Desc: "空き領域をクリックまたはブロックのない空白トラックを直接右クリックし、ドローン/シェル追加を選択します。",
+      step3MenuTitle: "ドローン/シェル追加をクリック",
+      step3MenuDesc: "ドローン/シェル追加をクリックして先ほど保存した JSON を選ぶと、この位置にブロック群が追加されます。",
+      completedToast: "ブロック群の書き出しと再利用が完了しました。"
     },
     timelineTour: {
       helpBtn: "ガイド",

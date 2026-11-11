@@ -74,6 +74,27 @@ export class GuideHubModal {
             this.timelineEditor.tourGuide.startInspectorTour();
           }
         }
+      },
+      {
+        id: 'reuse_blocks',
+        title: () =>
+          t('editor.guideHub.reuseBlocksTitle') ||
+          'Export and Reuse Block Clusters',
+        desc: () =>
+          t('editor.guideHub.reuseBlocksDesc') ||
+          'Select multiple blocks, export them via Block Context Menu, and add them back via Empty Space Context Menu.',
+        badge: () =>
+          t('editor.guideHub.reuseBlocksBadge') || '3 steps',
+        actionLabel: () =>
+          t('editor.guideHub.startBtn') || 'Start Guide',
+        variant: 'primary',
+        execute: () => {
+          if (this.timelineEditor && this.timelineEditor.reuseBlocksGuide) {
+            this.timelineEditor.reuseBlocksGuide.start();
+          } else if (this.timelineEditor && this.timelineEditor.tourGuide) {
+            this.timelineEditor.tourGuide.startReuseBlocksTour();
+          }
+        }
       }
     ];
   }

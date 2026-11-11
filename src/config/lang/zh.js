@@ -197,6 +197,7 @@ export default {
       driveBtn: "从 Drive 下载剧本",
       selectFolderBtn: "选择文件夹",
       rescanBtn: "重新扫描",
+      openSingleFileBtn: "打开单个 JSON",
       openFolderBtn: "打开文件夹",
       currentFolderLabel: "当前文件夹: {path}",
       noFolderSelected: "尚未选择文件夹",
@@ -223,7 +224,7 @@ export default {
       downloadedContinueBtn: "已下载完成，选择文件夹",
       openDriveAgainBtn: "重新打开 Drive",
       step1Title: "下载演出剧本",
-      step1Desc: "点击下载剧本按钮打开 Google Drive，将示例演出文件下载到电脑。",
+      step1Desc: "点击从 Drive 下载剧本按钮打开 Google Drive，将示例演出文件下载到电脑。",
       step1WaitingTitle: "等待下载完成",
       step1WaitingDesc: "在浏览器中下载并解压剧本文件夹后，点击下方按钮继续选择文件夹。",
       step2Title: "选择剧本文件夹",
@@ -233,7 +234,7 @@ export default {
       step3Desc: "在列表中点击任意剧本的导入按钮，将烟花、无人机和音乐加载到时间轴。",
       step4Title: "开始播放演出",
       step4Desc: "一切准备就绪。点击播放按钮或按空格键 Space 即可开始演出。",
-      completedToast: "请欣赏演出。您随时可以通过工具栏打开剧本库。"
+      completedToast: "请欣赏演出。您随时可以通过工具栏打开导入剧本。"
     },
     guideHub: {
       title: "指南与教程中心",
@@ -248,7 +249,36 @@ export default {
       timelineTourBadge: "6 步",
       inspectorTourTitle: "属性面板指南",
       inspectorTourDesc: "了解事件参数、烟花形状、动力学、叠加特效及发射花样偏移设置。",
-      inspectorTourBadge: "4 步"
+      inspectorTourBadge: "4 步",
+      reuseBlocksTitle: "导出并复用区块组合",
+      reuseBlocksDesc: "多选区块后右键导出为 JSON，再通过空白处右键菜单重新导入到指定时间点。",
+      reuseBlocksBadge: "3 步"
+    },
+    reuseBlocksTour: {
+      step1Title: "同时选择多个区块",
+      step1Desc: "按住 Ctrl 键逐个点击选择，或在空白轨道区按住左键拖拽框选多个区块。",
+      step1Shortcut: "提示: Ctrl + 点击 或 拖拽框选区域",
+      step2Title: "右键导出选中区块",
+      step2Desc: "选中多个区块后，在任意已选区块上点击右键打开区块菜单，选择导出选中区域保存为 JSON 文件。",
+      step2Shortcut: "操作: 右键点击已选区块 -> 导出选中区域",
+      step3Title: "通过空白处右键菜单重新添加",
+      step3Desc: "在轨道区空白位置右键点击使时间锚点跳转至该处并打开空白处菜单，选择添加无人机/烟花 JSON 并导入刚导出的文件。",
+      step3Shortcut: "操作: 右键点击空白轨道区 -> 添加无人机/烟花 JSON"
+    },
+    reuseBlocksGuide: {
+      stepIndicator: "实操引导 {current} / {total}",
+      selectionProgress: "已选择: {count} / 2 个以上区块",
+      step1Title: "同时选择多个区块",
+      step1Desc: "按住 Ctrl 点击至少 2 个区块，或在空白轨道区拖拽鼠标框选多个区块。",
+      step2Title: "右键点击已选区块",
+      step2Desc: "在任意已选区块上点击右键打开菜单，然后选择导出选中区域。",
+      step2MenuTitle: "点击导出选中区域",
+      step2MenuDesc: "点击菜单中的导出选中区域并将 JSON 文件保存到电脑。",
+      step3Title: "右键点击空白区域",
+      step3Desc: "点击空白处或直接在没有区块的轨道空白处右键点击，然后选择添加无人机/烟花 JSON。",
+      step3MenuTitle: "点击添加无人机/烟花 JSON",
+      step3MenuDesc: "点击添加无人机/烟花 JSON 并选择刚才保存的 JSON 文件，即可将区块组合添加到此处。",
+      completedToast: "已成功导出并复用区块组合。"
     },
     timelineTour: {
       helpBtn: "新手引导",

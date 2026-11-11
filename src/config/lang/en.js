@@ -151,6 +151,7 @@ export default {
       addDroneOpt: "Add Drone/Shell JSON",
       addAudioOpt: "Add Audio MP3/WAV",
       importBtn: "Import Sequence",
+      importBtnTooltip: "Open script library from folder, Google Drive, or JSON file",
       newBtn: "New",
       newBtnTooltip: "Create new blank script Ctrl+Alt+N",
       newScriptTitle: "New Script",
@@ -205,6 +206,7 @@ export default {
       driveBtn: "Download Scripts from Drive",
       selectFolderBtn: "Select Folder",
       rescanBtn: "Rescan",
+      openSingleFileBtn: "Open JSON File",
       openFolderBtn: "Open Folder",
       currentFolderLabel: "Current folder: {path}",
       noFolderSelected: "No folder selected yet",
@@ -231,7 +233,7 @@ export default {
       downloadedContinueBtn: "I have downloaded, choose folder",
       openDriveAgainBtn: "Open Drive again",
       step1Title: "Download Show Scripts",
-      step1Desc: "Click Get Scripts to open Google Drive and download sample show files to your computer.",
+      step1Desc: "Click Download Scripts from Drive to open Google Drive and download sample show files to your computer.",
       step1WaitingTitle: "Waiting for Download",
       step1WaitingDesc: "Download the scripts folder from Google Drive in your browser, extract it if zipped, then click Continue below.",
       step2Title: "Select Scripts Folder",
@@ -241,7 +243,7 @@ export default {
       step3Desc: "Click Import on any show in the list to load its fireworks, drones, and music onto the Timeline.",
       step4Title: "Play Your First Show",
       step4Desc: "Everything is loaded. Click the Play button or press Spacebar to start the show.",
-      completedToast: "Enjoy the show. You can open Script Library anytime from the toolbar."
+      completedToast: "Enjoy the show. You can open Import Sequence anytime from the toolbar."
     },
     guideHub: {
       title: "Guides and Tutorials",
@@ -256,7 +258,36 @@ export default {
       timelineTourBadge: "6 steps",
       inspectorTourTitle: "Property Inspector Guide",
       inspectorTourDesc: "Explore event parameters, firework Shapes, Dynamics, Active Effects, and Pattern Offsets.",
-      inspectorTourBadge: "4 steps"
+      inspectorTourBadge: "4 steps",
+      reuseBlocksTitle: "Export and Reuse Block Clusters",
+      reuseBlocksDesc: "Select multiple blocks, export them via Block Context Menu, and add them back via Empty Space Context Menu.",
+      reuseBlocksBadge: "3 steps"
+    },
+    reuseBlocksTour: {
+      step1Title: "Select Multiple Blocks",
+      step1Desc: "Hold Ctrl or Shift and click blocks to multi-select, or click and drag across empty Tracks Area to select a region.",
+      step1Shortcut: "Tip: Hold Ctrl + Click or drag marquee box on empty area",
+      step2Title: "Export via Block Context Menu",
+      step2Desc: "Right-click on any selected block to open the Block Context Menu, then click Export selected blocks to save them as a JSON file.",
+      step2Shortcut: "Action: Right-click selected block -> Export selected blocks",
+      step3Title: "Add Back at Empty Space",
+      step3Desc: "Right-click an empty spot in the Tracks Area to jump Anchor Head there and open the Empty Space Context Menu, then choose Add Drone/Shell JSON.",
+      step3Shortcut: "Action: Right-click empty Tracks Area -> Add Drone/Shell JSON"
+    },
+    reuseBlocksGuide: {
+      stepIndicator: "Practice {current} of {total}",
+      selectionProgress: "Selected: {count} of 2+ blocks",
+      step1Title: "Select Multiple Blocks",
+      step1Desc: "Hold Ctrl and click at least 2 blocks, or click and drag across empty Tracks Area to select a region.",
+      step2Title: "Right-Click Selected Block",
+      step2Desc: "Right-click on any selected block to open the Block Context Menu and click Export selected blocks.",
+      step2MenuTitle: "Click Export Selected Blocks",
+      step2MenuDesc: "Click Export selected blocks in the menu and save the JSON file to your computer.",
+      step3Title: "Right-Click Empty Space",
+      step3Desc: "Click empty space or right-click directly on an empty area of the Tracks Area where there is no block, then choose Add Drone/Shell JSON.",
+      step3MenuTitle: "Click Add Drone/Shell JSON",
+      step3MenuDesc: "Click Add Drone/Shell JSON and choose the JSON file you just exported to add the blocks here.",
+      completedToast: "Exported and reused blocks successfully."
     },
     timelineTour: {
       helpBtn: "Guide",

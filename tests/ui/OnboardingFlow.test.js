@@ -283,4 +283,27 @@ describe('ShowLibraryModal and TimelineEditor show loading', () => {
     createSpy.mockRestore();
     revokeSpy.mockRestore();
   });
+
+  it('should trigger openSingleScriptFile from ShowLibraryModal openSingleFileBtn and close on load', () => {
+    const mockDirector = {
+      elapsedTime: 0,
+      isPlaying: false,
+      loadScript: vi.fn(),
+      seek: vi.fn(),
+      pause: vi.fn(),
+      play: vi.fn()
+    };
+    const editor = new TimelineEditor(mockDirector, null);
+    const singleSpy = vi.spyOn(editor, 'openSingleScriptFile').mockResolvedValue(true);
+
+    editor.showLibraryModal.open();
+    expect(editor.showLibraryModal.isVisible).toBe(true);
+    expect(editor.showLibraryModal.openSingleFileBtn).toBeDefined();
+
+    editor.showLibraryModal.openSingleFileBtn.click();
+    expect(singleSpy).toHaveBeenCalled();
+
+    globalEventBus.emit('timeline:show-loaded', { filename: 'single.json' });
+    expect(editor.showLibraryModal.isVisible).toBe(false);
+  });
 });

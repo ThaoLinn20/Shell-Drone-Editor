@@ -1,4 +1,5 @@
 import { t } from '../config/lang/i18n.js';
+import { globalEventBus } from '../core/EventBus.js';
 
 export class TimelineContextMenu {
   constructor(timelineEditor) {
@@ -22,7 +23,7 @@ export class TimelineContextMenu {
     this.menuElement.className = 'timeline-context-menu';
     this.menuElement.style.position = 'fixed';
     this.menuElement.style.display = 'none';
-    this.menuElement.style.zIndex = '2000';
+    this.menuElement.style.zIndex = '100018';
     this.menuElement.style.background = 'rgba(25, 30, 38, 0.96)';
     this.menuElement.style.border = '1px solid #4a5568';
     this.menuElement.style.borderRadius = '6px';
@@ -58,6 +59,14 @@ export class TimelineContextMenu {
   }
 
   onDocumentClick(e) {
+    if (
+      e &&
+      e.target &&
+      typeof e.target.closest === 'function' &&
+      e.target.closest('.interactive-spotlight-tooltip')
+    ) {
+      return;
+    }
     if (
       this.isVisible &&
       this.menuElement &&
@@ -295,6 +304,12 @@ export class TimelineContextMenu {
 
         const item = document.createElement('div');
         item.className = 'timeline-context-menu-item';
+        if (action.id) {
+          if (!item.dataset) {
+            item.dataset = {};
+          }
+          item.dataset.actionId = action.id;
+        }
         item.style.display = 'flex';
         item.style.alignItems = 'center';
         item.style.justifyContent = 'space-between';
@@ -373,6 +388,14 @@ export class TimelineContextMenu {
 
     this.menuElement.style.left = `${posX}px`;
     this.menuElement.style.top = `${posY}px`;
+
+    globalEventBus.emit(
+      'timeline:context-menu-shown',
+      {
+        targetType: (context && context.targetType) || 'block',
+        menuElement: this.menuElement
+      }
+    );
   }
 
   hide() {
@@ -380,6 +403,7 @@ export class TimelineContextMenu {
     this.menuElement.style.display = 'none';
     this.isVisible = false;
     this.currentContext = null;
+    globalEventBus.emit('timeline:context-menu-hidden');
   }
 
   destroy() {

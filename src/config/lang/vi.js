@@ -151,6 +151,7 @@ export default {
       addDroneOpt: "Thêm Drone/Shell JSON",
       addAudioOpt: "Thêm Audio MP3/WAV",
       importBtn: "Nhập kịch bản",
+      importBtnTooltip: "Mở kho kịch bản từ thư mục, Google Drive hoặc tệp JSON",
       newBtn: "Tạo mới",
       newBtnTooltip: "Tạo kịch bản mới rỗng Ctrl+Alt+N",
       newScriptTitle: "Tạo kịch bản mới",
@@ -205,6 +206,7 @@ export default {
       driveBtn: "Tải kịch bản từ Drive",
       selectFolderBtn: "Chọn thư mục",
       rescanBtn: "Quét lại",
+      openSingleFileBtn: "Mở file JSON lẻ",
       openFolderBtn: "Mở thư mục",
       currentFolderLabel: "Thư mục hiện tại: {path}",
       noFolderSelected: "Chưa chọn thư mục kịch bản",
@@ -231,7 +233,7 @@ export default {
       downloadedContinueBtn: "Tôi đã tải xong, chọn thư mục",
       openDriveAgainBtn: "Mở lại link Drive",
       step1Title: "Tải kịch bản mẫu",
-      step1Desc: "Nhấn nút Tải kịch bản để mở liên kết Google Drive và tải các kịch bản trình diễn về máy tính.",
+      step1Desc: "Nhấn nút Tải kịch bản từ Drive để mở liên kết Google Drive và tải các kịch bản trình diễn về máy tính.",
       step1WaitingTitle: "Đang chờ bạn tải kịch bản",
       step1WaitingDesc: "Sau khi tải thư mục kịch bản từ Google Drive về máy và giải nén nếu cần, hãy nhấn nút bên dưới để chọn thư mục.",
       step2Title: "Chọn thư mục chứa kịch bản",
@@ -241,7 +243,7 @@ export default {
       step3Desc: "Chọn một kịch bản trong danh sách và nhấn Import để đưa pháo hoa, drone cùng âm nhạc lên Timeline.",
       step4Title: "Chạy trình diễn",
       step4Desc: "Kịch bản đã sẵn sàng. Hãy nhấn nút Play hoặc bấm phím Space để bắt đầu xem trình diễn.",
-      completedToast: "Chúc bạn xem trình diễn vui vẻ. Bạn có thể mở lại Kho kịch bản bất cứ lúc nào trên thanh công cụ."
+      completedToast: "Chúc bạn xem trình diễn vui vẻ. Bạn có thể mở lại Nhập kịch bản bất cứ lúc nào trên thanh công cụ."
     },
     guideHub: {
       title: "Trung tâm Hướng dẫn",
@@ -256,7 +258,36 @@ export default {
       timelineTourBadge: "6 bước",
       inspectorTourTitle: "Hướng dẫn Property Inspector",
       inspectorTourDesc: "Khám phá thông số sự kiện, Shape, Dynamics, Active Effects và Pattern Offsets.",
-      inspectorTourBadge: "4 bước"
+      inspectorTourBadge: "4 bước",
+      reuseBlocksTitle: "Export và Tái sử dụng Cụm Block",
+      reuseBlocksDesc: "Chọn nhiều block, chuột phải để export ra tệp riêng và thêm lại tại vị trí bất kỳ bằng menu chuột phải vùng trống.",
+      reuseBlocksBadge: "3 bước"
+    },
+    reuseBlocksTour: {
+      step1Title: "Chọn nhiều Block cùng lúc",
+      step1Desc: "Giữ phím Ctrl rồi nhấp chuột vào từng block để chọn thêm, hoặc nhấn giữ chuột và kéo quét vùng trên khoảng trống Tracks Area để khoanh chọn nhiều block.",
+      step1Shortcut: "Mẹo: Giữ Ctrl + Nhấp chọn hoặc kéo chuột khoanh vùng",
+      step2Title: "Chuột phải và Export cụm Block",
+      step2Desc: "Sau khi chọn xong, nhấn chuột phải vào một block đang được chọn để mở Block Context Menu rồi chọn Export các block được chọn.",
+      step2Shortcut: "Thao tác: Chuột phải vào block đang chọn -> Export các block được chọn",
+      step3Title: "Thêm lại bằng Menu chuột phải vùng trống",
+      step3Desc: "Nhấn chuột phải vào vị trí trống trên Tracks Area nơi bạn muốn đặt lại cụm block để Anchor Head nhảy tới đó, rồi chọn Thêm Drone/Shell JSON và chọn tệp vừa xuất.",
+      step3Shortcut: "Thao tác: Chuột phải vào vùng trống -> Thêm Drone/Shell JSON"
+    },
+    reuseBlocksGuide: {
+      stepIndicator: "Thực hành {current} / {total}",
+      selectionProgress: "Đã chọn: {count} / 2 block trở lên",
+      step1Title: "Chọn nhiều Block cùng lúc",
+      step1Desc: "Giữ Ctrl và nhấp chọn ít nhất 2 block, hoặc kéo chuột trên vùng trống Tracks Area để quét chọn vùng.",
+      step2Title: "Chuột phải vào Block đang chọn",
+      step2Desc: "Nhấn chuột phải lên một block đang được chọn để mở menu rồi chọn Export các block được chọn.",
+      step2MenuTitle: "Nhấn Export các block được chọn",
+      step2MenuDesc: "Nhấn vào mục Export các block được chọn và lưu tệp JSON về máy tính.",
+      step3Title: "Chuột phải vào vùng trống",
+      step3Desc: "Nhấp chuột vào khoảng trống hoặc chuột phải trực tiếp lên vị trí trống không có block trên Tracks Area, rồi chọn Thêm Drone/Shell JSON.",
+      step3MenuTitle: "Nhấn Thêm Drone/Shell JSON",
+      step3MenuDesc: "Nhấn Thêm Drone/Shell JSON và chọn tệp JSON bạn vừa lưu để chèn lại cụm block vào vị trí này.",
+      completedToast: "Export và tái sử dụng cụm block thành công."
     },
     timelineTour: {
       helpBtn: "Hướng dẫn",

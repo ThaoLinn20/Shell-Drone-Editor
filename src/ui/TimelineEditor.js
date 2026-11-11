@@ -15,6 +15,7 @@ import { TimelineContextMenu } from './TimelineContextMenu.js';
 import { ShowLibraryModal } from './ShowLibraryModal.js';
 import { OnboardingFlow } from './OnboardingFlow.js';
 import { GuideHubModal } from './GuideHubModal.js';
+import { ReuseBlocksGuideFlow } from './ReuseBlocksGuideFlow.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 
 
@@ -59,6 +60,7 @@ export class TimelineEditor {
     this.contextMenu = new TimelineContextMenu(this);
     this.showLibraryModal = new ShowLibraryModal(this);
     this.onboardingFlow = new OnboardingFlow(this);
+    this.reuseBlocksGuide = new ReuseBlocksGuideFlow(this);
     this.guideHubModal = new GuideHubModal(this);
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
@@ -196,21 +198,6 @@ export class TimelineEditor {
     addBtn.title = t('editor.timelinePanel.addSequenceTooltip') ||
       'Add sequence event at Anchor Head time';
     addBtn.addEventListener('click', () => this.addSequence(this.anchorTime));
-
-    const importBtn = document.createElement('button');
-    importBtn.textContent = t('editor.timelinePanel.importBtn');
-    importBtn.title = t('editor.timelinePanel.importBtnTooltip') ||
-      'Import show script from JSON file';
-
-    importBtn.style.background = '#1976d2';
-    importBtn.style.color = 'white';
-    importBtn.addEventListener('click', () => {
-      if (fileStorage.isElectron) {
-        this.openNativeFile();
-      } else {
-        this.fileInput.click();
-      }
-    });
 
     const exportBtn = document.createElement('button');
     exportBtn.textContent = t('editor.timelinePanel.exportBtn') || 'Export';
@@ -365,26 +352,13 @@ export class TimelineEditor {
     );
     this.helpBtn = helpBtn;
 
-    const downloadScriptsBtn = document.createElement('button');
-    downloadScriptsBtn.textContent =
-      t('editor.timelinePanel.downloadScriptsBtn') || 'Get Scripts';
-    downloadScriptsBtn.title =
-      t('editor.timelinePanel.downloadScriptsTooltip') ||
-      'Open Google Drive to download show scripts';
-    downloadScriptsBtn.style.background = '#0f766e';
-    downloadScriptsBtn.style.color = 'white';
-    downloadScriptsBtn.addEventListener('click', () => {
-      this.openScriptsDrive();
-    });
-    this.downloadScriptsBtn = downloadScriptsBtn;
-
     const libraryBtn = document.createElement('button');
     libraryBtn.textContent =
-      t('editor.timelinePanel.libraryBtn') || 'Script Library';
+      t('editor.timelinePanel.importBtn') || 'Import Sequence';
     libraryBtn.title =
-      t('editor.timelinePanel.libraryBtnTooltip') ||
-      'Load and browse show scripts from a folder';
-    libraryBtn.style.background = '#00838f';
+      t('editor.timelinePanel.importBtnTooltip') ||
+      'Open script library from folder, Google Drive, or JSON file';
+    libraryBtn.style.background = '#1976d2';
     libraryBtn.style.color = 'white';
     libraryBtn.addEventListener('click', () => {
       this.openShowLibrary();
@@ -397,9 +371,7 @@ export class TimelineEditor {
     dataActionsGroup.style.gap = '10px';
     dataActionsGroup.appendChild(newBtn);
     dataActionsGroup.appendChild(addBtn);
-    dataActionsGroup.appendChild(importBtn);
     dataActionsGroup.appendChild(libraryBtn);
-    dataActionsGroup.appendChild(downloadScriptsBtn);
     dataActionsGroup.appendChild(exportBtn);
     dataActionsGroup.appendChild(addFileDropdownContainer);
     this.dataActionsGroup = dataActionsGroup;
@@ -1212,6 +1184,16 @@ export class TimelineEditor {
     globalEventBus.emit('onboarding:drive-opened');
   }
 
+  openSingleScriptFile() {
+    if (fileStorage.isElectron) {
+      return this.openNativeFile();
+    }
+    if (this.fileInput) {
+      this.fileInput.click();
+    }
+    return Promise.resolve(false);
+  }
+
   openShowLibrary() {
     if (this.showLibraryModal) {
       this.showLibraryModal.open();
@@ -1222,6 +1204,16 @@ export class TimelineEditor {
     if (this.guideHubModal) {
       this.guideHubModal.open();
     }
+  }
+
+  emitSelectionChanged() {
+    globalEventBus.emit(
+      'timeline:selection-changed',
+      {
+        selectedCount: this.selectedEvents ? this.selectedEvents.length : 0,
+        selectedEvents: this.selectedEvents ? [...this.selectedEvents] : []
+      }
+    );
   }
 
   updateInspectorPosition() {
@@ -1425,6 +1417,14 @@ export class TimelineEditor {
     const currentTime = this.showDirector.elapsedTime;
     this.showDirector.loadScript(this.getFlattenedSequences());
     this.showDirector.seek(currentTime);
+    globalEventBus.emit(
+      'timeline:json-imported',
+      {
+        importedCount: 1,
+        type: 'droneshow',
+        fileName
+      }
+    );
   }
 
   appendSequenceArray(time, data, fileName) {
@@ -1457,6 +1457,14 @@ export class TimelineEditor {
     this.showDirector.loadScript(this.getFlattenedSequences());
     this.showDirector.seek(currentTime);
     alert(`Đã chèn nối tiếp kịch bản "${fileName}" thành công tại ${time.toFixed(1)}s!`);
+    globalEventBus.emit(
+      'timeline:json-imported',
+      {
+        importedCount: newEvents.length,
+        type: 'sequence',
+        fileName
+      }
+    );
   }
 
   assignTracks() {
@@ -1745,6 +1753,7 @@ export class TimelineEditor {
                 this.selectedEvents = [seq];
                 this.inspector.show(seq);
                 this.renderTracks();
+                this.emitSelectionChanged();
               }
             );
 
@@ -1788,6 +1797,7 @@ export class TimelineEditor {
             this.inspector.show(seq, this.selectedEvents);
           }
           this.renderTracks();
+          this.emitSelectionChanged();
           return;
         }
 
@@ -1795,6 +1805,7 @@ export class TimelineEditor {
         // If it IS already selected, keep selection (so we can drag them together).
         if (!this.selectedEvents.includes(seq)) {
           this.selectedEvents = [seq];
+          this.emitSelectionChanged();
         }
         this.inspector.show(seq);
 
@@ -2068,11 +2079,13 @@ export class TimelineEditor {
           this.inspector.hide();
         }
         this.renderTracks();
+        this.emitSelectionChanged();
       } else if (!this.marqueeIsAdditive && !this.ctrlClickedSeq) {
         // Simple click on empty space without moving: deselect all
         this.selectedEvents = [];
         this.inspector.hide();
         this.renderTracks();
+        this.emitSelectionChanged();
       }
       this.ctrlClickedSeq = null;
     }
@@ -2548,6 +2561,14 @@ export class TimelineEditor {
           alert(t('editor.timelinePanel.exportSuccess', {
             filename: res.filename
           }));
+          globalEventBus.emit(
+            'timeline:blocks-exported',
+            {
+              exportedCount: cleanSeqs.length,
+              onlySelected,
+              filename: res.filename
+            }
+          );
         }
       } catch (err) {
         alert(t('editor.timelinePanel.exportError', {
@@ -2574,6 +2595,14 @@ export class TimelineEditor {
       alert(t('editor.timelinePanel.exportSuccess', {
         filename: defaultExportName
       }));
+      globalEventBus.emit(
+        'timeline:blocks-exported',
+        {
+          exportedCount: cleanSeqs.length,
+          onlySelected,
+          filename: defaultExportName
+        }
+      );
     } catch (err) {
       alert(t('editor.timelinePanel.exportError', {
         error: err.message
