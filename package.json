@@ -1,7 +1,7 @@
 {
-  "name": "shell-drone-animation",
+  "name": "fdshowstudio",
   "version": "3.4.1",
-  "description": "Firework & Drone Show Studio",
+  "description": "FDShowStudio - 3D Firework & Drone Show Studio",
   "author": "ThaoLinn20",
   "private": true,
   "type": "module",
@@ -19,12 +19,12 @@
   },
   "build": {
     "appId": "com.droneshell.editor",
-    "productName": "Firework & Drone Show Studio",
+    "productName": "FDShowStudio",
     "copyright": "Copyright © 2026 ThaoLinn20",
     "publish": [
       {
         "provider": "github",
-        "owner": "ThAolInh20",
+        "owner": "ThaoLinn20",
         "repo": "Shell-Drone-Editor",
         "releaseType": "release"
       }
@@ -60,7 +60,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Firework & Drone Show Studio",
+      "shortcutName": "FDShowStudio",
       "displayLanguageSelector": true,
       "license": "LICENSE"
     }

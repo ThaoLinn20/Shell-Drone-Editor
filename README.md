@@ -1,8 +1,8 @@
-# Firework & Drone Show Studio
+# FDShowStudio
 
 **Languages:** [English](README.md) | [Tiếng Việt](docs/readme/README_vi.md) | [日本語](docs/readme/README_ja.md) | [中文](docs/readme/README_zh.md)
 
-Firework & Drone Show Studio is a 3D firework & drone animation simulation and editing application built with **Three.js** and **Vite**, utilizing **Electron** to build professional Desktop software.
+FDShowStudio is a 3D firework & drone animation simulation and editing application built with **Three.js** and **Vite**, utilizing **Electron** to build professional Desktop software.
 
 ---
 
@@ -11,8 +11,8 @@ Firework & Drone Show Studio is a 3D firework & drone animation simulation and e
 ### Method 1: Using Git (Recommended)
 If you have [Git](https://git-scm.com/) installed (you can download Git [here](https://git-scm.com/downloads)), open your Terminal (or Command Prompt/PowerShell) and run the following commands:
 ```bash
-git clone https://github.com/ThAolInh20/Shell-Drone-Editor.git
-cd shell-drone-animation
+git clone https://github.com/ThaoLinn20/Shell-Drone-Editor.git
+cd Shell-Drone-Editor
 ```
 
 ### Method 2: Download ZIP File directly
@@ -27,7 +27,7 @@ cd shell-drone-animation
 The project requires **[Node.js](https://nodejs.org/)** version 18 or higher (you can download Node.js [here](https://nodejs.org/en/download)). Please ensure Node.js is installed before proceeding.
 
 ### Step 1: Install Dependencies
-Open the terminal at the project's root folder (`shell-drone-animation`) and execute:
+Open the terminal at the project's root folder (`Shell-Drone-Editor`) and execute:
 ```bash
 npm install
 ```

@@ -64,10 +64,10 @@ Determine the exact download URLs for `.exe` (Windows Installer) and `.zip` (Por
 1. **User-Provided Link**: If the user provided a download URL or draft release hash in their message, use that exact base path and file names.
 2. **Inspect `dist-electron` & `dist-electron/latest.yml`**: Read `dist-electron/latest.yml` and list `dist-electron/` to verify the exact artifact filenames produced by `electron-builder`. Note that when `electron-builder` or GitHub Releases uploads filenames containing spaces, spaces are converted to dashes or dots depending on upload method (`electron-builder --publish always` preserves its generated upload naming, typically replacing spaces with dashes `-`, while manual browser upload replaces spaces with dots `.`). Match the exact asset names used by the release workflow.
 3. **Standard Canonical Release URL Structure**:
-   - Base URL: `https://github.com/ThAolInh20/Shell-Drone-Editor/releases/download/[New Version Tag]/`
-   - Windows Installer (.exe): `[Firework-Drone-Show-Studio-Setup-<version>.exe](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/download/[New Version Tag]/<exact-exe-filename>)`
-   - Portable Archive (.zip): `[Firework-Drone-Show-Studio-<version>-win.zip](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/download/[New Version Tag]/<exact-zip-filename>)`
-   - All Release Assets: `[GitHub Releases [New Version Tag]](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/tag/[New Version Tag])`
+   - Base URL: `https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/[New Version Tag]/`
+   - Windows Installer (.exe): `[fdshowstudio-setup-<version>.exe](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/[New Version Tag]/<exact-exe-filename>)`
+   - Portable Archive (.zip): `[fdshowstudio-<version>-win.zip](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/[New Version Tag]/<exact-zip-filename>)`
+   - All Release Assets: `[GitHub Releases [New Version Tag]](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/tag/[New Version Tag])`
 
 ## 7. Format the Canonical Release Notes (RELEASE_NOTES.md)
 Structure the output using Markdown IN ENGLISH. Use exactly this structure:
@@ -76,9 +76,9 @@ Structure the output using Markdown IN ENGLISH. Use exactly this structure:
 # Release Notes - [New Version Tag]
 
 ## Downloads
-- Windows Installer (.exe): [<exact-exe-filename>](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/download/[New Version Tag]/<exact-exe-filename>)
-- Portable Archive (.zip): [<exact-zip-filename>](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/download/[New Version Tag]/<exact-zip-filename>)
-- All Release Assets: [GitHub Releases [New Version Tag]](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/tag/[New Version Tag])
+- Windows Installer (.exe): [<exact-exe-filename>](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/[New Version Tag]/<exact-exe-filename>)
+- Portable Archive (.zip): [<exact-zip-filename>](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/[New Version Tag]/<exact-zip-filename>)
+- All Release Assets: [GitHub Releases [New Version Tag]](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/tag/[New Version Tag])
 
 ## Features
 - [Short description of the new feature in English]
@@ -109,9 +109,9 @@ It must strictly follow these rules:
 Template:
 
 ```markdown
-# Cập nhật phiên bản mới: Firework & Drone Show Studio [New Version Tag]
+# Cập nhật phiên bản mới: FDShowStudio [New Version Tag]
 
-Chào cả nhà, bản cập nhật [New Version Tag] của Firework & Drone Show Studio đã chính thức ra mắt với nhiều tính năng mới hấp dẫn cùng các cải tiến tối ưu giúp trải nghiệm tạo show mượt mà và trực quan hơn!
+Chào cả nhà, bản cập nhật [New Version Tag] của FDShowStudio đã chính thức ra mắt với nhiều tính năng mới hấp dẫn cùng các cải tiến tối ưu giúp trải nghiệm tạo show mượt mà và trực quan hơn!
 
 Các điểm mới nổi bật:
 - [Tính năng 1: Mô tả ngắn gọn, lợi ích nổi bật]
@@ -126,9 +126,9 @@ Mọi người tải về trải nghiệm và để lại góp ý nhé!
 
 ---
 
-# New Release Announcement: Firework & Drone Show Studio [New Version Tag]
+# New Release Announcement: FDShowStudio [New Version Tag]
 
-Hello creators! The latest update [New Version Tag] of Firework & Drone Show Studio is officially available, bringing exciting new capabilities and optimizations for designing spectacular light shows!
+Hello creators! The latest update [New Version Tag] of FDShowStudio is officially available, bringing exciting new capabilities and optimizations for designing spectacular light shows!
 
 Key Highlights:
 - [Feature 1: Clear benefit and user value]

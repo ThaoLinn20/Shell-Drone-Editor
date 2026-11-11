@@ -1,8 +1,8 @@
-# Firework & Drone Show Studio (Mô phỏng Trình diễn Drone và Pháo hoa 3D)
+# FDShowStudio - Mô phỏng Trình diễn Drone và Pháo hoa 3D
 
 **Languages:** [English](README_en.md) | [Tiếng Việt](README_vi.md) | [日本語](README_ja.md) | [中文](README_zh.md)
 
-Firework & Drone Show Studio là ứng dụng mô phỏng và biên tập trình diễn pháo hoa & drone 3D, được xây dựng bằng **Three.js** và **Vite**, sử dụng **Electron** để build phần mềm Desktop chuyên nghiệp.
+FDShowStudio là ứng dụng mô phỏng và biên tập trình diễn pháo hoa & drone 3D, được xây dựng bằng **Three.js** và **Vite**, sử dụng **Electron** để build phần mềm Desktop chuyên nghiệp.
 
 ---
 
@@ -11,8 +11,8 @@ Firework & Drone Show Studio là ứng dụng mô phỏng và biên tập trình
 ### Cách 1: Sử dụng Git (Khuyên dùng)
 Nếu máy bạn đã cài đặt [Git](https://git-scm.com/) (bạn có thể tải Git [tại đây](https://git-scm.com/downloads)), hãy mở Terminal (hoặc Command Prompt/PowerShell) và chạy lệnh sau:
 ```bash
-git clone https://github.com/ThAolInh20/Shell-Drone-Editor.git
-cd shell-drone-animation
+git clone https://github.com/ThaoLinn20/Shell-Drone-Editor.git
+cd Shell-Drone-Editor
 ```
 
 ### Cách 2: Tải file ZIP trực tiếp
@@ -27,7 +27,7 @@ cd shell-drone-animation
 Dự án yêu cầu **[Node.js](https://nodejs.org/)** phiên bản 18 trở lên (bạn có thể tải Node.js [tại đây](https://nodejs.org/en/download)). Hãy đảm bảo bạn đã cài đặt Node.js trước khi tiếp tục.
 
 ### Bước 1: Cài đặt các Thư viện Phụ thuộc (Dependencies)
-Mở terminal tại thư mục gốc của dự án (`shell-drone-animation`) và thực hiện lệnh:
+Mở terminal tại thư mục gốc của dự án (`Shell-Drone-Editor`) và thực hiện lệnh:
 ```bash
 npm install
 ```
