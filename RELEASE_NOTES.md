@@ -1,22 +1,19 @@
-# Release Notes - v3.3.1
+# Release Notes - v3.4.1
 
 ## Downloads
-- Windows Installer (.exe): [Firework.Drone.Show.Studio.Setup.3.3.1.exe](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/download/v3.3.1/Firework.Drone.Show.Studio.Setup.3.3.1.exe)
-- Portable Archive (.zip / .rar): [Firework.Drone.Show.Studio-3.3.1-win.zip](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/download/v3.3.1/Firework.Drone.Show.Studio-3.3.1-win.zip)
-- All Release Assets: [GitHub Releases v3.3.1](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/tag/v3.3.1)
+- Windows Installer (.exe): [shell-drone-animation-setup-3.4.1.exe](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/download/v3.4.1/shell-drone-animation-setup-3.4.1.exe)
+- Portable Archive (.zip): [shell-drone-animation-3.4.1-win.zip](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/download/v3.4.1/shell-drone-animation-3.4.1-win.zip)
+- All Release Assets: [GitHub Releases v3.4.1](https://github.com/ThAolInh20/Shell-Drone-Editor/releases/tag/v3.4.1)
 
 ## Features
-- Added Terminal Flare active effect allowing firework stars to surge into brilliant actinic white light right before burnout.
-- Added dedicated Property Inspector controls for Terminal Flare trigger timing, duration, luminous intensity, and optical expansion.
-- Added Cascade Wave sequence modifier enabling directional wave sweeps with multi-angle and parallel ring propagation.
-- Expanded Cascade Wave duration range up to 6.0 seconds for dramatic long-duration cascading fireworks.
-- Integrated the visual Active Effects Timeline across all nested stages and second-burst child shells.
-- Registered Dark Phase and Sync Strobe timed modifiers with visual color coding in the Active Effects Timeline.
-- Enabled inline numeric typing on all Property Inspector slider value badges with soft limit bounds.
+- Added automatic background update checking and downloading for the Windows desktop installer so users stay on the latest version effortlessly.
+- Added a non-intrusive top update notification bar showing download progress and release highlights without interrupting show editing.
+- Added an unsaved work protection prompt before restarting to install an update across the Timeline Editor, Drone Editor, and Static Formation Designer.
+- Added a Check for Updates option and current version indicator in the Help menu.
 
 ## Updates
-- Decoupled pyrotechnic simulation modules into thin re-export proxies connected to the standalone firework engine.
-- Expanded four-language localizations across English, Vietnamese, Japanese, and Chinese for all new effects and controls.
+- Added four-language localizations across English, Vietnamese, Chinese, and Japanese for all update notifications and prompts.
+- Optimized update progress display so downloading updates runs smoothly without interrupting 3D previews.
 
 ## Chores
-- Updated architecture rules, parameter schemas, and release management tooling.
+- Added automated Windows build and release publishing workflow along with unit tests for the update system.
