@@ -265,6 +265,9 @@ export default {
       createScriptTitle: "Tạo mới, Chỉnh sửa, Lưu và Xuất kịch bản",
       createScriptDesc: "Dùng nút Tạo mới, thêm sự kiện từ thanh công cụ và menu chuột phải vùng trống, nhấn Space chạy thử, Ctrl+S lưu và Xuất file mới.",
       createScriptBadge: "7 bước",
+      welcomeGuideTitle: "Bắt đầu với Trung tâm Hướng dẫn",
+      welcomeGuideDesc: "Mở nút Hướng dẫn trên thanh công cụ, chọn một hướng dẫn phù hợp nhu cầu và làm theo từng bước thực hành.",
+      welcomeGuideBadge: "2 bước",
       searchPlaceholder: "Tìm kiếm hướng dẫn theo tên, nội dung hoặc tag...",
       clearSearchLabel: "Xóa tìm kiếm",
       tagAll: "Tất cả",
@@ -322,6 +325,14 @@ export default {
       step6Title: "Xuất kịch bản với Xuất file mới",
       step6Desc: "Nhấn nút Xuất file mới trên thanh công cụ để xuất toàn bộ kịch bản ra tệp JSON chia sẻ được.",
       completedToast: "Hoàn tất tạo mới, lưu và xuất kịch bản thành công."
+    },
+    welcomeGuide: {
+      stepIndicator: "Tổng quan {current} / {total}",
+      step1Title: "Mở Trung tâm Hướng dẫn",
+      step1Desc: "Chào mừng bạn đến với FDShowStudio. Hãy nhấn nút Hướng dẫn trên thanh công cụ để khám phá các bài hướng dẫn từng bước.",
+      step2Title: "Chọn một Hướng dẫn và thực hành",
+      step2Desc: "Chọn một hướng dẫn phù hợp với mục tiêu của bạn rồi nhấn Bắt đầu để làm theo từng thao tác trực tiếp.",
+      step2Hint: "Mẹo: Dùng ô tìm kiếm hoặc bộ lọc tag phía trên để chọn nhanh"
     },
     timelineTour: {
       helpBtn: "Hướng dẫn",

@@ -256,6 +256,9 @@ export default {
       createScriptTitle: "新建、添加、保存与导出剧本",
       createScriptDesc: "使用新建按钮清空时间轴，通过工具栏和右键菜单添加动作，按 Space 试播，Ctrl+S 保存并另存导出。",
       createScriptBadge: "7 步",
+      welcomeGuideTitle: "从指南中心开始使用",
+      welcomeGuideDesc: "打开工具栏上的新手引导按钮，选择适合您目标的教程并按步骤交互操作。",
+      welcomeGuideBadge: "2 步",
       searchPlaceholder: "按名称、内容或标签搜索指南...",
       clearSearchLabel: "清除搜索",
       tagAll: "全部",
@@ -313,6 +316,14 @@ export default {
       step6Title: "点击另存为导出全部剧本",
       step6Desc: "点击工具栏上的另存为按钮，将完整剧本导出为可分享的 JSON 文件。",
       completedToast: "已完成新建、保存与导出剧本实操。"
+    },
+    welcomeGuide: {
+      stepIndicator: "概览引导 {current} / {total}",
+      step1Title: "打开指南中心",
+      step1Desc: "欢迎使用 FDShowStudio。请点击工具栏上的引导按钮，浏览分步互动教程。",
+      step2Title: "选择一个指南并按步骤操作",
+      step2Desc: "挑选符合您需求的教程卡片并点击开始，随后按屏幕提示一步步体验操作。",
+      step2Hint: "提示: 可使用上方的搜索框或标签快速筛选"
     },
     timelineTour: {
       helpBtn: "新手引导",

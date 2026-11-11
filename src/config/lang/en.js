@@ -265,6 +265,9 @@ export default {
       createScriptTitle: "Create, Save, and Export a Script",
       createScriptDesc: "Create a blank script with New, add sequences from toolbar and right-click menu, preview with Space, save with Ctrl+S, and export.",
       createScriptBadge: "7 steps",
+      welcomeGuideTitle: "First Steps with Guide Hub",
+      welcomeGuideDesc: "Open the Guide Hub from the toolbar, choose a walkthrough that matches your goal, and follow each step.",
+      welcomeGuideBadge: "2 steps",
       searchPlaceholder: "Search guides by name, topic, or tag...",
       clearSearchLabel: "Clear search",
       tagAll: "All",
@@ -322,6 +325,14 @@ export default {
       step6Title: "Export Full Script",
       step6Desc: "Click Export As to export your complete show script as a shareable JSON file.",
       completedToast: "Created, saved, and exported your script successfully."
+    },
+    welcomeGuide: {
+      stepIndicator: "Overview {current} of {total}",
+      step1Title: "Open the Guide Hub",
+      step1Desc: "Welcome to FDShowStudio. Click the Guide button on the toolbar to explore step-by-step interactive tutorials.",
+      step2Title: "Pick a Guide and Follow Steps",
+      step2Desc: "Choose any walkthrough that matches your goal and click Start Guide to learn hands-on inside the editor.",
+      step2Hint: "Tip: Use search or tag filters above to find a tutorial"
     },
     timelineTour: {
       helpBtn: "Guide",

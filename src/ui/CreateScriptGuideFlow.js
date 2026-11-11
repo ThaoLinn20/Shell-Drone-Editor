@@ -38,6 +38,12 @@ export class CreateScriptGuideFlow {
     ) {
       this.timelineEditor.reuseBlocksGuide.stateMachine.dismiss();
     }
+    if (
+      this.timelineEditor.welcomeGuide &&
+      this.timelineEditor.welcomeGuide.stateMachine?.isActive
+    ) {
+      this.timelineEditor.welcomeGuide.stateMachine.dismiss();
+    }
 
     this.spotlight.initDOM();
     this.stateMachine.start();

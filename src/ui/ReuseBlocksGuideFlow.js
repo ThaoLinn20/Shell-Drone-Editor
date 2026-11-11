@@ -54,6 +54,18 @@ export class ReuseBlocksGuideFlow {
     ) {
       this.timelineEditor.onboardingFlow.stateMachine.dismiss();
     }
+    if (
+      this.timelineEditor.welcomeGuide &&
+      this.timelineEditor.welcomeGuide.stateMachine?.isActive
+    ) {
+      this.timelineEditor.welcomeGuide.stateMachine.dismiss();
+    }
+    if (
+      this.timelineEditor.createScriptGuide &&
+      this.timelineEditor.createScriptGuide.stateMachine?.isActive
+    ) {
+      this.timelineEditor.createScriptGuide.stateMachine.dismiss();
+    }
 
     this.ensureSampleBlocks();
     this.timelineEditor.selectedEvents = [];

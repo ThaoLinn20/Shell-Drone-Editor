@@ -58,6 +58,12 @@ export class OnboardingFlow {
   }
 
   restart() {
+    if (
+      this.timelineEditor?.welcomeGuide &&
+      this.timelineEditor.welcomeGuide.stateMachine?.isActive
+    ) {
+      this.timelineEditor.welcomeGuide.stateMachine.dismiss();
+    }
     this.spotlight.initDOM();
     this.bindWindowListeners();
     this.stateMachine.restart();

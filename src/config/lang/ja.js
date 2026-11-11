@@ -256,6 +256,9 @@ export default {
       createScriptTitle: "新規作成・追加・保存・書き出し",
       createScriptDesc: "新規作成からツールバーや右クリックメニューでイベントを追加し、Space で再生確認、Ctrl+S で保存、別名保存で書き出します。",
       createScriptBadge: "7 ステップ",
+      welcomeGuideTitle: "ガイドハブから始める基本案内",
+      welcomeGuideDesc: "ツールバーのガイドボタンを開き、目的に合ったチュートリアルを選んで手順に沿って操作します。",
+      welcomeGuideBadge: "2 ステップ",
       searchPlaceholder: "名前・内容・タグでガイドを検索...",
       clearSearchLabel: "検索をクリア",
       tagAll: "すべて",
@@ -313,6 +316,14 @@ export default {
       step6Title: "別名で保存から全体書き出し",
       step6Desc: "ツールバーの別名で保存ボタンをクリックして、スクリプト全体を JSON ファイルとして書き出します。",
       completedToast: "スクリプトの新規作成・保存・書き出しが完了しました。"
+    },
+    welcomeGuide: {
+      stepIndicator: "概要 {current} / {total}",
+      step1Title: "ガイドハブを開く",
+      step1Desc: "FDShowStudio へようこそ。ツールバーのガイドボタンをクリックして対話形式のチュートリアルを開きましょう。",
+      step2Title: "ガイドを選んで手順を開始",
+      step2Desc: "やりたい操作に合うガイドを選んで開始ボタンをクリックし、案内に沿って操作を体験できます。",
+      step2Hint: "ヒント: 上部の検索やタグ絞り込みで素早く見つけられます"
     },
     timelineTour: {
       helpBtn: "ガイド",

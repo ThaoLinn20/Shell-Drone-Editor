@@ -17,6 +17,7 @@ import { OnboardingFlow } from './OnboardingFlow.js';
 import { GuideHubModal } from './GuideHubModal.js';
 import { ReuseBlocksGuideFlow } from './ReuseBlocksGuideFlow.js';
 import { CreateScriptGuideFlow } from './CreateScriptGuideFlow.js';
+import { WelcomeGuideFlow } from './WelcomeGuideFlow.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 
 
@@ -63,6 +64,7 @@ export class TimelineEditor {
     this.onboardingFlow = new OnboardingFlow(this);
     this.reuseBlocksGuide = new ReuseBlocksGuideFlow(this);
     this.createScriptGuide = new CreateScriptGuideFlow(this);
+    this.welcomeGuide = new WelcomeGuideFlow(this);
     this.guideHubModal = new GuideHubModal(this);
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
@@ -76,8 +78,8 @@ export class TimelineEditor {
         this.hotkeyManager.setActiveContext('timeline');
       }
       globalEventBus.emit('timeline:toggle', true);
-      if (this.onboardingFlow) {
-        this.onboardingFlow.startIfFirstTime();
+      if (this.welcomeGuide) {
+        this.welcomeGuide.startIfFirstTime();
       }
     }
 

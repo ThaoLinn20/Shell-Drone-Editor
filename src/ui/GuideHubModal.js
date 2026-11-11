@@ -1,4 +1,5 @@
 import { t } from '../config/lang/i18n.js';
+import { globalEventBus } from '../core/EventBus.js';
 import {
   createModalButton,
   createModalShell
@@ -139,6 +140,26 @@ export class GuideHubModal {
         execute: () => {
           if (this.timelineEditor && this.timelineEditor.createScriptGuide) {
             this.timelineEditor.createScriptGuide.start();
+          }
+        }
+      },
+      {
+        id: 'welcome_guide',
+        title: () =>
+          t('editor.guideHub.welcomeGuideTitle') ||
+          'First Steps with Guide Hub',
+        desc: () =>
+          t('editor.guideHub.welcomeGuideDesc') ||
+          'Open the Guide Hub from the toolbar, choose a walkthrough that matches your goal, and follow each step.',
+        badge: () =>
+          t('editor.guideHub.welcomeGuideBadge') || '2 steps',
+        tags: ['intro'],
+        actionLabel: () =>
+          t('editor.guideHub.startBtn') || 'Start Guide',
+        variant: 'primary',
+        execute: () => {
+          if (this.timelineEditor && this.timelineEditor.welcomeGuide) {
+            this.timelineEditor.welcomeGuide.start();
           }
         }
       },
@@ -571,6 +592,12 @@ export class GuideHubModal {
     actionBtn.className = 'guide-hub-action-btn';
     actionBtn.style.flexShrink = '0';
     actionBtn.addEventListener('click', () => {
+      globalEventBus.emit(
+        'guidehub:guide-executed',
+        {
+          guideId: guide.id
+        }
+      );
       this.close();
       if (typeof guide.execute === 'function') {
         guide.execute();
@@ -596,6 +623,7 @@ export class GuideHubModal {
       'keydown',
       this.onKeyDown
     );
+    globalEventBus.emit('guidehub:opened');
   }
 
   close() {
@@ -610,6 +638,7 @@ export class GuideHubModal {
       'keydown',
       this.onKeyDown
     );
+    globalEventBus.emit('guidehub:closed');
   }
 
   onKeyDown(e) {
