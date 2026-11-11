@@ -510,6 +510,232 @@ ipcMain.handle('open-external', async (event, url) => {
   }
 });
 
+function inspectShowItems(items) {
+  let maxEnd = 0;
+  let hasAudio = false;
+  const walk = (list, baseOffset = 0) => {
+    list.forEach((item) => {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+      const start = baseOffset + (Number(item.time) || Number(item.timeOffset) || 0);
+      const dur = Number(item.duration) || 0;
+      if (start + dur > maxEnd) {
+        maxEnd = start + dur;
+      }
+      if (item.type === 'audio') {
+        hasAudio = true;
+      }
+      if (item.type === 'group' && Array.isArray(item.children)) {
+        walk(
+          item.children,
+          start
+        );
+      }
+    });
+  };
+  walk(items);
+  return {
+    duration: maxEnd,
+    hasAudio
+  };
+}
+
+function scanDirectoryForScripts(rootDir, maxDepth = 2) {
+  const scripts = [];
+  const archiveFiles = [];
+  const archiveExts = new Set(['.zip', '.rar', '.7z']);
+
+  const walkDir = (dirPath, depth) => {
+    if (depth > maxDepth) {
+      return;
+    }
+    let entries;
+    try {
+      entries = fs.readdirSync(
+        dirPath,
+        {
+          withFileTypes: true
+        }
+      );
+    } catch (err) {
+      return;
+    }
+
+    for (const entry of entries) {
+      const fullPath = path.join(
+        dirPath,
+        entry.name
+      );
+      if (entry.isDirectory()) {
+        if (!entry.name.startsWith('.')) {
+          walkDir(
+            fullPath,
+            depth + 1
+          );
+        }
+        continue;
+      }
+      if (!entry.isFile()) {
+        continue;
+      }
+
+      const ext = path.extname(entry.name).toLowerCase();
+      const relativePath = path.relative(
+        rootDir,
+        fullPath
+      ).replace(/\\/g, '/');
+
+      if (archiveExts.has(ext)) {
+        archiveFiles.push({
+          filename: entry.name,
+          filePath: fullPath,
+          relativePath
+        });
+        continue;
+      }
+
+      if (ext !== '.json') {
+        continue;
+      }
+
+      try {
+        const content = fs.readFileSync(
+          fullPath,
+          'utf8'
+        );
+        const parsed = JSON.parse(content);
+        if (!Array.isArray(parsed)) {
+          continue;
+        }
+        const meta = inspectShowItems(parsed);
+        const companions = meta.hasAudio
+          ? findCompanionAudios(
+            fullPath,
+            content
+          )
+          : null;
+        const folderRel = path.dirname(relativePath);
+        scripts.push({
+          filename: entry.name,
+          filePath: fullPath,
+          relativePath,
+          folderName: folderRel === '.' ? '' : folderRel,
+          eventCount: parsed.length,
+          duration: meta.duration,
+          hasAudio: meta.hasAudio,
+          companionAudioReady: Boolean(companions)
+        });
+      } catch (err) {
+        // Ignore non-show or malformed JSON files in user folder
+      }
+    }
+  };
+
+  walkDir(
+    rootDir,
+    0
+  );
+  scripts.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
+  return {
+    scripts,
+    archiveFiles
+  };
+}
+
+ipcMain.handle('select-scripts-folder', async () => {
+  try {
+    const result = await dialog.showOpenDialog(
+      mainWindow,
+      {
+        properties: ['openDirectory']
+      }
+    );
+    if (!result.canceled && result.filePaths.length > 0) {
+      return result.filePaths[0];
+    }
+    return null;
+  } catch (err) {
+    console.error('Error selecting scripts folder:', err);
+    throw err;
+  }
+});
+
+ipcMain.handle('scan-scripts-folder', async (_event, folderPath) => {
+  try {
+    if (!folderPath || typeof folderPath !== 'string') {
+      return {
+        folderPath: '',
+        exists: false,
+        scripts: [],
+        archiveFiles: []
+      };
+    }
+    const exists = fs.existsSync(folderPath) &&
+      fs.statSync(folderPath).isDirectory();
+    if (!exists) {
+      return {
+        folderPath,
+        exists: false,
+        scripts: [],
+        archiveFiles: []
+      };
+    }
+    const {
+      scripts,
+      archiveFiles
+    } = scanDirectoryForScripts(folderPath);
+    return {
+      folderPath,
+      exists: true,
+      scripts,
+      archiveFiles
+    };
+  } catch (err) {
+    console.error('Error scanning scripts folder:', err);
+    throw err;
+  }
+});
+
+ipcMain.handle('read-script-file', async (_event, filePath) => {
+  try {
+    if (!filePath || !fs.existsSync(filePath)) {
+      return null;
+    }
+    const content = fs.readFileSync(
+      filePath,
+      'utf8'
+    );
+    const filename = path.basename(filePath);
+    const companionAudios = findCompanionAudios(
+      filePath,
+      content
+    );
+    return {
+      filePath,
+      content,
+      filename,
+      companionAudios
+    };
+  } catch (err) {
+    console.error('Error reading script file:', err);
+    throw err;
+  }
+});
+
+ipcMain.handle('open-folder-in-explorer', async (_event, folderPath) => {
+  try {
+    if (folderPath && fs.existsSync(folderPath)) {
+      await shell.openPath(folderPath);
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('Error opening folder in explorer:', err);
+    return false;
+  }
+});
+
 
 app.whenReady().then(() => {
   updaterController = setupAutoUpdater({

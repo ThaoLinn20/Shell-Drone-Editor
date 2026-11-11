@@ -42,9 +42,63 @@ export class TimelineTourGuide {
   }
 
   getSteps() {
-    return this.currentTourType === 'inspector'
-      ? this.getInspectorSteps()
-      : this.getTimelineSteps();
+    const stepMap = {
+      inspector: () => this.getInspectorSteps(),
+      reuse_blocks: () => this.getReuseBlocksSteps(),
+      timeline: () => this.getTimelineSteps()
+    };
+    return (stepMap[this.currentTourType] || stepMap.timeline)();
+  }
+
+  getFirstEventBlockTarget() {
+    const tracksArea = this.timelineEditor.tracksArea;
+    if (!tracksArea) {
+      return this.timelineEditor.inspectorContainer || this.timelineEditor.trackContainer;
+    }
+    const eventBlock =
+      (typeof tracksArea.querySelector === 'function' &&
+        (tracksArea.querySelector('.timeline-event-block:not(.timeline-block-audio)') ||
+          tracksArea.querySelector('.timeline-event-block:not([data-event-type="audio"])') ||
+          tracksArea.querySelector('.timeline-event-block'))) ||
+      tracksArea.firstElementChild;
+    return eventBlock || tracksArea;
+  }
+
+  getReuseBlocksSteps() {
+    return [
+      {
+        id: 'multiSelect',
+        title: t('editor.reuseBlocksTour.step1Title') ||
+          'Select Multiple Blocks',
+        desc: t('editor.reuseBlocksTour.step1Desc') ||
+          'Hold Ctrl or Shift and click blocks to multi-select, or click and drag across empty Tracks Area to select a region.',
+        shortcut: t('editor.reuseBlocksTour.step1Shortcut') ||
+          'Tip: Hold Ctrl + Click or drag marquee box on empty area',
+        getTarget: () =>
+          this.timelineEditor.trackContainer || this.timelineEditor.tracksArea
+      },
+      {
+        id: 'exportSelected',
+        title: t('editor.reuseBlocksTour.step2Title') ||
+          'Export via Block Context Menu',
+        desc: t('editor.reuseBlocksTour.step2Desc') ||
+          'Right-click on any selected block to open the Block Context Menu, then click Export selected blocks to save them as a JSON file.',
+        shortcut: t('editor.reuseBlocksTour.step2Shortcut') ||
+          'Action: Right-click selected block -> Export selected blocks',
+        getTarget: () => this.getFirstEventBlockTarget()
+      },
+      {
+        id: 'reimportEmptySpace',
+        title: t('editor.reuseBlocksTour.step3Title') ||
+          'Add Back at Empty Space',
+        desc: t('editor.reuseBlocksTour.step3Desc') ||
+          'Right-click an empty spot in the Tracks Area to jump Anchor Head there and open the Empty Space Context Menu, then choose Add Drone/Shell JSON.',
+        shortcut: t('editor.reuseBlocksTour.step3Shortcut') ||
+          'Action: Right-click empty Tracks Area -> Add Drone/Shell JSON',
+        getTarget: () =>
+          this.timelineEditor.trackContainer || this.timelineEditor.tracksArea
+      }
+    ];
   }
 
   getInspectorSteps() {
@@ -207,19 +261,7 @@ export class TimelineTourGuide {
         desc: t('editor.timelineTour.step6Desc') ||
           'Nhấp chuột vào khối sự kiện trên track để chọn và mở bảng thuộc tính Inspector bên phải, nơi bạn có thể tinh chỉnh màu sắc, preset và cao độ.',
         shortcut: t('editor.timelineTour.step6Shortcut') || 'Thao tác: Nhấp chọn khối để xem thuộc tính chi tiết',
-        getTarget: () => {
-          const tracksArea = this.timelineEditor.tracksArea;
-          if (!tracksArea) {
-            return this.timelineEditor.inspectorContainer;
-          }
-          const eventBlock =
-            (typeof tracksArea.querySelector === 'function' &&
-              (tracksArea.querySelector('.timeline-event-block:not(.timeline-block-audio)') ||
-                tracksArea.querySelector('.timeline-event-block:not([data-event-type="audio"])') ||
-                tracksArea.querySelector('.timeline-event-block'))) ||
-            tracksArea.firstElementChild;
-          return eventBlock || tracksArea;
-        }
+        getTarget: () => this.getFirstEventBlockTarget()
       }
     ];
   }
@@ -429,6 +471,10 @@ export class TimelineTourGuide {
 
   startInspectorTour() {
     this.startTour('inspector');
+  }
+
+  startReuseBlocksTour() {
+    this.startTour('reuse_blocks');
   }
 
   initDOM() {
@@ -708,9 +754,13 @@ export class TimelineTourGuide {
 
   finishTour(status = 'completed') {
     this.isActive = false;
-    const storageKey = this.currentTourType === 'inspector'
-      ? 'inspector_tour_status'
-      : 'timeline_tour_status';
+    const storageKeyMap = {
+      inspector: 'inspector_tour_status',
+      reuse_blocks: 'reuse_blocks_tour_status',
+      timeline: 'timeline_tour_status'
+    };
+    const storageKey =
+      storageKeyMap[this.currentTourType] || 'timeline_tour_status';
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(storageKey, status);
     }

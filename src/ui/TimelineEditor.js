@@ -12,6 +12,13 @@ import { showToast } from '../utils/Toast.js';
 import { WaveformGenerator } from '../utils/WaveformGenerator.js';
 import { TimelineTourGuide } from './TimelineTourGuide.js';
 import { TimelineContextMenu } from './TimelineContextMenu.js';
+import { ShowLibraryModal } from './ShowLibraryModal.js';
+import { OnboardingFlow } from './OnboardingFlow.js';
+import { GuideHubModal } from './GuideHubModal.js';
+import { ReuseBlocksGuideFlow } from './ReuseBlocksGuideFlow.js';
+import { CreateScriptGuideFlow } from './CreateScriptGuideFlow.js';
+import { WelcomeGuideFlow } from './WelcomeGuideFlow.js';
+import { DOCS_CONFIG } from '../config/docs.js';
 
 
 export class TimelineEditor {
@@ -50,8 +57,15 @@ export class TimelineEditor {
     this.marqueeBox = null;
     this.autoSaveEnabled = localStorage.getItem('settings_auto_save_enabled') !== 'false';
     this.autoSaveTimer = null;
+    this.activeAudioBlobUrls = [];
 
     this.contextMenu = new TimelineContextMenu(this);
+    this.showLibraryModal = new ShowLibraryModal(this);
+    this.onboardingFlow = new OnboardingFlow(this);
+    this.reuseBlocksGuide = new ReuseBlocksGuideFlow(this);
+    this.createScriptGuide = new CreateScriptGuideFlow(this);
+    this.welcomeGuide = new WelcomeGuideFlow(this);
+    this.guideHubModal = new GuideHubModal(this);
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
     this.renderTracks();
@@ -64,8 +78,8 @@ export class TimelineEditor {
         this.hotkeyManager.setActiveContext('timeline');
       }
       globalEventBus.emit('timeline:toggle', true);
-      if (this.tourGuide) {
-        this.tourGuide.promptFirstTimeTour();
+      if (this.welcomeGuide) {
+        this.welcomeGuide.startIfFirstTime();
       }
     }
 
@@ -156,6 +170,7 @@ export class TimelineEditor {
     playBtn.title = t('editor.timelinePanel.playBtnTooltip') ||
       'Play or pause script Space';
     playBtn.addEventListener('click', () => this.togglePlay());
+    this.playBtn = playBtn;
 
     this.followBtn = document.createElement('button');
     this.followBtn.textContent = t('editor.timelinePanel.followOn');
@@ -181,27 +196,14 @@ export class TimelineEditor {
         this.createNewScript();
       }
     );
+    this.newBtn = newBtn;
 
     const addBtn = document.createElement('button');
     addBtn.textContent = t('editor.timelinePanel.addSequence');
     addBtn.title = t('editor.timelinePanel.addSequenceTooltip') ||
       'Add sequence event at Anchor Head time';
     addBtn.addEventListener('click', () => this.addSequence(this.anchorTime));
-
-    const importBtn = document.createElement('button');
-    importBtn.textContent = t('editor.timelinePanel.importBtn');
-    importBtn.title = t('editor.timelinePanel.importBtnTooltip') ||
-      'Import show script from JSON file';
-
-    importBtn.style.background = '#1976d2';
-    importBtn.style.color = 'white';
-    importBtn.addEventListener('click', () => {
-      if (fileStorage.isElectron) {
-        this.openNativeFile();
-      } else {
-        this.fileInput.click();
-      }
-    });
+    this.addBtn = addBtn;
 
     const exportBtn = document.createElement('button');
     exportBtn.textContent = t('editor.timelinePanel.exportBtn') || 'Export';
@@ -215,6 +217,7 @@ export class TimelineEditor {
         this.exportSequence(false);
       }
     );
+    this.exportBtn = exportBtn;
 
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
@@ -276,8 +279,7 @@ export class TimelineEditor {
     addDroneOpt.addEventListener('click', (e) => {
       e.stopPropagation();
       dropdownMenu.style.display = 'none';
-      this.mediaFileInput.accept = '.json';
-      this.mediaFileInput.click();
+      this.triggerJsonImport();
     });
 
     const addAudioOpt = document.createElement('div');
@@ -352,9 +354,23 @@ export class TimelineEditor {
     helpBtn.addEventListener(
       'click',
       () => {
-        this.tourGuide.startTour();
+        this.openGuideHub();
       }
     );
+    this.helpBtn = helpBtn;
+
+    const libraryBtn = document.createElement('button');
+    libraryBtn.textContent =
+      t('editor.timelinePanel.importBtn') || 'Import Sequence';
+    libraryBtn.title =
+      t('editor.timelinePanel.importBtnTooltip') ||
+      'Open script library from folder, Google Drive, or JSON file';
+    libraryBtn.style.background = '#1976d2';
+    libraryBtn.style.color = 'white';
+    libraryBtn.addEventListener('click', () => {
+      this.openShowLibrary();
+    });
+    this.libraryBtn = libraryBtn;
 
     const dataActionsGroup = document.createElement('div');
     dataActionsGroup.style.display = 'inline-flex';
@@ -362,7 +378,7 @@ export class TimelineEditor {
     dataActionsGroup.style.gap = '10px';
     dataActionsGroup.appendChild(newBtn);
     dataActionsGroup.appendChild(addBtn);
-    dataActionsGroup.appendChild(importBtn);
+    dataActionsGroup.appendChild(libraryBtn);
     dataActionsGroup.appendChild(exportBtn);
     dataActionsGroup.appendChild(addFileDropdownContainer);
     this.dataActionsGroup = dataActionsGroup;
@@ -434,10 +450,17 @@ export class TimelineEditor {
     this.ruler.style.cursor = 'text'; // Indicate it's clickable
     this.ruler.addEventListener('mousedown', (e) => {
       const rect = this.ruler.getBoundingClientRect();
-      const time = Math.max(0, (e.clientX - rect.left) / this.pixelsPerSecond);
-      this.anchorTime = time;
-      this.anchorHead.style.left = (time * this.pixelsPerSecond) + 'px';
-      this.seek(time);
+      const time = Math.max(
+        0,
+        (e.clientX - rect.left) / this.pixelsPerSecond
+      );
+      this.setAnchorTime(
+        time,
+        true
+      );
+    });
+    this.ruler.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
     });
     this.trackContainer.appendChild(this.ruler);
 
@@ -478,6 +501,33 @@ export class TimelineEditor {
         const time = (e.clientX - rect.left) / this.pixelsPerSecond;
         this.addSequence(time);
       }
+    });
+
+    // Right-click on empty space to jump Anchor Head + Playhead and open menu
+    this.tracksArea.addEventListener('contextmenu', (e) => {
+      if (e.target !== this.tracksArea) {
+        return;
+      }
+      e.preventDefault();
+      const rect = this.tracksArea.getBoundingClientRect();
+      const time = Math.max(
+        0,
+        (e.clientX - rect.left) / this.pixelsPerSecond
+      );
+      this.setAnchorTime(
+        time,
+        true
+      );
+      this.contextMenu.show(
+        e.clientX,
+        e.clientY,
+        {
+          targetType: 'empty_space',
+          targetEvent: null,
+          selectedEvents: this.selectedEvents,
+          timelineEditor: this
+        }
+      );
     });
 
     // Drag & Drop for MP3 files
@@ -766,9 +816,7 @@ export class TimelineEditor {
         'timeline',
         'f1',
         () => {
-          if (this.tourGuide) {
-            this.tourGuide.startTour();
-          }
+          this.openGuideHub();
         }
       );
     }
@@ -1132,10 +1180,47 @@ export class TimelineEditor {
         this.visible ? 'timeline' : 'global'
       );
     }
-    if (this.visible && this.tourGuide) {
-      this.tourGuide.promptFirstTimeTour();
+    if (this.visible && this.onboardingFlow) {
+      this.onboardingFlow.startIfFirstTime();
     }
     globalEventBus.emit('timeline:toggle', this.visible);
+  }
+
+  openScriptsDrive() {
+    fileStorage.openExternal(DOCS_CONFIG.scriptsDriveUrl);
+    globalEventBus.emit('onboarding:drive-opened');
+  }
+
+  openSingleScriptFile() {
+    if (fileStorage.isElectron) {
+      return this.openNativeFile();
+    }
+    if (this.fileInput) {
+      this.fileInput.click();
+    }
+    return Promise.resolve(false);
+  }
+
+  openShowLibrary() {
+    if (this.showLibraryModal) {
+      this.showLibraryModal.open();
+    }
+  }
+
+  openGuideHub() {
+    if (this.guideHubModal) {
+      this.guideHubModal.open();
+    }
+  }
+
+  emitSelectionChanged() {
+    globalEventBus.emit(
+      'timeline:selection-changed',
+      {
+        selectedCount: this.selectedEvents ? this.selectedEvents.length : 0,
+        selectedEvents: this.selectedEvents ? [...this.selectedEvents] : []
+      }
+    );
   }
 
   updateInspectorPosition() {
@@ -1157,6 +1242,7 @@ export class TimelineEditor {
     } else {
       this.seek(this.anchorTime);
       this.showDirector.play();
+      globalEventBus.emit('timeline:playback-started');
     }
   }
 
@@ -1187,6 +1273,28 @@ export class TimelineEditor {
     return result;
   }
 
+  setAnchorTime(time, shouldSeek = true) {
+    const clampedTime = Math.max(
+      0,
+      time
+    );
+    this.anchorTime = clampedTime;
+    if (this.anchorHead) {
+      this.anchorHead.style.left =
+        (clampedTime * this.pixelsPerSecond) + 'px';
+    }
+    if (shouldSeek) {
+      this.seek(clampedTime);
+    }
+  }
+
+  triggerJsonImport() {
+    if (this.mediaFileInput) {
+      this.mediaFileInput.accept = '.json';
+      this.mediaFileInput.click();
+    }
+  }
+
   seek(time) {
     this.autoScrollEnabled = true;
     if (this.followBtn) {
@@ -1200,7 +1308,7 @@ export class TimelineEditor {
     this.playhead.style.left = (time * this.pixelsPerSecond) + 'px';
   }
 
-  addSequence(time = this.anchorTime) {
+  addSequence(time = this.anchorTime, source = 'toolbar') {
     this.saveHistoryState();
     const newSeq = {
       time: Math.round(time * 10) / 10,
@@ -1218,6 +1326,13 @@ export class TimelineEditor {
     // Auto-scroll track container to show the new event
     const scrollPos = time * this.pixelsPerSecond;
     this.trackContainer.scrollLeft = Math.max(0, scrollPos - 100);
+    globalEventBus.emit(
+      'timeline:sequence-added',
+      {
+        source,
+        time: newSeq.time
+      }
+    );
   }
 
   addAudioSequence(time, file) {
@@ -1316,6 +1431,14 @@ export class TimelineEditor {
     const currentTime = this.showDirector.elapsedTime;
     this.showDirector.loadScript(this.getFlattenedSequences());
     this.showDirector.seek(currentTime);
+    globalEventBus.emit(
+      'timeline:json-imported',
+      {
+        importedCount: 1,
+        type: 'droneshow',
+        fileName
+      }
+    );
   }
 
   appendSequenceArray(time, data, fileName) {
@@ -1348,6 +1471,14 @@ export class TimelineEditor {
     this.showDirector.loadScript(this.getFlattenedSequences());
     this.showDirector.seek(currentTime);
     alert(`Đã chèn nối tiếp kịch bản "${fileName}" thành công tại ${time.toFixed(1)}s!`);
+    globalEventBus.emit(
+      'timeline:json-imported',
+      {
+        importedCount: newEvents.length,
+        type: 'sequence',
+        fileName
+      }
+    );
   }
 
   assignTracks() {
@@ -1636,6 +1767,7 @@ export class TimelineEditor {
                 this.selectedEvents = [seq];
                 this.inspector.show(seq);
                 this.renderTracks();
+                this.emitSelectionChanged();
               }
             );
 
@@ -1679,6 +1811,7 @@ export class TimelineEditor {
             this.inspector.show(seq, this.selectedEvents);
           }
           this.renderTracks();
+          this.emitSelectionChanged();
           return;
         }
 
@@ -1686,6 +1819,7 @@ export class TimelineEditor {
         // If it IS already selected, keep selection (so we can drag them together).
         if (!this.selectedEvents.includes(seq)) {
           this.selectedEvents = [seq];
+          this.emitSelectionChanged();
         }
         this.inspector.show(seq);
 
@@ -1745,6 +1879,7 @@ export class TimelineEditor {
               e.clientX,
               e.clientY,
               {
+                targetType: 'block',
                 targetEvent: seq,
                 selectedEvents: this.selectedEvents,
                 timelineEditor: this
@@ -1958,11 +2093,13 @@ export class TimelineEditor {
           this.inspector.hide();
         }
         this.renderTracks();
+        this.emitSelectionChanged();
       } else if (!this.marqueeIsAdditive && !this.ctrlClickedSeq) {
         // Simple click on empty space without moving: deselect all
         this.selectedEvents = [];
         this.inspector.hide();
         this.renderTracks();
+        this.emitSelectionChanged();
       }
       this.ctrlClickedSeq = null;
     }
@@ -1998,96 +2135,154 @@ export class TimelineEditor {
     requestAnimationFrame(this.updateLoop);
   }
 
+  revokeAudioBlobUrls() {
+    if (
+      Array.isArray(this.activeAudioBlobUrls) &&
+      typeof URL !== 'undefined' &&
+      typeof URL.revokeObjectURL === 'function'
+    ) {
+      this.activeAudioBlobUrls.forEach((url) => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          // Ignore revoke errors
+        }
+      });
+    }
+    this.activeAudioBlobUrls = [];
+  }
+
+  loadShowFromFileData(fileData, options = {}) {
+    if (!fileData) {
+      return false;
+    }
+
+    const {
+      filePath = null,
+      content,
+      filename,
+      companionAudios = null
+    } = fileData;
+
+    const data = typeof content === 'string'
+      ? JSON.parse(content)
+      : content;
+    if (!Array.isArray(data)) {
+      throw new Error(
+        t('editor.filePanel.alertInvalidJson') ||
+        'Invalid show script JSON format'
+      );
+    }
+
+    if (
+      !options.skipConfirm &&
+      this.sequences.length > 0 &&
+      typeof confirm === 'function' &&
+      !confirm(t('editor.timelinePanel.importConfirm'))
+    ) {
+      return false;
+    }
+
+    this.revokeAudioBlobUrls();
+
+    if (companionAudios) {
+      const blobUrlCache = {};
+      const attachAudio = (list) => {
+        list.forEach((item) => {
+          if (item.type === 'audio') {
+            const audioName = (item.url || item.name || '').split(/[\\/]/).pop();
+            const match = companionAudios[audioName] ||
+              companionAudios[item.url] ||
+              companionAudios[item.name];
+            if (match && match.buffer) {
+              const cacheKey = audioName || item.url || item.name;
+              if (!blobUrlCache[cacheKey]) {
+                const blob = new Blob(
+                  [match.buffer],
+                  {
+                    type: match.mimeType || 'audio/mpeg'
+                  }
+                );
+                const objectUrl = URL.createObjectURL(blob);
+                blobUrlCache[cacheKey] = objectUrl;
+                this.activeAudioBlobUrls.push(objectUrl);
+              }
+              item._blobUrl = blobUrlCache[cacheKey];
+            }
+          }
+          if (
+            item.type === 'group' &&
+            Array.isArray(item.children)
+          ) {
+            attachAudio(item.children);
+          }
+        });
+      };
+      attachAudio(data);
+    }
+
+    const resetTime = Boolean(options.resetPlaybackPosition);
+    const savedScrollLeft = resetTime
+      ? 0
+      : (this.trackContainer ? this.trackContainer.scrollLeft : 0);
+    const savedAnchorTime = resetTime ? 0 : (this.anchorTime || 0);
+    const savedTime = resetTime
+      ? 0
+      : (this.showDirector ? this.showDirector.elapsedTime : 0);
+
+    this.sequences = data;
+    this.filename = filename;
+    if (filePath !== undefined) {
+      this.currentFilePath = filePath;
+    }
+    this.selectedEvents = [];
+    if (this.inspector) {
+      this.inspector.hide();
+    }
+    this.updateFileIndicator();
+    this.setSaveStatus('saved');
+    this.renderTracks();
+    this.showDirector.loadScript(this.getFlattenedSequences());
+    if (this.showDirector) {
+      this.showDirector.seek(savedTime);
+    }
+    if (this.trackContainer) {
+      this.trackContainer.scrollLeft = savedScrollLeft;
+    }
+    this.anchorTime = savedAnchorTime;
+    if (this.anchorHead) {
+      this.anchorHead.style.left = (savedAnchorTime * this.pixelsPerSecond) + 'px';
+    }
+    if (this.playhead && resetTime) {
+      this.playhead.style.left = '0px';
+    }
+
+    globalEventBus.emit(
+      'timeline:show-loaded',
+      {
+        filename,
+        filePath
+      }
+    );
+
+    if (!options.silentSuccess) {
+      alert(t('editor.timelinePanel.importSuccess', { filename }));
+    }
+
+    return true;
+  }
+
   async openNativeFile() {
     try {
       const fileData = await fileStorage.openFileDialog();
       if (fileData) {
-        const {
-          filePath,
-          content,
-          filename,
-          companionAudios
-        } = fileData;
-        const data = JSON.parse(content);
-        if (!Array.isArray(data)) {
-          throw new Error(t('editor.filePanel.alertInvalidJson'));
-        }
-
-        if (
-          this.sequences.length > 0 &&
-          !confirm(t('editor.timelinePanel.importConfirm'))
-        ) {
-          return;
-        }
-
-        if (companionAudios) {
-          const blobUrlCache = {};
-          const attachAudio = (list) => {
-            list.forEach((item) => {
-              if (item.type === 'audio') {
-                const audioName = (item.url || item.name || '').split(/[\\/]/).pop();
-                const match = companionAudios[audioName] ||
-                  companionAudios[item.url] ||
-                  companionAudios[item.name];
-                if (match && match.buffer) {
-                  const cacheKey = audioName || item.url || item.name;
-                  if (!blobUrlCache[cacheKey]) {
-                    const blob = new Blob(
-                      [match.buffer],
-                      {
-                        type: match.mimeType || 'audio/mpeg'
-                      }
-                    );
-                    blobUrlCache[cacheKey] = URL.createObjectURL(blob);
-                  }
-                  item._blobUrl = blobUrlCache[cacheKey];
-                }
-              }
-              if (
-                item.type === 'group' &&
-                Array.isArray(item.children)
-              ) {
-                attachAudio(item.children);
-              }
-            });
-          };
-          attachAudio(data);
-        }
-
-        const savedScrollLeft = this.trackContainer
-          ? this.trackContainer.scrollLeft
-          : 0;
-        const savedAnchorTime = this.anchorTime || 0;
-        const savedTime = this.showDirector
-          ? this.showDirector.elapsedTime
-          : 0;
-
-        this.sequences = data;
-        this.filename = filename;
-        this.currentFilePath = filePath;
-        this.selectedEvents = [];
-        if (this.inspector) {
-          this.inspector.hide();
-        }
-        this.updateFileIndicator();
-        this.setSaveStatus('saved');
-        this.renderTracks();
-        this.showDirector.loadScript(this.getFlattenedSequences());
-        if (this.showDirector) {
-          this.showDirector.seek(savedTime);
-        }
-        if (this.trackContainer) {
-          this.trackContainer.scrollLeft = savedScrollLeft;
-        }
-        this.anchorTime = savedAnchorTime;
-        if (this.anchorHead) {
-          this.anchorHead.style.left = (savedAnchorTime * this.pixelsPerSecond) + 'px';
-        }
-        alert(t('editor.timelinePanel.importSuccess', { filename }));
+        this.loadShowFromFileData(fileData);
       }
-
     } catch (err) {
-      alert("Lỗi khi đọc file qua Electron: " + err.message);
+      alert(
+        (t('editor.timelinePanel.readJsonError', { error: err.message })) ||
+        ('Error reading file: ' + err.message)
+      );
     }
   }
 
@@ -2114,13 +2309,16 @@ export class TimelineEditor {
 
   async createNewScript() {
     if (this.sequences && this.sequences.length > 0) {
-      const confirmed = await customConfirm(
+      const confirmPromise = customConfirm(
         t('editor.timelinePanel.newScriptConfirm') ||
           'Tạo kịch bản mới sẽ làm mới timeline. Mọi block và audio chưa lưu sẽ bị xóa. Bạn có chắc chắn muốn tiếp tục?',
         t('editor.timelinePanel.newScriptTitle') ||
           'Tạo kịch bản mới'
       );
+      globalEventBus.emit('timeline:new-script-confirm-opened');
+      const confirmed = await confirmPromise;
       if (!confirmed) {
+        globalEventBus.emit('timeline:new-script-confirm-cancelled');
         return;
       }
     }
@@ -2166,6 +2364,7 @@ export class TimelineEditor {
       t('editor.timelinePanel.newScriptCreated') ||
         'Đã tạo kịch bản mới rỗng'
     );
+    globalEventBus.emit('timeline:new-script-created');
   }
 
   async saveDirectly() {
@@ -2179,7 +2378,10 @@ export class TimelineEditor {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (this.sequences.length > 0 && !confirm("Tiến hành import sẽ ghi đè lên các thay đổi chưa được lưu. Bạn có chắc chắn muốn tiếp tục?")) {
+    if (
+      this.sequences.length > 0 &&
+      !confirm(t('editor.timelinePanel.importConfirm'))
+    ) {
       this.fileInput.value = '';
       return;
     }
@@ -2187,40 +2389,24 @@ export class TimelineEditor {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const data = JSON.parse(event.target.result);
-        if (!Array.isArray(data)) throw new Error("File JSON không hợp lệ (cần là một mảng).");
-
-        const savedScrollLeft = this.trackContainer
-          ? this.trackContainer.scrollLeft
-          : 0;
-        const savedAnchorTime = this.anchorTime || 0;
-        const savedTime = this.showDirector
-          ? this.showDirector.elapsedTime
-          : 0;
-
-        this.sequences = data;
-        this.filename = file.name;
-        this.selectedEvents = [];
-        if (this.inspector) {
-          this.inspector.hide();
-        }
-        this.updateFileIndicator();
-        this.setSaveStatus('saved');
-        this.renderTracks();
-        this.showDirector.loadScript(this.getFlattenedSequences());
-        if (this.showDirector) {
-          this.showDirector.seek(savedTime);
-        }
-        if (this.trackContainer) {
-          this.trackContainer.scrollLeft = savedScrollLeft;
-        }
-        this.anchorTime = savedAnchorTime;
-        if (this.anchorHead) {
-          this.anchorHead.style.left = (savedAnchorTime * this.pixelsPerSecond) + 'px';
-        }
-        alert(t('editor.timelinePanel.importSuccess', { filename: file.name }) || "Import thành công!");
+        this.loadShowFromFileData(
+          {
+            filePath: null,
+            content: event.target.result,
+            filename: file.name,
+            companionAudios: null
+          },
+          {
+            skipConfirm: true
+          }
+        );
       } catch (err) {
-        alert("Lỗi khi đọc file JSON: " + err.message);
+        alert(
+          t(
+            'editor.timelinePanel.readJsonError',
+            { error: err.message }
+          ) || ('Error reading JSON file: ' + err.message)
+        );
       }
       this.fileInput.value = '';
     };
@@ -2268,6 +2454,14 @@ export class TimelineEditor {
           if (!silent) {
             alert(t('editor.timelinePanel.saveSuccess', { filename: this.filename }));
           }
+          if (!isAutoSave) {
+            globalEventBus.emit(
+              'timeline:script-saved',
+              {
+                filename: this.filename
+              }
+            );
+          }
         } catch (err) {
           this.setSaveStatus('error');
           if (silent) {
@@ -2304,6 +2498,12 @@ export class TimelineEditor {
               if (!silent) {
                 alert(`Đã lưu kịch bản mới thành công vào: ${res.filename}`);
               }
+              globalEventBus.emit(
+                'timeline:script-saved',
+                {
+                  filename: res.filename
+                }
+              );
             } else {
               this.setSaveStatus('unsaved');
             }
@@ -2331,6 +2531,14 @@ export class TimelineEditor {
     if (silent) {
       localStorage.setItem(`seq:${(this.filename || 'demoShow').replace('.json', '')}`, content);
       this.setSaveStatus('saved');
+      if (!isAutoSave) {
+        globalEventBus.emit(
+          'timeline:script-saved',
+          {
+            filename: this.filename || 'demoShow.json'
+          }
+        );
+      }
       return;
     }
 
@@ -2346,6 +2554,14 @@ export class TimelineEditor {
       URL.revokeObjectURL(url);
       this.setSaveStatus('saved');
       alert(t('editor.timelinePanel.saveSuccess', { filename: this.filename || 'demoShow.json' }));
+      if (!isAutoSave) {
+        globalEventBus.emit(
+          'timeline:script-saved',
+          {
+            filename: this.filename || 'demoShow.json'
+          }
+        );
+      }
     } catch (err) {
       this.setSaveStatus('error');
       alert(t('editor.timelinePanel.saveError', { error: err.message }));
@@ -2393,6 +2609,14 @@ export class TimelineEditor {
           alert(t('editor.timelinePanel.exportSuccess', {
             filename: res.filename
           }));
+          globalEventBus.emit(
+            'timeline:blocks-exported',
+            {
+              exportedCount: cleanSeqs.length,
+              onlySelected,
+              filename: res.filename
+            }
+          );
         }
       } catch (err) {
         alert(t('editor.timelinePanel.exportError', {
@@ -2419,6 +2643,14 @@ export class TimelineEditor {
       alert(t('editor.timelinePanel.exportSuccess', {
         filename: defaultExportName
       }));
+      globalEventBus.emit(
+        'timeline:blocks-exported',
+        {
+          exportedCount: cleanSeqs.length,
+          onlySelected,
+          filename: defaultExportName
+        }
+      );
     } catch (err) {
       alert(t('editor.timelinePanel.exportError', {
         error: err.message
@@ -2685,10 +2917,10 @@ export class TimelineEditor {
     );
 
     if (nextBeat !== undefined) {
-      this.anchorTime = nextBeat;
-      this.anchorHead.style.left =
-        (nextBeat * this.pixelsPerSecond) + 'px';
-      this.seek(nextBeat);
+      this.setAnchorTime(
+        nextBeat,
+        true
+      );
     }
   }
 
@@ -2706,10 +2938,10 @@ export class TimelineEditor {
     if (prevBeats.length > 0) {
       const prevBeat =
         prevBeats[prevBeats.length - 1];
-      this.anchorTime = prevBeat;
-      this.anchorHead.style.left =
-        (prevBeat * this.pixelsPerSecond) + 'px';
-      this.seek(prevBeat);
+      this.setAnchorTime(
+        prevBeat,
+        true
+      );
     }
   }
 }
