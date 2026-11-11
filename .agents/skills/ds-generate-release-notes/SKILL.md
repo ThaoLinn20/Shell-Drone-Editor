@@ -20,6 +20,7 @@ When the user asks you to generate release notes or create a new release, execut
 
 ## 1. Pre-flight Checks & Fetch Commits Since Last Tag
 - Check working tree status (`git status -s`) so unintended temporary files are not accidentally tagged.
+- Sync `@shell-drone/firework-engine` in `package-lock.json` by running `npm update @shell-drone/firework-engine` so GitHub Actions CI (`npm ci`) uses the exact same engine commit as local development.
 - Find the most recent git tag: `git describe --tags --abbrev=0`.
 - If no tags exist, get all commits from the beginning: `git log --oneline`.
 - Otherwise, get all commits from the last tag to HEAD: `git log <last_tag>..HEAD --oneline`.
