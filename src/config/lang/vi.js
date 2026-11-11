@@ -182,6 +182,8 @@ export default {
       addStepBtn: "Thêm bước +",
       groupBtn: "Gom nhóm",
       ungroupBtn: "Hủy nhóm",
+      pasteBtn: "Dán",
+      addSequenceMenu: "Thêm sự kiện",
       groupBlockName: "Nhóm sự kiện",
       playBtnTooltip: "Phát hoặc tạm dừng kịch bản Space",
       followTooltip: "Bật hoặc tắt tự động cuộn theo Playhead",

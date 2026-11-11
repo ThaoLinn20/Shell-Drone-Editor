@@ -175,6 +175,8 @@ export default {
       addStepBtn: "ステップ追加 +",
       groupBtn: "グループ化",
       ungroupBtn: "グループ解除",
+      pasteBtn: "貼り付け",
+      addSequenceMenu: "イベント追加",
       groupBlockName: "イベントグループ",
       playBtnTooltip: "再生または一時停止 Space",
       followTooltip: "再生ヘッドへの自動追従を切り替え",

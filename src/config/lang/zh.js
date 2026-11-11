@@ -175,6 +175,8 @@ export default {
       addStepBtn: "添加步骤 +",
       groupBtn: "编组",
       ungroupBtn: "解散编组",
+      pasteBtn: "粘贴",
+      addSequenceMenu: "添加动作",
       groupBlockName: "事件编组",
       playBtnTooltip: "播放或暂停剧本 Space",
       followTooltip: "切换时间轴自动跟随播放头",

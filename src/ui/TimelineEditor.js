@@ -276,8 +276,7 @@ export class TimelineEditor {
     addDroneOpt.addEventListener('click', (e) => {
       e.stopPropagation();
       dropdownMenu.style.display = 'none';
-      this.mediaFileInput.accept = '.json';
-      this.mediaFileInput.click();
+      this.triggerJsonImport();
     });
 
     const addAudioOpt = document.createElement('div');
@@ -434,10 +433,17 @@ export class TimelineEditor {
     this.ruler.style.cursor = 'text'; // Indicate it's clickable
     this.ruler.addEventListener('mousedown', (e) => {
       const rect = this.ruler.getBoundingClientRect();
-      const time = Math.max(0, (e.clientX - rect.left) / this.pixelsPerSecond);
-      this.anchorTime = time;
-      this.anchorHead.style.left = (time * this.pixelsPerSecond) + 'px';
-      this.seek(time);
+      const time = Math.max(
+        0,
+        (e.clientX - rect.left) / this.pixelsPerSecond
+      );
+      this.setAnchorTime(
+        time,
+        true
+      );
+    });
+    this.ruler.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
     });
     this.trackContainer.appendChild(this.ruler);
 
@@ -478,6 +484,33 @@ export class TimelineEditor {
         const time = (e.clientX - rect.left) / this.pixelsPerSecond;
         this.addSequence(time);
       }
+    });
+
+    // Right-click on empty space to jump Anchor Head + Playhead and open menu
+    this.tracksArea.addEventListener('contextmenu', (e) => {
+      if (e.target !== this.tracksArea) {
+        return;
+      }
+      e.preventDefault();
+      const rect = this.tracksArea.getBoundingClientRect();
+      const time = Math.max(
+        0,
+        (e.clientX - rect.left) / this.pixelsPerSecond
+      );
+      this.setAnchorTime(
+        time,
+        true
+      );
+      this.contextMenu.show(
+        e.clientX,
+        e.clientY,
+        {
+          targetType: 'empty_space',
+          targetEvent: null,
+          selectedEvents: this.selectedEvents,
+          timelineEditor: this
+        }
+      );
     });
 
     // Drag & Drop for MP3 files
@@ -1187,6 +1220,28 @@ export class TimelineEditor {
     return result;
   }
 
+  setAnchorTime(time, shouldSeek = true) {
+    const clampedTime = Math.max(
+      0,
+      time
+    );
+    this.anchorTime = clampedTime;
+    if (this.anchorHead) {
+      this.anchorHead.style.left =
+        (clampedTime * this.pixelsPerSecond) + 'px';
+    }
+    if (shouldSeek) {
+      this.seek(clampedTime);
+    }
+  }
+
+  triggerJsonImport() {
+    if (this.mediaFileInput) {
+      this.mediaFileInput.accept = '.json';
+      this.mediaFileInput.click();
+    }
+  }
+
   seek(time) {
     this.autoScrollEnabled = true;
     if (this.followBtn) {
@@ -1745,6 +1800,7 @@ export class TimelineEditor {
               e.clientX,
               e.clientY,
               {
+                targetType: 'block',
                 targetEvent: seq,
                 selectedEvents: this.selectedEvents,
                 timelineEditor: this
@@ -2685,10 +2741,10 @@ export class TimelineEditor {
     );
 
     if (nextBeat !== undefined) {
-      this.anchorTime = nextBeat;
-      this.anchorHead.style.left =
-        (nextBeat * this.pixelsPerSecond) + 'px';
-      this.seek(nextBeat);
+      this.setAnchorTime(
+        nextBeat,
+        true
+      );
     }
   }
 
@@ -2706,10 +2762,10 @@ export class TimelineEditor {
     if (prevBeats.length > 0) {
       const prevBeat =
         prevBeats[prevBeats.length - 1];
-      this.anchorTime = prevBeat;
-      this.anchorHead.style.left =
-        (prevBeat * this.pixelsPerSecond) + 'px';
-      this.seek(prevBeat);
+      this.setAnchorTime(
+        prevBeat,
+        true
+      );
     }
   }
 }

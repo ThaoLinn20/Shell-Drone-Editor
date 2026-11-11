@@ -24,6 +24,16 @@ Tài liệu này quy định các thuật ngữ lập trình và thuật ngữ n
 - Định nghĩa: Vùng chứa các track (dòng) để đựng các khối sự kiện.
 - Trong code: `this.tracksArea` (thuộc lớp `TimelineEditor`).
 
+### Empty Space Context Menu (Menu chuột phải vùng trống)
+- Định nghĩa: Menu ngữ cảnh hiển thị khi người dùng nhấn chuột phải vào vùng trống trên `Tracks Area` (không trúng bất kỳ block hay phần tử con nào của block).
+- Hành vi: Tự động đưa `Anchor Head` và `Playhead` tới mốc thời gian tại vị trí chuột phải (qua `setAnchorTime(time, true)`), giữ nguyên các block đang được chọn (`selectedEvents`), và hiển thị các lệnh chèn/dán tại mốc mới (`Paste`, `Add Sequence`, `Add Drone/Shell JSON`).
+- Trong code: Ngữ cảnh `targetType: 'empty_space'` (kiểm tra bằng `isEmptySpaceContext`) trong [src/ui/TimelineContextMenu.js](./src/ui/TimelineContextMenu.js) và sự kiện `contextmenu` trên `this.tracksArea` trong [src/ui/TimelineEditor.js](./src/ui/TimelineEditor.js).
+
+### Block Context Menu (Menu chuột phải trên Block)
+- Định nghĩa: Menu ngữ cảnh hiển thị khi người dùng nhấn chuột phải lên một block sự kiện đang được chọn trên `Tracks Area`.
+- Hành vi: Giữ nguyên vị trí `Anchor Head` và `Playhead`, chỉ hiển thị các thao tác tác động lên block đang chọn (`Group`, `Ungroup`, `Export selected blocks`).
+- Trong code: Ngữ cảnh `targetType: 'block'` (kiểm tra bằng `isBlockContext`) trong [src/ui/TimelineContextMenu.js](./src/ui/TimelineContextMenu.js) và sự kiện `contextmenu` trên từng phần tử `block` trong [src/ui/TimelineEditor.js](./src/ui/TimelineEditor.js).
+
 ---
 
 ## 2. Các Loại Khối trên Timeline (Timeline Sequences)

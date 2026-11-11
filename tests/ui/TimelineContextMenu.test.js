@@ -134,7 +134,12 @@ describe('TimelineContextMenu', () => {
     mockTimelineEditor = {
       exportSequence: vi.fn(),
       groupSelected: vi.fn(),
-      ungroupSelected: vi.fn()
+      ungroupSelected: vi.fn(),
+      pasteSelected: vi.fn(),
+      addSequence: vi.fn(),
+      triggerJsonImport: vi.fn(),
+      anchorTime: 5,
+      clipboardEvents: []
     };
     contextMenu = new TimelineContextMenu(mockTimelineEditor);
   });
@@ -278,6 +283,79 @@ describe('TimelineContextMenu', () => {
 
     ungroupAction.execute(groupContext);
     expect(mockTimelineEditor.ungroupSelected).toHaveBeenCalled();
+  });
+
+  it('should show only paste, add-sequence, and add-drone-json in empty_space context even when events are selected', () => {
+    const context = {
+      targetType: 'empty_space',
+      targetEvent: null,
+      selectedEvents: [
+        { id: 'evt-1', type: 'group' },
+        { id: 'evt-2', type: 'sequence' }
+      ],
+      timelineEditor: mockTimelineEditor
+    };
+
+    contextMenu.show(120, 240, context);
+
+    expect(contextMenu.isVisible).toBe(true);
+    const items = contextMenu.menuElement.querySelectorAll('.timeline-context-menu-item');
+    expect(items.length).toBe(3);
+
+    const groupAction = contextMenu.actions.find((a) => a.id === 'group');
+    const ungroupAction = contextMenu.actions.find((a) => a.id === 'ungroup');
+    const exportAction = contextMenu.actions.find((a) => a.id === 'export-selected');
+    expect(groupAction.isVisible(context)).toBe(false);
+    expect(ungroupAction.isVisible(context)).toBe(false);
+    expect(exportAction.isVisible(context)).toBe(false);
+  });
+
+  it('should trigger addSequence at anchorTime when add-sequence action executes', () => {
+    const addSeqAction = contextMenu.actions.find((a) => a.id === 'add-sequence');
+    expect(addSeqAction).toBeDefined();
+
+    const context = {
+      targetType: 'empty_space',
+      timelineEditor: mockTimelineEditor
+    };
+    expect(addSeqAction.isVisible(context)).toBe(true);
+    expect(addSeqAction.isEnabled(context)).toBe(true);
+
+    addSeqAction.execute(context);
+    expect(mockTimelineEditor.addSequence).toHaveBeenCalledWith(5);
+  });
+
+  it('should disable paste when clipboardEvents is empty and enable when non-empty', () => {
+    const pasteAction = contextMenu.actions.find((a) => a.id === 'paste');
+    expect(pasteAction).toBeDefined();
+
+    const emptyClipboardContext = {
+      targetType: 'empty_space',
+      timelineEditor: mockTimelineEditor
+    };
+    expect(pasteAction.isVisible(emptyClipboardContext)).toBe(true);
+    expect(pasteAction.isEnabled(emptyClipboardContext)).toBe(false);
+
+    mockTimelineEditor.clipboardEvents = [{ event: { type: 'sequence' }, offset: 0 }];
+    expect(pasteAction.isEnabled(emptyClipboardContext)).toBe(true);
+
+    pasteAction.execute(emptyClipboardContext);
+    expect(mockTimelineEditor.pasteSelected).toHaveBeenCalled();
+  });
+
+  it('should trigger triggerJsonImport when add-drone-json action executes', () => {
+    const addJsonAction = contextMenu.actions.find((a) => a.id === 'add-drone-json');
+    expect(addJsonAction).toBeDefined();
+
+    const context = {
+      targetType: 'empty_space',
+      timelineEditor: mockTimelineEditor
+    };
+    expect(addJsonAction.isVisible(context)).toBe(true);
+    expect(addJsonAction.isEnabled(context)).toBe(true);
+
+    addJsonAction.execute(context);
+    expect(mockTimelineEditor.triggerJsonImport).toHaveBeenCalled();
   });
 });
 

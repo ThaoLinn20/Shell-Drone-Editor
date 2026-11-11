@@ -182,6 +182,8 @@ export default {
       addStepBtn: "Add Step +",
       groupBtn: "Group",
       ungroupBtn: "Ungroup",
+      pasteBtn: "Paste",
+      addSequenceMenu: "Add Sequence",
       groupBlockName: "Event Group",
       playBtnTooltip: "Play or pause script Space",
       followTooltip: "Toggle auto scroll following Playhead",
