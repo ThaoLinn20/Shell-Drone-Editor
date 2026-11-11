@@ -7,7 +7,9 @@ const translations = { en, vi, zh, ja };
 
 // Determine initial language
 let defaultLang = 'en';
-const systemLang = navigator.language || navigator.userLanguage;
+const systemLang = typeof navigator !== 'undefined'
+  ? (navigator.language || navigator.userLanguage)
+  : null;
 if (systemLang) {
   if (systemLang.startsWith('vi')) {
     defaultLang = 'vi';

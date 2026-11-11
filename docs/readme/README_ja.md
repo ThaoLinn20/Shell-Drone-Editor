@@ -1,8 +1,8 @@
-# Firework & Drone Show Studio (3D花火＆ドローンアニメーションシミュレーション)
+# FDShowStudio - 3D花火＆ドローンアニメーションシミュレーション
 
 **Languages:** [English](README_en.md) | [Tiếng Việt](README_vi.md) | [日本語](README_ja.md) | [中文](README_zh.md)
 
-Firework & Drone Show Studio は、**Three.js** と **Vite** を使用して構築され、**Electron** を利用してプロフェッショナルなデスクトップソフトウェアを構築した3D花火およびドローンアニメーションのシミュレーションおよび編集アプリケーションです。
+FDShowStudio は、**Three.js** と **Vite** を使用して構築され、**Electron** を利用してプロフェッショナルなデスクトップソフトウェアを構築した3D花火およびドローンアニメーションのシミュレーションおよび編集アプリケーションです。
 
 ---
 
@@ -11,8 +11,8 @@ Firework & Drone Show Studio は、**Three.js** と **Vite** を使用して構�
 ### 方法 1: Git を使用する (推奨)
 [Git](https://git-scm.com/)がインストールされている場合は（必要に応じて[こちら](https://git-scm.com/downloads)からGitをダウンロードしてください）、ターミナル（またはコマンドプロンプト/PowerShell）を開き、次のコマンドを実行します。
 ```bash
-git clone https://github.com/ThAolInh20/Shell-Drone-Editor.git
-cd shell-drone-animation
+git clone https://github.com/ThaoLinn20/Shell-Drone-Editor.git
+cd Shell-Drone-Editor
 ```
 
 ### 方法 2: ZIP ファイルを直接ダウンロードする
@@ -27,7 +27,7 @@ cd shell-drone-animation
 このプロジェクトには **[Node.js](https://nodejs.org/)** バージョン 18 以上が必要です（必要に応じて[こちら](https://nodejs.org/ja/download)からNode.jsをダウンロードしてください）。先に進む前に Node.js がインストールされていることを確認してください。
 
 ### ステップ 1: 依存関係のインストール
-プロジェクトのルートフォルダ (`shell-drone-animation`) でターミナルを開き、以下を実行します。
+プロジェクトのルートフォルダ (`Shell-Drone-Editor`) でターミナルを開き、以下を実行します。
 ```bash
 npm install
 ```

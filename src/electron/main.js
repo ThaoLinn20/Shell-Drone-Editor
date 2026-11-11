@@ -9,6 +9,7 @@ import {
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { setupAutoUpdater } from './updater.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,7 @@ const __dirname = path.dirname(__filename);
 const isDev = !app.isPackaged;
 
 let mainWindow = null;
+let updaterController = null;
 
 // Resolve the sequences directory path safely
 const sequencesDir = isDev
@@ -27,9 +29,27 @@ if (!fs.existsSync(sequencesDir)) {
   fs.mkdirSync(sequencesDir, { recursive: true });
 }
 
-// Seed default sequences in production if userData folder is empty
+// Migrate legacy userData sequences and seed default sequences in production
 if (!isDev) {
   try {
+    const legacySequencesDir = path.join(
+      app.getPath('appData'),
+      'shell-drone-animation',
+      'sequences'
+    );
+    if (fs.existsSync(legacySequencesDir)) {
+      const legacyFiles = fs.readdirSync(legacySequencesDir);
+      for (const file of legacyFiles) {
+        const destPath = path.join(sequencesDir, file);
+        if (!fs.existsSync(destPath)) {
+          fs.copyFileSync(
+            path.join(legacySequencesDir, file),
+            destPath
+          );
+        }
+      }
+    }
+
     // In prod, main.js is at src/electron/main.js in ASAR, but resources are in resources/app/
     const defaultSequencesDir = path.resolve(__dirname, '../config/sequences');
     if (fs.existsSync(defaultSequencesDir)) {
@@ -55,7 +75,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
-    title: 'Firework & Drone Show Studio',
+    title: 'FDShowStudio',
     backgroundColor: '#1a1a1a',
     icon: path.join(__dirname, '../../public/icon2.ico'),
   });
@@ -235,6 +255,28 @@ function createWindow() {
         ] : [
           { role: 'close', label: 'Close' }
         ])
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Check for Updates...',
+          click: () => {
+            if (updaterController) {
+              updaterController.checkForUpdates({
+                manual: true
+              });
+            }
+          }
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: `Version ${app.getVersion()}`,
+          enabled: false
+        }
       ]
     }
   ];
@@ -470,7 +512,12 @@ ipcMain.handle('open-external', async (event, url) => {
 
 
 app.whenReady().then(() => {
+  updaterController = setupAutoUpdater({
+    getMainWindow: () => mainWindow
+  });
+
   createWindow();
+  updaterController.scheduleStartupCheck();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

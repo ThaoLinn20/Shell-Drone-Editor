@@ -872,5 +872,23 @@ export default {
         geometryOffsets: "value: 0 -> 1"
       }
     }
+  },
+  updater: {
+    checkingToast: "Checking for updates...",
+    upToDateToast: "You are on the latest version {version}",
+    devModeToast: "Auto-update check is only active in packaged builds",
+    errorToast: "Update check failed: {error}",
+    availableTitle: "New version {version} available",
+    downloadingTitle: "Downloading update {version}",
+    downloadingProgress: "{percent}% complete",
+    downloadedTitle: "Update {version} is ready",
+    downloadedDesc: "Restart the application to finish installing the new version.",
+    restartNowBtn: "Restart and Update",
+    laterBtn: "Later",
+    unsavedTitle: "Unsaved Changes",
+    unsavedMessage: "You have unsaved changes. Save your work before restarting to update?",
+    saveAndRestartBtn: "Save and Restart",
+    restartWithoutSavingBtn: "Restart Without Saving",
+    cancelBtn: "Cancel"
   }
 };

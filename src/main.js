@@ -25,6 +25,7 @@ import { HotkeyManager } from './core/HotkeyManager.js';
 import { fileStorage } from './core/FileStorageAdapter.js';
 import { globalEventBus } from './core/EventBus.js';
 import { loadAndApplySettings } from './config/settings.js';
+import { initUpdateNotifier } from './ui/UpdateNotifier.js';
 
 // Initialize Core ECS Boilerplate
 const clock = new Clock();
@@ -230,5 +231,19 @@ fileStorage.onMenuAction((action) => {
     if (timelineEditor) {
       timelineEditor.exportSequence(true);
     }
+  }
+});
+
+initUpdateNotifier({
+  hasUnsavedChanges: () => Boolean(
+    timelineEditor &&
+    timelineEditor.currentSaveStatus === 'unsaved'
+  ),
+  saveChanges: async () => {
+    if (!timelineEditor) {
+      return true;
+    }
+    await timelineEditor.saveDirectly();
+    return timelineEditor.currentSaveStatus === 'saved';
   }
 });

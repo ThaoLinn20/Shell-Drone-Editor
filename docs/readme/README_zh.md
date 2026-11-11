@@ -1,8 +1,8 @@
-# Firework & Drone Show Studio (3D烟花与无人机动画模拟)
+# FDShowStudio - 3D烟花与无人机动画模拟
 
 **Languages:** [English](README_en.md) | [Tiếng Việt](README_vi.md) | [日本語](README_ja.md) | [中文](README_zh.md)
 
-Firework & Drone Show Studio 是一个3D烟花和无人机动画模拟及编辑应用程序，使用 **Three.js** 和 **Vite** 构建，并利用 **Electron** 构建专业的桌面软件。
+FDShowStudio 是一个3D烟花和无人机动画模拟及编辑应用程序，使用 **Three.js** 和 **Vite** 构建，并利用 **Electron** 构建专业的桌面软件。
 
 ---
 
@@ -11,8 +11,8 @@ Firework & Drone Show Studio 是一个3D烟花和无人机动画模拟及编辑�
 ### 方法 1: 使用 Git (推荐)
 如果您的计算机已安装 [Git](https://git-scm.com/)（如果需要，请在[这里](https://git-scm.com/downloads)下载 Git），请打开终端（或命令提示符/PowerShell）并运行以下命令：
 ```bash
-git clone https://github.com/ThAolInh20/Shell-Drone-Editor.git
-cd shell-drone-animation
+git clone https://github.com/ThaoLinn20/Shell-Drone-Editor.git
+cd Shell-Drone-Editor
 ```
 
 ### 方法 2: 直接下载 ZIP 文件
@@ -27,7 +27,7 @@ cd shell-drone-animation
 该项目需要 **[Node.js](https://nodejs.org/)** 18 或更高版本（如果需要，请在[这里](https://nodejs.org/en/download)下载 Node.js）。在继续之前，请确保已安装 Node.js。
 
 ### 步骤 1: 安装依赖项
-在项目的根文件夹 (`shell-drone-animation`) 打开终端并执行：
+在项目的根文件夹 (`Shell-Drone-Editor`) 打开终端并执行：
 ```bash
 npm install
 ```

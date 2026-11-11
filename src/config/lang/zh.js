@@ -860,5 +860,23 @@ export default {
         geometryOffsets: "value: 0 -> 1"
       }
     }
+  },
+  updater: {
+    checkingToast: "正在检查更新...",
+    upToDateToast: "当前已是最新版本 {version}",
+    devModeToast: "自动更新检查仅在打包后的应用中生效",
+    errorToast: "检查更新失败：{error}",
+    availableTitle: "发现新版本 {version}",
+    downloadingTitle: "正在下载更新 {version}",
+    downloadingProgress: "已完成 {percent}%",
+    downloadedTitle: "更新 {version} 已准备就绪",
+    downloadedDesc: "重启应用以完成新版本的安装。",
+    restartNowBtn: "重启并更新",
+    laterBtn: "稍后",
+    unsavedTitle: "未保存的更改",
+    unsavedMessage: "当前有未保存的更改。是否在重启更新前保存工作内容？",
+    saveAndRestartBtn: "保存并重启",
+    restartWithoutSavingBtn: "不保存直接更新",
+    cancelBtn: "取消"
   }
 };

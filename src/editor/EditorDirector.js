@@ -242,6 +242,7 @@ export class EditorDirector extends BaseDirector {
             this.state.currentFilePath,
             content
           );
+          this.state.isDirty = false;
           if (silent) {
             showToast(
               isAutoSave
@@ -252,12 +253,14 @@ export class EditorDirector extends BaseDirector {
           } else {
             await customAlert(`Đã lưu kịch bản động trực tiếp thành công vào: ${this.state.name}.json`);
           }
+          return true;
         } catch (err) {
           if (silent) {
             showToast('Lỗi khi lưu file: ' + err.message, 'error');
           } else {
             await customAlert("Lỗi khi lưu file trực tiếp: " + err.message);
           }
+          return false;
         }
       } else {
         // No file path set yet
@@ -267,9 +270,12 @@ export class EditorDirector extends BaseDirector {
               `${this.state.name}.json`,
               content
             );
+            this.state.isDirty = false;
             showToast(`Đã tự động lưu: ${this.state.name}.json`, 'info');
+            return true;
           } catch (e) {
             console.warn('Auto-save error:', e);
+            return false;
           }
         } else {
           // Save As
@@ -281,23 +287,26 @@ export class EditorDirector extends BaseDirector {
             if (res) {
               this.state.currentFilePath = res.filePath;
               this.state.name = res.filename.replace('.json', '');
+              this.state.isDirty = false;
               document.getElementById('ui-name').value = this.state.name;
               if (silent) {
                 showToast(`Đã lưu kịch bản mới: ${res.filename}`, 'success');
               } else {
                 await customAlert(`Đã lưu kịch bản mới thành công: ${res.filename}`);
               }
+              return true;
             }
+            return false;
           } catch (err) {
             if (silent) {
               showToast('Lỗi khi lưu mới file: ' + err.message, 'error');
             } else {
               await customAlert("Lỗi khi lưu kịch bản mới: " + err.message);
             }
+            return false;
           }
         }
       }
-      return;
     }
 
     // Fallback to browser download if not in Electron

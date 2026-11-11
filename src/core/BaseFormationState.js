@@ -27,6 +27,7 @@ export class BaseFormationState {
     this.clipboard = null;
 
     this.lineConstraints = [];
+    this.isDirty = false;
 
     this.listeners = [];
   }
@@ -45,8 +46,12 @@ export class BaseFormationState {
   }
 
   saveStateToHistory() {
+    const hadHistory = this.historyManager.stack.length > 0;
     const snapshot = this.createHistorySnapshot();
     this.historyManager.save(snapshot);
+    if (hadHistory) {
+      this.isDirty = true;
+    }
     this.notify();
   }
 
@@ -72,6 +77,7 @@ export class BaseFormationState {
     const snapshot = this.historyManager.undo();
     if (snapshot) {
       this.restoreFromSnapshot(snapshot);
+      this.isDirty = true;
       this.notify();
     }
   }
@@ -80,6 +86,7 @@ export class BaseFormationState {
     const snapshot = this.historyManager.redo();
     if (snapshot) {
       this.restoreFromSnapshot(snapshot);
+      this.isDirty = true;
       this.notify();
     }
   }
