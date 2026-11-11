@@ -2,7 +2,7 @@
 
 [English](README.md) | [Tiếng Việt](README-vn.md) | [日本語](README-ja.md) | [简体中文](README-zh.md)
 
-**Firework & Drone Show Studio** là phần mềm mô phỏng 3D cho pháo hoa và drone. Phần mềm hỗ trợ biên kịch kịch bản pháo hoa, thiết kế đội hình drone, biên đạo đầy đủ cho 1 show trình diễn drone kết hợp với pháo hoa
+**Firework & Drone Show Studio** là phần mềm mô phỏng 3D cho pháo hoa và drone. Phần mềm hỗ trợ `thiết kế` pháo hoa, `biên kịch` kịch bản pháo hoa, `thiết kế` đội hình drone, và animation cho biên đạo đầy đủ cho 1 show trình diễn drone kết hợp với pháo hoa.
 
 ---
 
@@ -15,15 +15,6 @@
 - **Toàn bộ dữ liệu lưu dưới dạng JSON:** Đồng bộ, dễ dàng chia sẻ.
 - **Đảm bảo chạy ổn định:** cho 100-200 pháo hoa cùng 1 lúc.
 - **Giao diện chuyên nghiệp hiện đại:** Chuẩn hóa workflow cho Editor.
-
----
-
-## Đối tượng sử dụng mục tiêu
-
-- **Đơn vị tổ chức sự kiện và doanh nghiệp biểu diễn:** Dựng kịch bản mô phỏng 3D trực quan và trải nghiệm thực tế cho các kịch bản `pháo hoa` và `drone`.
-- **Người đam mê nghệ thuật trình diễn pháo hoa và drone** Tạo ra các mẫu kịch bản pháo hoa và drone chuyên nghiệp và nghiệp dư.
-- **Nhà thiết kế pháo hoa** Thiết kế, tùy biến hiệu ứng vật lý hạt pháo hoa.
-- **Nhà thiết kế đội hình drone** Thiết kế, tùy biến đội hình drone và xây dựng animation cho drone.
 
 ---
 
@@ -62,48 +53,9 @@
 
 ## Tải về và Cài đặt
 
-### Dành cho người dùng cuối
-
 1. Truy cập trang **[GitHub Releases](https://github.com/ThAolInh20/Shell-Drone_3d/releases)** của dự án.
 2. Tải về gói cài đặt mới nhất dành cho Windows định dạng `.exe` hoặc gói nén `.zip`.
 3. Giải nén hoặc chạy file cài đặt để bắt đầu sử dụng phần mềm.
-
-*Lưu ý: Nếu hệ thống Windows hiển thị cảnh báo bảo mật SmartScreen, bạn có thể chọn `More Info` và chọn `Run anyway` để tiếp tục.*
-
----
-
-## Hướng dẫn Vận hành Dành cho Nhà phát triển
-
-Dự án yêu cầu môi trường **[Node.js](https://nodejs.org/)** phiên bản 18 trở lên.
-
-### Bước 1: Sao chép mã nguồn và cài đặt thư viện
-```bash
-git clone https://github.com/ThAolInh20/Shell-Drone-Editor.git
-cd shell-drone-animation
-npm install
-```
-
-### Bước 2: Khởi chạy ứng dụng
-
-#### Chế độ Desktop App với Electron (Khuyến nghị)
-Mở ứng dụng độc lập với đầy đủ tính năng ghi tệp trực tiếp và điều hướng nhanh:
-```bash
-npm run electron:dev
-```
-
-#### Chế độ Trình duyệt Web
-Khởi chạy máy chủ phát triển Vite:
-```bash
-npm run dev
-```
-Sau đó truy cập đường dẫn cục bộ hiển thị trên terminal (mặc định là `http://localhost:5173/`).
-
-### Bước 3: Đóng gói phần mềm
-Để biên dịch và đóng gói thành phần mềm cài đặt Windows hoàn chỉnh:
-```bash
-npm run electron:build
-```
-Tệp cài đặt sau khi đóng gói sẽ nằm trong thư mục `dist-electron`.
 
 ---
 
