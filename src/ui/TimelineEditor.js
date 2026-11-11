@@ -12,6 +12,10 @@ import { showToast } from '../utils/Toast.js';
 import { WaveformGenerator } from '../utils/WaveformGenerator.js';
 import { TimelineTourGuide } from './TimelineTourGuide.js';
 import { TimelineContextMenu } from './TimelineContextMenu.js';
+import { ShowLibraryModal } from './ShowLibraryModal.js';
+import { OnboardingFlow } from './OnboardingFlow.js';
+import { GuideHubModal } from './GuideHubModal.js';
+import { DOCS_CONFIG } from '../config/docs.js';
 
 
 export class TimelineEditor {
@@ -50,8 +54,12 @@ export class TimelineEditor {
     this.marqueeBox = null;
     this.autoSaveEnabled = localStorage.getItem('settings_auto_save_enabled') !== 'false';
     this.autoSaveTimer = null;
+    this.activeAudioBlobUrls = [];
 
     this.contextMenu = new TimelineContextMenu(this);
+    this.showLibraryModal = new ShowLibraryModal(this);
+    this.onboardingFlow = new OnboardingFlow(this);
+    this.guideHubModal = new GuideHubModal(this);
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
     this.renderTracks();
@@ -64,8 +72,8 @@ export class TimelineEditor {
         this.hotkeyManager.setActiveContext('timeline');
       }
       globalEventBus.emit('timeline:toggle', true);
-      if (this.tourGuide) {
-        this.tourGuide.promptFirstTimeTour();
+      if (this.onboardingFlow) {
+        this.onboardingFlow.startIfFirstTime();
       }
     }
 
@@ -156,6 +164,7 @@ export class TimelineEditor {
     playBtn.title = t('editor.timelinePanel.playBtnTooltip') ||
       'Play or pause script Space';
     playBtn.addEventListener('click', () => this.togglePlay());
+    this.playBtn = playBtn;
 
     this.followBtn = document.createElement('button');
     this.followBtn.textContent = t('editor.timelinePanel.followOn');
@@ -351,9 +360,36 @@ export class TimelineEditor {
     helpBtn.addEventListener(
       'click',
       () => {
-        this.tourGuide.startTour();
+        this.openGuideHub();
       }
     );
+    this.helpBtn = helpBtn;
+
+    const downloadScriptsBtn = document.createElement('button');
+    downloadScriptsBtn.textContent =
+      t('editor.timelinePanel.downloadScriptsBtn') || 'Get Scripts';
+    downloadScriptsBtn.title =
+      t('editor.timelinePanel.downloadScriptsTooltip') ||
+      'Open Google Drive to download show scripts';
+    downloadScriptsBtn.style.background = '#0f766e';
+    downloadScriptsBtn.style.color = 'white';
+    downloadScriptsBtn.addEventListener('click', () => {
+      this.openScriptsDrive();
+    });
+    this.downloadScriptsBtn = downloadScriptsBtn;
+
+    const libraryBtn = document.createElement('button');
+    libraryBtn.textContent =
+      t('editor.timelinePanel.libraryBtn') || 'Script Library';
+    libraryBtn.title =
+      t('editor.timelinePanel.libraryBtnTooltip') ||
+      'Load and browse show scripts from a folder';
+    libraryBtn.style.background = '#00838f';
+    libraryBtn.style.color = 'white';
+    libraryBtn.addEventListener('click', () => {
+      this.openShowLibrary();
+    });
+    this.libraryBtn = libraryBtn;
 
     const dataActionsGroup = document.createElement('div');
     dataActionsGroup.style.display = 'inline-flex';
@@ -362,6 +398,8 @@ export class TimelineEditor {
     dataActionsGroup.appendChild(newBtn);
     dataActionsGroup.appendChild(addBtn);
     dataActionsGroup.appendChild(importBtn);
+    dataActionsGroup.appendChild(libraryBtn);
+    dataActionsGroup.appendChild(downloadScriptsBtn);
     dataActionsGroup.appendChild(exportBtn);
     dataActionsGroup.appendChild(addFileDropdownContainer);
     this.dataActionsGroup = dataActionsGroup;
@@ -799,9 +837,7 @@ export class TimelineEditor {
         'timeline',
         'f1',
         () => {
-          if (this.tourGuide) {
-            this.tourGuide.startTour();
-          }
+          this.openGuideHub();
         }
       );
     }
@@ -1165,10 +1201,27 @@ export class TimelineEditor {
         this.visible ? 'timeline' : 'global'
       );
     }
-    if (this.visible && this.tourGuide) {
-      this.tourGuide.promptFirstTimeTour();
+    if (this.visible && this.onboardingFlow) {
+      this.onboardingFlow.startIfFirstTime();
     }
     globalEventBus.emit('timeline:toggle', this.visible);
+  }
+
+  openScriptsDrive() {
+    fileStorage.openExternal(DOCS_CONFIG.scriptsDriveUrl);
+    globalEventBus.emit('onboarding:drive-opened');
+  }
+
+  openShowLibrary() {
+    if (this.showLibraryModal) {
+      this.showLibraryModal.open();
+    }
+  }
+
+  openGuideHub() {
+    if (this.guideHubModal) {
+      this.guideHubModal.open();
+    }
   }
 
   updateInspectorPosition() {
@@ -1190,6 +1243,7 @@ export class TimelineEditor {
     } else {
       this.seek(this.anchorTime);
       this.showDirector.play();
+      globalEventBus.emit('timeline:playback-started');
     }
   }
 
@@ -2054,96 +2108,154 @@ export class TimelineEditor {
     requestAnimationFrame(this.updateLoop);
   }
 
+  revokeAudioBlobUrls() {
+    if (
+      Array.isArray(this.activeAudioBlobUrls) &&
+      typeof URL !== 'undefined' &&
+      typeof URL.revokeObjectURL === 'function'
+    ) {
+      this.activeAudioBlobUrls.forEach((url) => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          // Ignore revoke errors
+        }
+      });
+    }
+    this.activeAudioBlobUrls = [];
+  }
+
+  loadShowFromFileData(fileData, options = {}) {
+    if (!fileData) {
+      return false;
+    }
+
+    const {
+      filePath = null,
+      content,
+      filename,
+      companionAudios = null
+    } = fileData;
+
+    const data = typeof content === 'string'
+      ? JSON.parse(content)
+      : content;
+    if (!Array.isArray(data)) {
+      throw new Error(
+        t('editor.filePanel.alertInvalidJson') ||
+        'Invalid show script JSON format'
+      );
+    }
+
+    if (
+      !options.skipConfirm &&
+      this.sequences.length > 0 &&
+      typeof confirm === 'function' &&
+      !confirm(t('editor.timelinePanel.importConfirm'))
+    ) {
+      return false;
+    }
+
+    this.revokeAudioBlobUrls();
+
+    if (companionAudios) {
+      const blobUrlCache = {};
+      const attachAudio = (list) => {
+        list.forEach((item) => {
+          if (item.type === 'audio') {
+            const audioName = (item.url || item.name || '').split(/[\\/]/).pop();
+            const match = companionAudios[audioName] ||
+              companionAudios[item.url] ||
+              companionAudios[item.name];
+            if (match && match.buffer) {
+              const cacheKey = audioName || item.url || item.name;
+              if (!blobUrlCache[cacheKey]) {
+                const blob = new Blob(
+                  [match.buffer],
+                  {
+                    type: match.mimeType || 'audio/mpeg'
+                  }
+                );
+                const objectUrl = URL.createObjectURL(blob);
+                blobUrlCache[cacheKey] = objectUrl;
+                this.activeAudioBlobUrls.push(objectUrl);
+              }
+              item._blobUrl = blobUrlCache[cacheKey];
+            }
+          }
+          if (
+            item.type === 'group' &&
+            Array.isArray(item.children)
+          ) {
+            attachAudio(item.children);
+          }
+        });
+      };
+      attachAudio(data);
+    }
+
+    const resetTime = Boolean(options.resetPlaybackPosition);
+    const savedScrollLeft = resetTime
+      ? 0
+      : (this.trackContainer ? this.trackContainer.scrollLeft : 0);
+    const savedAnchorTime = resetTime ? 0 : (this.anchorTime || 0);
+    const savedTime = resetTime
+      ? 0
+      : (this.showDirector ? this.showDirector.elapsedTime : 0);
+
+    this.sequences = data;
+    this.filename = filename;
+    if (filePath !== undefined) {
+      this.currentFilePath = filePath;
+    }
+    this.selectedEvents = [];
+    if (this.inspector) {
+      this.inspector.hide();
+    }
+    this.updateFileIndicator();
+    this.setSaveStatus('saved');
+    this.renderTracks();
+    this.showDirector.loadScript(this.getFlattenedSequences());
+    if (this.showDirector) {
+      this.showDirector.seek(savedTime);
+    }
+    if (this.trackContainer) {
+      this.trackContainer.scrollLeft = savedScrollLeft;
+    }
+    this.anchorTime = savedAnchorTime;
+    if (this.anchorHead) {
+      this.anchorHead.style.left = (savedAnchorTime * this.pixelsPerSecond) + 'px';
+    }
+    if (this.playhead && resetTime) {
+      this.playhead.style.left = '0px';
+    }
+
+    globalEventBus.emit(
+      'timeline:show-loaded',
+      {
+        filename,
+        filePath
+      }
+    );
+
+    if (!options.silentSuccess) {
+      alert(t('editor.timelinePanel.importSuccess', { filename }));
+    }
+
+    return true;
+  }
+
   async openNativeFile() {
     try {
       const fileData = await fileStorage.openFileDialog();
       if (fileData) {
-        const {
-          filePath,
-          content,
-          filename,
-          companionAudios
-        } = fileData;
-        const data = JSON.parse(content);
-        if (!Array.isArray(data)) {
-          throw new Error(t('editor.filePanel.alertInvalidJson'));
-        }
-
-        if (
-          this.sequences.length > 0 &&
-          !confirm(t('editor.timelinePanel.importConfirm'))
-        ) {
-          return;
-        }
-
-        if (companionAudios) {
-          const blobUrlCache = {};
-          const attachAudio = (list) => {
-            list.forEach((item) => {
-              if (item.type === 'audio') {
-                const audioName = (item.url || item.name || '').split(/[\\/]/).pop();
-                const match = companionAudios[audioName] ||
-                  companionAudios[item.url] ||
-                  companionAudios[item.name];
-                if (match && match.buffer) {
-                  const cacheKey = audioName || item.url || item.name;
-                  if (!blobUrlCache[cacheKey]) {
-                    const blob = new Blob(
-                      [match.buffer],
-                      {
-                        type: match.mimeType || 'audio/mpeg'
-                      }
-                    );
-                    blobUrlCache[cacheKey] = URL.createObjectURL(blob);
-                  }
-                  item._blobUrl = blobUrlCache[cacheKey];
-                }
-              }
-              if (
-                item.type === 'group' &&
-                Array.isArray(item.children)
-              ) {
-                attachAudio(item.children);
-              }
-            });
-          };
-          attachAudio(data);
-        }
-
-        const savedScrollLeft = this.trackContainer
-          ? this.trackContainer.scrollLeft
-          : 0;
-        const savedAnchorTime = this.anchorTime || 0;
-        const savedTime = this.showDirector
-          ? this.showDirector.elapsedTime
-          : 0;
-
-        this.sequences = data;
-        this.filename = filename;
-        this.currentFilePath = filePath;
-        this.selectedEvents = [];
-        if (this.inspector) {
-          this.inspector.hide();
-        }
-        this.updateFileIndicator();
-        this.setSaveStatus('saved');
-        this.renderTracks();
-        this.showDirector.loadScript(this.getFlattenedSequences());
-        if (this.showDirector) {
-          this.showDirector.seek(savedTime);
-        }
-        if (this.trackContainer) {
-          this.trackContainer.scrollLeft = savedScrollLeft;
-        }
-        this.anchorTime = savedAnchorTime;
-        if (this.anchorHead) {
-          this.anchorHead.style.left = (savedAnchorTime * this.pixelsPerSecond) + 'px';
-        }
-        alert(t('editor.timelinePanel.importSuccess', { filename }));
+        this.loadShowFromFileData(fileData);
       }
-
     } catch (err) {
-      alert("Lỗi khi đọc file qua Electron: " + err.message);
+      alert(
+        (t('editor.timelinePanel.readJsonError', { error: err.message })) ||
+        ('Error reading file: ' + err.message)
+      );
     }
   }
 
@@ -2235,7 +2347,10 @@ export class TimelineEditor {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (this.sequences.length > 0 && !confirm("Tiến hành import sẽ ghi đè lên các thay đổi chưa được lưu. Bạn có chắc chắn muốn tiếp tục?")) {
+    if (
+      this.sequences.length > 0 &&
+      !confirm(t('editor.timelinePanel.importConfirm'))
+    ) {
       this.fileInput.value = '';
       return;
     }
@@ -2243,40 +2358,24 @@ export class TimelineEditor {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const data = JSON.parse(event.target.result);
-        if (!Array.isArray(data)) throw new Error("File JSON không hợp lệ (cần là một mảng).");
-
-        const savedScrollLeft = this.trackContainer
-          ? this.trackContainer.scrollLeft
-          : 0;
-        const savedAnchorTime = this.anchorTime || 0;
-        const savedTime = this.showDirector
-          ? this.showDirector.elapsedTime
-          : 0;
-
-        this.sequences = data;
-        this.filename = file.name;
-        this.selectedEvents = [];
-        if (this.inspector) {
-          this.inspector.hide();
-        }
-        this.updateFileIndicator();
-        this.setSaveStatus('saved');
-        this.renderTracks();
-        this.showDirector.loadScript(this.getFlattenedSequences());
-        if (this.showDirector) {
-          this.showDirector.seek(savedTime);
-        }
-        if (this.trackContainer) {
-          this.trackContainer.scrollLeft = savedScrollLeft;
-        }
-        this.anchorTime = savedAnchorTime;
-        if (this.anchorHead) {
-          this.anchorHead.style.left = (savedAnchorTime * this.pixelsPerSecond) + 'px';
-        }
-        alert(t('editor.timelinePanel.importSuccess', { filename: file.name }) || "Import thành công!");
+        this.loadShowFromFileData(
+          {
+            filePath: null,
+            content: event.target.result,
+            filename: file.name,
+            companionAudios: null
+          },
+          {
+            skipConfirm: true
+          }
+        );
       } catch (err) {
-        alert("Lỗi khi đọc file JSON: " + err.message);
+        alert(
+          t(
+            'editor.timelinePanel.readJsonError',
+            { error: err.message }
+          ) || ('Error reading JSON file: ' + err.message)
+        );
       }
       this.fileInput.value = '';
     };
