@@ -56,6 +56,7 @@
       ]
     },
     "nsis": {
+      "artifactName": "${productName}-Setup-${version}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
@@ -75,7 +76,7 @@
     "wait-on": "^9.0.10"
   },
   "dependencies": {
-    "@shell-drone/firework-engine": "github:ThaoLinn20/firework-engine",
+    "@shell-drone/firework-engine": "git+https://github.com/ThaoLinn20/firework-engine.git",
     "electron-updater": "^6.8.11",
     "three": "^0.183.2"
   }

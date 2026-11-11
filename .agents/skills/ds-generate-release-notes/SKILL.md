@@ -45,28 +45,21 @@ Categorize the fetched commits into the following standard groups:
   `npm version <new_version_without_v> --no-git-tag-version`
   (For example, `npm version 3.4.0 --no-git-tag-version`). This keeps both `package.json` and `package-lock.json` synchronized so `npm ci` in CI/CD works cleanly.
 
-## 5. Run Full Test Suite & Electron Production Build
-Run all verification and build steps in order:
+## 5. Run Full Test Suite & Vite Production Bundle
+Run verification steps locally without duplicating the full Electron packaging that GitHub Actions performs:
 1. Run full unit tests:
    `npm test`
-2. Run Vite production bundle & Electron Windows packaging:
-   `npm run electron:build`
-   (Which executes `npm run build && electron-builder` to output artifacts into `dist-electron/`).
-3. Inspect `dist-electron/` and `dist-electron/latest.yml` to verify that ALL required auto-update and installer artifacts were generated without errors:
-   - Windows NSIS installer `.exe` (required for `electron-updater` auto-updates)
-   - Differential blockmap `.exe.blockmap`
-   - Update metadata `latest.yml` (critical for auto-update version discovery)
-   - Portable `.zip` archive (if configured in `package.json`)
-4. If `npm run electron:build` fails (e.g. missing network cache on first run or missing build tool), diagnose and resolve or report the exact blocker before tagging/releasing.
+2. Verify production Vite bundle compiles cleanly:
+   `npm run build`
+3. Optional local packaging: only run `npm run electron:build` locally if debugging Windows installer output or publishing manually from local. Normally CI (`.github/workflows/release.yml`) builds and publishes the NSIS `.exe`, `.exe.blockmap`, portable `.zip`, and `latest.yml` once on tag push.
 
 ## 6. Determine Download Links (for RELEASE_NOTES.md only)
 Determine the exact download URLs for `.exe` (Windows Installer) and `.zip` (Portable Archive):
 1. **User-Provided Link**: If the user provided a download URL or draft release hash in their message, use that exact base path and file names.
-2. **Inspect `dist-electron` & `dist-electron/latest.yml`**: Read `dist-electron/latest.yml` and list `dist-electron/` to verify the exact artifact filenames produced by `electron-builder`. Note that when `electron-builder` or GitHub Releases uploads filenames containing spaces, spaces are converted to dashes or dots depending on upload method (`electron-builder --publish always` preserves its generated upload naming, typically replacing spaces with dashes `-`, while manual browser upload replaces spaces with dots `.`). Match the exact asset names used by the release workflow.
-3. **Standard Canonical Release URL Structure**:
+2. **Standard Canonical Release URL Structure** (`package.json` configures `nsis.artifactName: "${productName}-Setup-${version}.${ext}"` so installer names use dashes cleanly without spaces):
    - Base URL: `https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/[New Version Tag]/`
-   - Windows Installer (.exe): `[fdshowstudio-setup-<version>.exe](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/[New Version Tag]/<exact-exe-filename>)`
-   - Portable Archive (.zip): `[fdshowstudio-<version>-win.zip](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/[New Version Tag]/<exact-zip-filename>)`
+   - Windows Installer (.exe): `[FDShowStudio-Setup-<version>.exe](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/[New Version Tag]/FDShowStudio-Setup-<version>.exe)`
+   - Portable Archive (.zip): `[FDShowStudio-<version>-win.zip](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/[New Version Tag]/FDShowStudio-<version>-win.zip)`
    - All Release Assets: `[GitHub Releases [New Version Tag]](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/tag/[New Version Tag])`
 
 ## 7. Format the Canonical Release Notes (RELEASE_NOTES.md)
