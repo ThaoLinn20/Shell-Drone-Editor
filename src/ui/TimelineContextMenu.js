@@ -152,7 +152,8 @@ export class TimelineContextMenu {
       execute: (context) => {
         if (context.timelineEditor) {
           context.timelineEditor.addSequence(
-            context.timelineEditor.anchorTime
+            context.timelineEditor.anchorTime,
+            'context_menu'
           );
         }
       }

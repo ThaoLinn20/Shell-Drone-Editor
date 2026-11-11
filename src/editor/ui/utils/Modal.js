@@ -50,6 +50,7 @@ export function customAlert(message) {
     btns.style.justifyContent = 'flex-end';
 
     const okBtn = document.createElement('button');
+    okBtn.dataset.confirmAction = 'ok';
     okBtn.textContent = t('editor.okBtn') || 'OK';
     okBtn.style.background = '#3a86ff';
     okBtn.style.border = 'none';
@@ -192,6 +193,7 @@ export function customPrompt(title, defaultValue = "") {
     });
 
     const okBtn = document.createElement('button');
+    okBtn.dataset.confirmAction = 'ok';
     okBtn.textContent = t('editor.okBtn') || 'OK';
     okBtn.style.background = '#3a86ff';
     okBtn.style.border = 'none';
@@ -353,6 +355,7 @@ export function customConfirm(
 ) {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
+    overlay.dataset.confirmModal = 'true';
     overlay.style.position = 'fixed';
     overlay.style.top = '0';
     overlay.style.left = '0';
@@ -431,6 +434,7 @@ export function customConfirm(
     cancelBtn.style.fontSize = '12px';
 
     const okBtn = document.createElement('button');
+    okBtn.dataset.confirmAction = 'ok';
     okBtn.textContent = t('editor.okBtn') || 'OK';
     okBtn.style.background = '#3a86ff';
     okBtn.style.border = 'none';

@@ -322,7 +322,7 @@ describe('TimelineContextMenu', () => {
     expect(addSeqAction.isEnabled(context)).toBe(true);
 
     addSeqAction.execute(context);
-    expect(mockTimelineEditor.addSequence).toHaveBeenCalledWith(5);
+    expect(mockTimelineEditor.addSequence).toHaveBeenCalledWith(5, 'context_menu');
   });
 
   it('should disable paste when clipboardEvents is empty and enable when non-empty', () => {

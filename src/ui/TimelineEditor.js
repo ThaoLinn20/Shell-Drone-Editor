@@ -16,6 +16,7 @@ import { ShowLibraryModal } from './ShowLibraryModal.js';
 import { OnboardingFlow } from './OnboardingFlow.js';
 import { GuideHubModal } from './GuideHubModal.js';
 import { ReuseBlocksGuideFlow } from './ReuseBlocksGuideFlow.js';
+import { CreateScriptGuideFlow } from './CreateScriptGuideFlow.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 
 
@@ -61,6 +62,7 @@ export class TimelineEditor {
     this.showLibraryModal = new ShowLibraryModal(this);
     this.onboardingFlow = new OnboardingFlow(this);
     this.reuseBlocksGuide = new ReuseBlocksGuideFlow(this);
+    this.createScriptGuide = new CreateScriptGuideFlow(this);
     this.guideHubModal = new GuideHubModal(this);
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
@@ -192,12 +194,14 @@ export class TimelineEditor {
         this.createNewScript();
       }
     );
+    this.newBtn = newBtn;
 
     const addBtn = document.createElement('button');
     addBtn.textContent = t('editor.timelinePanel.addSequence');
     addBtn.title = t('editor.timelinePanel.addSequenceTooltip') ||
       'Add sequence event at Anchor Head time';
     addBtn.addEventListener('click', () => this.addSequence(this.anchorTime));
+    this.addBtn = addBtn;
 
     const exportBtn = document.createElement('button');
     exportBtn.textContent = t('editor.timelinePanel.exportBtn') || 'Export';
@@ -211,6 +215,7 @@ export class TimelineEditor {
         this.exportSequence(false);
       }
     );
+    this.exportBtn = exportBtn;
 
     this.fileInput = document.createElement('input');
     this.fileInput.type = 'file';
@@ -1301,7 +1306,7 @@ export class TimelineEditor {
     this.playhead.style.left = (time * this.pixelsPerSecond) + 'px';
   }
 
-  addSequence(time = this.anchorTime) {
+  addSequence(time = this.anchorTime, source = 'toolbar') {
     this.saveHistoryState();
     const newSeq = {
       time: Math.round(time * 10) / 10,
@@ -1319,6 +1324,13 @@ export class TimelineEditor {
     // Auto-scroll track container to show the new event
     const scrollPos = time * this.pixelsPerSecond;
     this.trackContainer.scrollLeft = Math.max(0, scrollPos - 100);
+    globalEventBus.emit(
+      'timeline:sequence-added',
+      {
+        source,
+        time: newSeq.time
+      }
+    );
   }
 
   addAudioSequence(time, file) {
@@ -2295,13 +2307,16 @@ export class TimelineEditor {
 
   async createNewScript() {
     if (this.sequences && this.sequences.length > 0) {
-      const confirmed = await customConfirm(
+      const confirmPromise = customConfirm(
         t('editor.timelinePanel.newScriptConfirm') ||
           'Tạo kịch bản mới sẽ làm mới timeline. Mọi block và audio chưa lưu sẽ bị xóa. Bạn có chắc chắn muốn tiếp tục?',
         t('editor.timelinePanel.newScriptTitle') ||
           'Tạo kịch bản mới'
       );
+      globalEventBus.emit('timeline:new-script-confirm-opened');
+      const confirmed = await confirmPromise;
       if (!confirmed) {
+        globalEventBus.emit('timeline:new-script-confirm-cancelled');
         return;
       }
     }
@@ -2347,6 +2362,7 @@ export class TimelineEditor {
       t('editor.timelinePanel.newScriptCreated') ||
         'Đã tạo kịch bản mới rỗng'
     );
+    globalEventBus.emit('timeline:new-script-created');
   }
 
   async saveDirectly() {
@@ -2436,6 +2452,14 @@ export class TimelineEditor {
           if (!silent) {
             alert(t('editor.timelinePanel.saveSuccess', { filename: this.filename }));
           }
+          if (!isAutoSave) {
+            globalEventBus.emit(
+              'timeline:script-saved',
+              {
+                filename: this.filename
+              }
+            );
+          }
         } catch (err) {
           this.setSaveStatus('error');
           if (silent) {
@@ -2472,6 +2496,12 @@ export class TimelineEditor {
               if (!silent) {
                 alert(`Đã lưu kịch bản mới thành công vào: ${res.filename}`);
               }
+              globalEventBus.emit(
+                'timeline:script-saved',
+                {
+                  filename: res.filename
+                }
+              );
             } else {
               this.setSaveStatus('unsaved');
             }
@@ -2499,6 +2529,14 @@ export class TimelineEditor {
     if (silent) {
       localStorage.setItem(`seq:${(this.filename || 'demoShow').replace('.json', '')}`, content);
       this.setSaveStatus('saved');
+      if (!isAutoSave) {
+        globalEventBus.emit(
+          'timeline:script-saved',
+          {
+            filename: this.filename || 'demoShow.json'
+          }
+        );
+      }
       return;
     }
 
@@ -2514,6 +2552,14 @@ export class TimelineEditor {
       URL.revokeObjectURL(url);
       this.setSaveStatus('saved');
       alert(t('editor.timelinePanel.saveSuccess', { filename: this.filename || 'demoShow.json' }));
+      if (!isAutoSave) {
+        globalEventBus.emit(
+          'timeline:script-saved',
+          {
+            filename: this.filename || 'demoShow.json'
+          }
+        );
+      }
     } catch (err) {
       this.setSaveStatus('error');
       alert(t('editor.timelinePanel.saveError', { error: err.message }));
