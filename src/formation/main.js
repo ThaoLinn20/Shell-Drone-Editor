@@ -3,6 +3,7 @@ import { CameraManager } from '../core/CameraManager.js';
 import { SceneManager } from '../core/SceneManager.js';
 import { Renderer } from '../core/Renderer.js';
 import { FormationDirector } from './FormationDirector.js';
+import { initUpdateNotifier } from '../ui/UpdateNotifier.js';
 import '../style.css';
 
 
@@ -36,4 +37,20 @@ function animate() {
 
 // Start simulation
 animate();
+
+initUpdateNotifier({
+  hasUnsavedChanges: () => Boolean(
+    formationDirector &&
+    formationDirector.state &&
+    formationDirector.state.isDirty
+  ),
+  saveChanges: async () => {
+    if (!formationDirector) {
+      return true;
+    }
+    return formationDirector.saveDirectly({
+      silent: true
+    });
+  }
+});
 

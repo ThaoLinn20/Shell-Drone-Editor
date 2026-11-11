@@ -4,6 +4,7 @@ import { SceneManager } from '../core/SceneManager.js';
 import { Renderer } from '../core/Renderer.js';
 import { EditorDirector } from './EditorDirector.js';
 import { PerformanceMonitor } from '../core/PerformanceMonitor.js';
+import { initUpdateNotifier } from '../ui/UpdateNotifier.js';
 
 // Khởi tạo các Core ECS tương tự main.js nhưng không load ShowSequencer
 const clock = new Clock();
@@ -39,3 +40,19 @@ function animate() {
 
 // Start simulation
 animate();
+
+initUpdateNotifier({
+  hasUnsavedChanges: () => Boolean(
+    editorDirector &&
+    editorDirector.state &&
+    editorDirector.state.isDirty
+  ),
+  saveChanges: async () => {
+    if (!editorDirector) {
+      return true;
+    }
+    return editorDirector.saveDirectly({
+      silent: true
+    });
+  }
+});

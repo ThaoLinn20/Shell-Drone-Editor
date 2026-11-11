@@ -14,12 +14,21 @@
     "media:mute-previews": "node scripts/mute-preview-videos.js",
     "assets:slice-moons": "node scripts/slice-moons.js",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-    "electron:build": "npm run build && electron-builder"
+    "electron:build": "npm run build && electron-builder",
+    "electron:publish": "npm run build && electron-builder --publish always"
   },
   "build": {
     "appId": "com.droneshell.editor",
     "productName": "Firework & Drone Show Studio",
     "copyright": "Copyright © 2026 ThaoLinn20",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ThAolInh20",
+        "repo": "Shell-Drone-Editor",
+        "releaseType": "release"
+      }
+    ],
     "directories": {
       "output": "dist-electron"
     },
@@ -67,6 +76,7 @@
   },
   "dependencies": {
     "@shell-drone/firework-engine": "github:ThaoLinn20/firework-engine",
+    "electron-updater": "^6.8.11",
     "three": "^0.183.2"
   }
 }

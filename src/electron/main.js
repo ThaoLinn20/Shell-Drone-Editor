@@ -9,6 +9,7 @@ import {
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { setupAutoUpdater } from './updater.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,7 @@ const __dirname = path.dirname(__filename);
 const isDev = !app.isPackaged;
 
 let mainWindow = null;
+let updaterController = null;
 
 // Resolve the sequences directory path safely
 const sequencesDir = isDev
@@ -235,6 +237,28 @@ function createWindow() {
         ] : [
           { role: 'close', label: 'Close' }
         ])
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Check for Updates...',
+          click: () => {
+            if (updaterController) {
+              updaterController.checkForUpdates({
+                manual: true
+              });
+            }
+          }
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: `Version ${app.getVersion()}`,
+          enabled: false
+        }
       ]
     }
   ];
@@ -470,7 +494,12 @@ ipcMain.handle('open-external', async (event, url) => {
 
 
 app.whenReady().then(() => {
+  updaterController = setupAutoUpdater({
+    getMainWindow: () => mainWindow
+  });
+
   createWindow();
+  updaterController.scheduleStartupCheck();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -861,5 +861,23 @@ export default {
         geometryOffsets: "value: 0 -> 1"
       }
     }
+  },
+  updater: {
+    checkingToast: "アップデートを確認しています...",
+    upToDateToast: "最新バージョン {version} を使用しています",
+    devModeToast: "自動アップデート確認はパッケージ版でのみ動作します",
+    errorToast: "アップデートの確認に失敗しました: {error}",
+    availableTitle: "新しいバージョン {version} が利用可能です",
+    downloadingTitle: "アップデート {version} をダウンロード中",
+    downloadingProgress: "{percent}% 完了",
+    downloadedTitle: "アップデート {version} の準備ができました",
+    downloadedDesc: "新しいバージョンのインストールを完了するにはアプリを再起動してください。",
+    restartNowBtn: "再起動してアップデート",
+    laterBtn: "後で",
+    unsavedTitle: "未保存の変更",
+    unsavedMessage: "未保存の変更があります。アップデートのために再起動する前に保存しますか？",
+    saveAndRestartBtn: "保存して再起動",
+    restartWithoutSavingBtn: "保存せずに更新",
+    cancelBtn: "キャンセル"
   }
 };

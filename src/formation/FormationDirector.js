@@ -444,6 +444,7 @@ export class FormationDirector extends BaseDirector {
             this.state.currentFilePath,
             content
           );
+          this.state.isDirty = false;
           if (silent) {
             showToast(
               isAutoSave
@@ -454,12 +455,14 @@ export class FormationDirector extends BaseDirector {
           } else {
             alert(t('editor.formationPanel.saveSuccessDirect', { filename: this.state.name }));
           }
+          return true;
         } catch (err) {
           if (silent) {
             showToast('Lỗi khi lưu file: ' + err.message, 'error');
           } else {
             alert(t('editor.formationPanel.saveErrorDirect', { error: err.message }));
           }
+          return false;
         }
       } else {
         // No file path set yet
@@ -469,9 +472,12 @@ export class FormationDirector extends BaseDirector {
               `${this.state.name}.json`,
               content
             );
+            this.state.isDirty = false;
             showToast(`Đã tự động lưu: ${this.state.name}.json`, 'info');
+            return true;
           } catch (e) {
             console.warn('Auto-save error:', e);
+            return false;
           }
         } else {
           // Save As
@@ -483,22 +489,25 @@ export class FormationDirector extends BaseDirector {
             if (res) {
               this.state.currentFilePath = res.filePath;
               this.state.name = res.filename.replace('.json', '');
+              this.state.isDirty = false;
               if (silent) {
                 showToast(`Đã lưu đội hình mới: ${res.filename}`, 'success');
               } else {
                 alert(t('editor.formationPanel.saveNewSuccess', { filename: res.filename }));
               }
+              return true;
             }
+            return false;
           } catch (err) {
             if (silent) {
               showToast('Lỗi khi lưu mới file: ' + err.message, 'error');
             } else {
               alert(t('editor.formationPanel.saveNewError', { error: err.message }));
             }
+            return false;
           }
         }
       }
-      return;
     }
 
     // Fallback to browser download if not in Electron

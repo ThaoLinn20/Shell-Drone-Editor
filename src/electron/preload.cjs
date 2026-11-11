@@ -7,6 +7,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveFileDialog: (content, defaultName) => ipcRenderer.invoke('save-file-dialog', { content, defaultName }),
   saveFileAbsolute: (filePath, content) => ipcRenderer.invoke('save-file-absolute', { filePath, content }),
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  getUpdateState: () => ipcRenderer.invoke('updater:get-state'),
+  checkForUpdates: () => ipcRenderer.invoke('updater:check'),
+  quitAndInstallUpdate: () => ipcRenderer.invoke('updater:quit-and-install'),
+  onUpdateStatus: (callback) => {
+    const handler = (_event, state) => callback(state);
+    ipcRenderer.on('updater:status', handler);
+    return () => {
+      ipcRenderer.removeListener('updater:status', handler);
+    };
+  },
   onChangeLanguage: (callback) => ipcRenderer.on('change-language', (event, lang) => callback(lang)),
   onMenuAction: (callback) => ipcRenderer.on('menu-action', (event, action, data) => callback(action, data))
 });

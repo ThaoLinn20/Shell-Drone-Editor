@@ -872,5 +872,23 @@ export default {
         geometryOffsets: "value: 0 -> 1"
       }
     }
+  },
+  updater: {
+    checkingToast: "Đang kiểm tra bản cập nhật...",
+    upToDateToast: "Bạn đang sử dụng phiên bản mới nhất {version}",
+    devModeToast: "Kiểm tra cập nhật tự động chỉ hoạt động ở bản đóng gói",
+    errorToast: "Kiểm tra cập nhật thất bại: {error}",
+    availableTitle: "Đã có phiên bản mới {version}",
+    downloadingTitle: "Đang tải bản cập nhật {version}",
+    downloadingProgress: "Đã tải {percent}%",
+    downloadedTitle: "Bản cập nhật {version} đã sẵn sàng",
+    downloadedDesc: "Khởi động lại ứng dụng để hoàn tất cài đặt phiên bản mới.",
+    restartNowBtn: "Khởi động lại và cập nhật",
+    laterBtn: "Để sau",
+    unsavedTitle: "Thay đổi chưa được lưu",
+    unsavedMessage: "Bạn có thay đổi chưa lưu. Bạn có muốn lưu lại trước khi khởi động lại để cập nhật không?",
+    saveAndRestartBtn: "Lưu và khởi động lại",
+    restartWithoutSavingBtn: "Cập nhật không lưu",
+    cancelBtn: "Hủy"
   }
 };
