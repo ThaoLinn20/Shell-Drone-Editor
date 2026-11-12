@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   ReuseBlocksStateMachine,
   REUSE_GUIDE_STEPS
-} from '../../src/ui/ReuseBlocksStateMachine.js';
+} from '../../../src/ui/guides/ReuseBlocksStateMachine.js';
 
 function createEventBus() {
   const listeners = new Map();
@@ -202,11 +202,11 @@ describe('ReuseBlocksGuideFlow', () => {
       open: vi.fn()
     });
 
-    const flowMod = await import('../../src/ui/ReuseBlocksGuideFlow.js');
+    const flowMod = await import('../../../src/ui/guides/ReuseBlocksGuideFlow.js');
     ReuseBlocksGuideFlow = flowMod.ReuseBlocksGuideFlow;
-    const editorMod = await import('../../src/ui/TimelineEditor.js');
+    const editorMod = await import('../../../src/ui/TimelineEditor.js');
     TimelineEditor = editorMod.TimelineEditor;
-    const busMod = await import('../../src/core/EventBus.js');
+    const busMod = await import('../../../src/core/EventBus.js');
     globalEventBus = busMod.globalEventBus;
   });
 

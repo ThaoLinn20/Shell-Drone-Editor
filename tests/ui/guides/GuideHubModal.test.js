@@ -106,10 +106,10 @@ describe('GuideHubModal', () => {
       }
     };
 
-    const i18nMod = await import('../../src/config/lang/i18n.js');
+    const i18nMod = await import('../../../src/config/lang/i18n.js');
     setLanguage = i18nMod.setLanguage;
     setLanguage('en');
-    const mod = await import('../../src/ui/GuideHubModal.js');
+    const mod = await import('../../../src/ui/guides/GuideHubModal.js');
     GuideHubModal = mod.GuideHubModal;
     modal = new GuideHubModal(mockTimelineEditor);
   });

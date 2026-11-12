@@ -1,6 +1,6 @@
-import { t } from '../config/lang/i18n.js';
-import { globalEventBus } from '../core/EventBus.js';
-import { showToast } from '../utils/Toast.js';
+import { t } from '../../config/lang/i18n.js';
+import { globalEventBus } from '../../core/EventBus.js';
+import { showToast } from '../../utils/Toast.js';
 import { InteractiveSpotlight } from './InteractiveSpotlight.js';
 import {
   OnboardingStateMachine,

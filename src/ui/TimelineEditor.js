@@ -10,15 +10,15 @@ import {
 } from '../editor/ui/utils/Modal.js';
 import { showToast } from '../utils/Toast.js';
 import { WaveformGenerator } from '../utils/WaveformGenerator.js';
-import { TimelineTourGuide } from './TimelineTourGuide.js';
+import { TimelineTourGuide } from './guides/TimelineTourGuide.js';
 import { TimelineContextMenu } from './TimelineContextMenu.js';
 import { ShowLibraryModal } from './ShowLibraryModal.js';
-import { OnboardingFlow } from './OnboardingFlow.js';
-import { GuideHubModal } from './GuideHubModal.js';
-import { ReuseBlocksGuideFlow } from './ReuseBlocksGuideFlow.js';
-import { CreateScriptGuideFlow } from './CreateScriptGuideFlow.js';
-import { WelcomeGuideFlow } from './WelcomeGuideFlow.js';
-import { AudioBeatsGuideFlow } from './AudioBeatsGuideFlow.js';
+import { OnboardingFlow } from './guides/OnboardingFlow.js';
+import { GuideHubModal } from './guides/GuideHubModal.js';
+import { ReuseBlocksGuideFlow } from './guides/ReuseBlocksGuideFlow.js';
+import { CreateScriptGuideFlow } from './guides/CreateScriptGuideFlow.js';
+import { WelcomeGuideFlow } from './guides/WelcomeGuideFlow.js';
+import { AudioBeatsGuideFlow } from './guides/AudioBeatsGuideFlow.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 
 

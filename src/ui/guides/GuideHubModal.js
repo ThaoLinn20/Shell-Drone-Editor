@@ -1,9 +1,9 @@
-import { t } from '../config/lang/i18n.js';
-import { globalEventBus } from '../core/EventBus.js';
+import { t } from '../../config/lang/i18n.js';
+import { globalEventBus } from '../../core/EventBus.js';
 import {
   createModalButton,
   createModalShell
-} from './ModalShell.js';
+} from '../ModalShell.js';
 
 export const GUIDE_TAGS = {
   all: {

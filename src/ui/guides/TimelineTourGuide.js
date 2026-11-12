@@ -1,5 +1,5 @@
-import { t } from '../config/lang/i18n.js';
-import { globalEventBus } from '../core/EventBus.js';
+import { t } from '../../config/lang/i18n.js';
+import { globalEventBus } from '../../core/EventBus.js';
 
 export class TimelineTourGuide {
   constructor(timelineEditor) {

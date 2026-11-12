@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   CreateScriptStateMachine,
   CREATE_SCRIPT_STEPS
-} from '../../src/ui/CreateScriptStateMachine.js';
+} from '../../../src/ui/guides/CreateScriptStateMachine.js';
 
 function createEventBus() {
   const listeners = new Map();
@@ -171,9 +171,9 @@ describe('CreateScriptGuideFlow', () => {
       open: vi.fn()
     });
 
-    const { CreateScriptGuideFlow } = await import('../../src/ui/CreateScriptGuideFlow.js');
-    const { TimelineEditor } = await import('../../src/ui/TimelineEditor.js');
-    const { globalEventBus } = await import('../../src/core/EventBus.js');
+    const { CreateScriptGuideFlow } = await import('../../../src/ui/guides/CreateScriptGuideFlow.js');
+    const { TimelineEditor } = await import('../../../src/ui/TimelineEditor.js');
+    const { globalEventBus } = await import('../../../src/core/EventBus.js');
 
     const mockDirector = {
       elapsedTime: 0,

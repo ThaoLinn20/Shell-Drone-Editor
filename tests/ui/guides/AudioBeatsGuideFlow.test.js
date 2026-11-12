@@ -3,7 +3,7 @@ import {
   AudioBeatsStateMachine,
   AUDIO_BEATS_STEPS,
   DEFAULT_TARGET_BEATS
-} from '../../src/ui/AudioBeatsStateMachine.js';
+} from '../../../src/ui/guides/AudioBeatsStateMachine.js';
 
 function createEventBus() {
   const listeners = new Map();
@@ -251,9 +251,9 @@ describe('AudioBeatsGuideFlow with TimelineEditor and PropertyInspector', () => 
       open: vi.fn()
     });
 
-    const { TimelineEditor } = await import('../../src/ui/TimelineEditor.js');
-    const { AudioBeatsGuideFlow } = await import('../../src/ui/AudioBeatsGuideFlow.js');
-    const { globalEventBus } = await import('../../src/core/EventBus.js');
+    const { TimelineEditor } = await import('../../../src/ui/TimelineEditor.js');
+    const { AudioBeatsGuideFlow } = await import('../../../src/ui/guides/AudioBeatsGuideFlow.js');
+    const { globalEventBus } = await import('../../../src/core/EventBus.js');
 
     const mockDirector = {
       elapsedTime: 0,
