@@ -1,7 +1,13 @@
 import * as THREE from 'three';
 import { PropertyInspector } from './PropertyInspector.js';
 import demoShow from '../config/sequences/demoShow.json';
-import { t } from '../config/lang/i18n.js';
+import {
+  getLanguage,
+  setLanguage,
+  SUPPORTED_LANGUAGES,
+  t
+} from '../config/lang/i18n.js';
+import { CustomSelect } from './CustomSelect.js';
 import { globalEventBus } from '../core/EventBus.js';
 import { fileStorage } from '../core/FileStorageAdapter.js';
 import {
@@ -383,7 +389,6 @@ export class TimelineEditor {
     helpBtn.style.border = '1px solid #486581';
     helpBtn.style.borderRadius = '4px';
     helpBtn.style.cursor = 'pointer';
-    helpBtn.style.marginLeft = 'auto';
     helpBtn.addEventListener(
       'click',
       () => {
@@ -391,6 +396,56 @@ export class TimelineEditor {
       }
     );
     this.helpBtn = helpBtn;
+
+    const langSelect = new CustomSelect({
+      options: SUPPORTED_LANGUAGES,
+      value: getLanguage(),
+      enableSearch: false,
+      fieldName: 'timeline-language',
+      className: 'timeline-lang-select',
+      onChange: async (nextLang) => {
+        if (!nextLang || nextLang === getLanguage()) {
+          return;
+        }
+        const confirmed = await customConfirm(
+          t('editor.timelineTour.languageSwitchConfirmMessage') ||
+            'Switching the language will reload the application and any unsaved script changes may be lost. Do you want to continue?',
+          t('editor.timelineTour.languageSwitchConfirmTitle') ||
+            'Switch Language'
+        );
+        if (!confirmed) {
+          langSelect.setValue(
+            getLanguage(),
+            false
+          );
+          return;
+        }
+        setLanguage(nextLang);
+        if (
+          typeof window !== 'undefined' &&
+          window.location &&
+          typeof window.location.reload === 'function'
+        ) {
+          window.location.reload();
+        }
+      }
+    });
+    langSelect.element.style.width = '115px';
+    langSelect.element.style.flexShrink = '0';
+    langSelect.element.title = t('editor.timelineTour.languageTooltip') ||
+      'Change display language';
+    langSelect.trigger.style.padding = '3px 8px';
+    langSelect.trigger.style.background = '#273544';
+    langSelect.trigger.style.border = '1px solid #486581';
+    this.langSelect = langSelect;
+
+    const rightActionsGroup = document.createElement('div');
+    rightActionsGroup.style.display = 'flex';
+    rightActionsGroup.style.alignItems = 'center';
+    rightActionsGroup.style.gap = '6px';
+    rightActionsGroup.style.marginLeft = 'auto';
+    rightActionsGroup.appendChild(helpBtn);
+    rightActionsGroup.appendChild(langSelect.element);
 
     const libraryBtn = document.createElement('button');
     libraryBtn.textContent =
@@ -422,7 +477,7 @@ export class TimelineEditor {
     toolbar.appendChild(this.fileIndicatorContainer);
     toolbar.appendChild(this.fileInput);
     toolbar.appendChild(this.mediaFileInput);
-    toolbar.appendChild(helpBtn);
+    toolbar.appendChild(rightActionsGroup);
 
     leftPanel.appendChild(toolbar);
 

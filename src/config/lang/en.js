@@ -528,6 +528,10 @@ export default {
     timelineTour: {
       helpBtn: "Guide",
       helpBtnTooltip: "View basic Timeline guide",
+      languageTooltip: "Change display language",
+      languageSwitchConfirmTitle: "Switch Language",
+      languageSwitchConfirmMessage:
+        "Switching the language will reload the application and any unsaved script changes may be lost. Do you want to continue?",
       welcomeTitle: "Explore Timeline Editor",
       welcomeDesc: "The timeline lets you choreograph firework effects, drone trajectories, and musical beats. Would you like a quick 1-minute walkthrough?",
       startTourBtn: "Start Tour",

@@ -528,6 +528,10 @@ export default {
     timelineTour: {
       helpBtn: "Hướng dẫn",
       helpBtnTooltip: "Xem hướng dẫn thao tác cơ bản trên Timeline",
+      languageTooltip: "Đổi ngôn ngữ hiển thị",
+      languageSwitchConfirmTitle: "Đổi ngôn ngữ",
+      languageSwitchConfirmMessage:
+        "Đổi ngôn ngữ sẽ tải lại ứng dụng và có thể làm mất kịch bản đang xử lý chưa lưu. Bạn có muốn tiếp tục?",
       welcomeTitle: "Khám phá Timeline Editor",
       welcomeDesc: "Dòng thời gian giúp bạn biên đạo hiệu ứng pháo hoa, quỹ đạo drone và nhịp phách âm nhạc. Bạn có muốn xem nhanh các tính năng cơ bản trong 1 phút?",
       startTourBtn: "Xem hướng dẫn",

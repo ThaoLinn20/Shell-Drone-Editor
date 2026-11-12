@@ -5,6 +5,25 @@ import ja from './ja.js';
 
 const translations = { en, vi, zh, ja };
 
+export const SUPPORTED_LANGUAGES = [
+  {
+    value: 'en',
+    label: 'English'
+  },
+  {
+    value: 'vi',
+    label: 'Tiếng Việt'
+  },
+  {
+    value: 'zh',
+    label: '中文'
+  },
+  {
+    value: 'ja',
+    label: '日本語'
+  }
+];
+
 // Determine initial language
 let defaultLang = 'en';
 const systemLang = typeof navigator !== 'undefined'

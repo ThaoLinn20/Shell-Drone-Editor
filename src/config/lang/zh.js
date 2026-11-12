@@ -519,6 +519,10 @@ export default {
     timelineTour: {
       helpBtn: "新手引导",
       helpBtnTooltip: "查看时间轴基本功能指南",
+      languageTooltip: "切换显示语言",
+      languageSwitchConfirmTitle: "切换语言",
+      languageSwitchConfirmMessage:
+        "切换语言将重新加载应用，未保存的剧本更改可能会丢失。确定要继续吗？",
       welcomeTitle: "探索时间轴编辑器",
       welcomeDesc: "时间轴用于编排烟花效果、无人机轨迹与音乐节拍。是否需要花1分钟快速了解核心功能？",
       startTourBtn: "开始引导",

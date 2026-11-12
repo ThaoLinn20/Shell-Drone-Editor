@@ -519,6 +519,10 @@ export default {
     timelineTour: {
       helpBtn: "ガイド",
       helpBtnTooltip: "タイムライン基本操作ガイドを表示",
+      languageTooltip: "表示言語を変更",
+      languageSwitchConfirmTitle: "言語の切り替え",
+      languageSwitchConfirmMessage:
+        "言語を切り替えるとアプリが再読み込みされ、未保存の台本変更が失われる可能性があります。続行しますか？",
       welcomeTitle: "タイムラインエディタ入門",
       welcomeDesc: "タイムラインは花火演出、ドローン軌道、音楽ビートを統合編集するエリアです。1分間で基本機能を確認しますか？",
       startTourBtn: "ツアー開始",
