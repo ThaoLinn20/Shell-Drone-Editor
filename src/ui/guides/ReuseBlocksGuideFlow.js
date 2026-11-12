@@ -2,6 +2,7 @@ import { t } from '../../config/lang/i18n.js';
 import { globalEventBus } from '../../core/EventBus.js';
 import { showToast } from '../../utils/Toast.js';
 import { InteractiveSpotlight } from './InteractiveSpotlight.js';
+import { prepareGuideFlowStart } from './guideFlowHelpers.js';
 import {
   ReuseBlocksStateMachine,
   REUSE_GUIDE_STEPS
@@ -21,35 +22,8 @@ export class ReuseBlocksGuideFlow {
   }
 
   start() {
-    if (!this.timelineEditor) {
+    if (!prepareGuideFlowStart(this.timelineEditor, this)) {
       return;
-    }
-    if (!this.timelineEditor.visible) {
-      this.timelineEditor.toggle();
-    }
-    if (
-      this.timelineEditor.onboardingFlow &&
-      this.timelineEditor.onboardingFlow.stateMachine?.isActive
-    ) {
-      this.timelineEditor.onboardingFlow.stateMachine.dismiss();
-    }
-    if (
-      this.timelineEditor.welcomeGuide &&
-      this.timelineEditor.welcomeGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.welcomeGuide.stateMachine.dismiss();
-    }
-    if (
-      this.timelineEditor.createScriptGuide &&
-      this.timelineEditor.createScriptGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.createScriptGuide.stateMachine.dismiss();
-    }
-    if (
-      this.timelineEditor.audioBeatsGuide &&
-      this.timelineEditor.audioBeatsGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.audioBeatsGuide.stateMachine.dismiss();
     }
 
     this.clearedSelectionForSelectStep = false;

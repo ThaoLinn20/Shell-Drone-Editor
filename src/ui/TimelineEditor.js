@@ -19,6 +19,7 @@ import { ReuseBlocksGuideFlow } from './guides/ReuseBlocksGuideFlow.js';
 import { CreateScriptGuideFlow } from './guides/CreateScriptGuideFlow.js';
 import { WelcomeGuideFlow } from './guides/WelcomeGuideFlow.js';
 import { AudioBeatsGuideFlow } from './guides/AudioBeatsGuideFlow.js';
+import { TimelineControlsGuideFlow } from './guides/TimelineControlsGuideFlow.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 
 
@@ -67,6 +68,7 @@ export class TimelineEditor {
     this.createScriptGuide = new CreateScriptGuideFlow(this);
     this.welcomeGuide = new WelcomeGuideFlow(this);
     this.audioBeatsGuide = new AudioBeatsGuideFlow(this);
+    this.timelineControlsGuide = new TimelineControlsGuideFlow(this);
     this.guideHubModal = new GuideHubModal(this);
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
@@ -478,7 +480,8 @@ export class TimelineEditor {
       );
       this.setAnchorTime(
         time,
-        true
+        true,
+        'ruler'
       );
     });
     this.ruler.addEventListener('contextmenu', (e) => {
@@ -538,7 +541,8 @@ export class TimelineEditor {
       );
       this.setAnchorTime(
         time,
-        true
+        true,
+        'empty_space_context'
       );
       this.contextMenu.show(
         e.clientX,
@@ -1032,6 +1036,12 @@ export class TimelineEditor {
           offset: s.time - minTime
         };
       });
+      globalEventBus.emit(
+        'timeline:copied',
+        {
+          count: this.clipboardEvents.length
+        }
+      );
     }
   }
 
@@ -1064,6 +1074,14 @@ export class TimelineEditor {
       }
 
       this.renderTracks();
+      globalEventBus.emit(
+        'timeline:pasted',
+        {
+          count: newPastedEvents.length,
+          anchorTime: this.anchorTime,
+          events: newPastedEvents
+        }
+      );
     }
   }
 
@@ -1296,7 +1314,7 @@ export class TimelineEditor {
     return result;
   }
 
-  setAnchorTime(time, shouldSeek = true) {
+  setAnchorTime(time, shouldSeek = true, source = 'programmatic') {
     const clampedTime = Math.max(
       0,
       time
@@ -1306,6 +1324,14 @@ export class TimelineEditor {
       this.anchorHead.style.left =
         (clampedTime * this.pixelsPerSecond) + 'px';
     }
+    globalEventBus.emit(
+      'timeline:anchor-changed',
+      {
+        time: clampedTime,
+        shouldSeek,
+        source
+      }
+    );
     if (shouldSeek) {
       this.seek(clampedTime);
       let matchedBeat = null;
@@ -1622,6 +1648,9 @@ export class TimelineEditor {
       this.blockDomMap.set(seq, block);
       block.className = `timeline-event-block timeline-block-${seq.type}`;
       block.dataset.eventType = seq.type;
+      block.dataset.selected = this.selectedEvents.includes(seq)
+        ? 'true'
+        : 'false';
       const startX = seq.time * this.pixelsPerSecond;
       const visualDurationVal = seq.uiDuration !== undefined ? seq.uiDuration : (seq.duration || 0);
       const width = Math.max(visualDurationVal * this.pixelsPerSecond, this.minBlockWidth);
@@ -1839,7 +1868,8 @@ export class TimelineEditor {
                 e.stopPropagation();
                 this.setAnchorTime(
                   seq.time + beatTime,
-                  true
+                  true,
+                  'beat_dot'
                 );
                 this.selectedEvents = [seq];
                 this.inspector.show(seq);
@@ -1914,6 +1944,11 @@ export class TimelineEditor {
       });
 
       const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'timeline-block-resize-handle';
+      if (!resizeHandle.dataset) {
+        resizeHandle.dataset = {};
+      }
+      resizeHandle.dataset.role = 'resize-handle';
       resizeHandle.style.position = 'absolute';
       resizeHandle.style.right = '0';
       resizeHandle.style.top = '0';
@@ -2181,6 +2216,39 @@ export class TimelineEditor {
       this.ctrlClickedSeq = null;
     }
 
+    const wasDragging = this.isDragging && this.draggedEvent;
+    const draggedEvent = this.draggedEvent;
+    const hasMovedBlock = Boolean(
+      wasDragging &&
+      (
+        (
+          this.selectedEvents &&
+          this.selectedEvents.some(
+            (s) => s.initialTime !== undefined && Math.abs(s.time - s.initialTime) > 1e-4
+          )
+        ) ||
+        (
+          draggedEvent.initialTime !== undefined &&
+          Math.abs(draggedEvent.time - draggedEvent.initialTime) > 1e-4
+        )
+      )
+    );
+
+    const wasResizing = this.isResizing && this.resizedEvent;
+    const resizedEvent = this.resizedEvent;
+    const resizedDuration = resizedEvent
+      ? (
+        resizedEvent.uiDuration !== undefined
+          ? resizedEvent.uiDuration
+          : (resizedEvent.duration || 0)
+      )
+      : 0;
+    const hasResizedBlock = Boolean(
+      wasResizing &&
+      this.initialDuration !== undefined &&
+      Math.abs(resizedDuration - this.initialDuration) > 1e-4
+    );
+
     this.isDragging = false;
     this.draggedEvent = null;
     this.isResizing = false;
@@ -2189,6 +2257,27 @@ export class TimelineEditor {
       this.selectedEvents.forEach(s => {
         delete s.initialTime;
       });
+    }
+
+    if (hasMovedBlock) {
+      globalEventBus.emit(
+        'timeline:block-moved',
+        {
+          event: draggedEvent,
+          time: draggedEvent.time,
+          selectedCount: this.selectedEvents ? this.selectedEvents.length : 0
+        }
+      );
+    }
+
+    if (hasResizedBlock) {
+      globalEventBus.emit(
+        'timeline:block-resized',
+        {
+          event: resizedEvent,
+          duration: resizedDuration
+        }
+      );
     }
   }
 

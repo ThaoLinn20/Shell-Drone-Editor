@@ -99,6 +99,9 @@ describe('GuideHubModal', () => {
       audioBeatsGuide: {
         start: vi.fn()
       },
+      timelineControlsGuide: {
+        start: vi.fn()
+      },
       tourGuide: {
         startTour: vi.fn(),
         startInspectorTour: vi.fn(),
@@ -124,7 +127,7 @@ describe('GuideHubModal', () => {
     vi.restoreAllMocks();
   });
 
-  it('should render all 7 default guides sorted with important/basic first and support custom guides', () => {
+  it('should render all 8 default guides sorted with important/basic first and support custom guides', () => {
     modal.registerGuide({
       id: 'custom_guide',
       title: 'Custom Guide',
@@ -139,15 +142,16 @@ describe('GuideHubModal', () => {
 
     expect(modal.isVisible).toBe(true);
     expect(modal.overlay.style.display).toBe('flex');
-    expect(modal.listContainer.children.length).toBe(8);
+    expect(modal.listContainer.children.length).toBe(9);
     expect(modal.listContainer.children[0].dataset.guideId).toBe('quick_start');
     expect(modal.listContainer.children[1].dataset.guideId).toBe('reuse_blocks');
     expect(modal.listContainer.children[2].dataset.guideId).toBe('create_and_export_script');
-    expect(modal.listContainer.children[3].dataset.guideId).toBe('audio_and_beats');
-    expect(modal.listContainer.children[4].dataset.guideId).toBe('welcome_guide');
-    expect(modal.listContainer.children[5].dataset.guideId).toBe('timeline_tour');
-    expect(modal.listContainer.children[6].dataset.guideId).toBe('inspector_tour');
-    expect(modal.listContainer.children[7].dataset.guideId).toBe('custom_guide');
+    expect(modal.listContainer.children[3].dataset.guideId).toBe('timeline_controls');
+    expect(modal.listContainer.children[4].dataset.guideId).toBe('audio_and_beats');
+    expect(modal.listContainer.children[5].dataset.guideId).toBe('welcome_guide');
+    expect(modal.listContainer.children[6].dataset.guideId).toBe('timeline_tour');
+    expect(modal.listContainer.children[7].dataset.guideId).toBe('inspector_tour');
+    expect(modal.listContainer.children[8].dataset.guideId).toBe('custom_guide');
 
     const guides = modal.getDefaultGuides();
     expect(guides.find((g) => g.id === 'quick_start').tags).toEqual([
@@ -155,6 +159,10 @@ describe('GuideHubModal', () => {
       'basic'
     ]);
     expect(guides.find((g) => g.id === 'reuse_blocks').tags).toEqual([
+      'important',
+      'basic'
+    ]);
+    expect(guides.find((g) => g.id === 'timeline_controls').tags).toEqual([
       'important',
       'basic'
     ]);
@@ -193,10 +201,11 @@ describe('GuideHubModal', () => {
       (chip) => chip.dataset.tagId === 'basic'
     );
     basicChip.trigger('click');
-    expect(modal.listContainer.children.length).toBe(3);
+    expect(modal.listContainer.children.length).toBe(4);
     expect(modal.listContainer.children[0].dataset.guideId).toBe('quick_start');
     expect(modal.listContainer.children[1].dataset.guideId).toBe('reuse_blocks');
     expect(modal.listContainer.children[2].dataset.guideId).toBe('create_and_export_script');
+    expect(modal.listContainer.children[3].dataset.guideId).toBe('timeline_controls');
   });
 
   it('should search guides case-insensitively and diacritic-insensitively across title, desc, and tags', () => {
@@ -207,7 +216,7 @@ describe('GuideHubModal', () => {
     // Vietnamese diacritic-insensitive match against Vietnamese tag labels ("Cơ bản")
     inputEl.value = 'co ban';
     inputEl.trigger('input', { target: { value: 'co ban' } });
-    expect(modal.listContainer.children.length).toBe(3);
+    expect(modal.listContainer.children.length).toBe(4);
     expect(modal.clearSearchBtn.style.display).toBe('block');
 
     // Search specific guide keyword
@@ -234,7 +243,7 @@ describe('GuideHubModal', () => {
     expect(modal.activeTag).toBe('all');
     expect(modal.searchQuery).toBe('');
     expect(modal.searchInput.value).toBe('');
-    expect(modal.listContainer.children.length).toBe(7);
+    expect(modal.listContainer.children.length).toBe(8);
   });
 
   it('should close modal before executing guide action', () => {
@@ -248,7 +257,7 @@ describe('GuideHubModal', () => {
     });
 
     modal.open();
-    const timelineCard = modal.listContainer.children[5];
+    const timelineCard = modal.listContainer.children[6];
     const actionBtn = timelineCard.children[1];
     actionBtn.trigger('click');
 
@@ -257,7 +266,7 @@ describe('GuideHubModal', () => {
     expect(callOrder).toEqual(['close', 'startTour']);
   });
 
-  it('should trigger quick_start, reuse_blocks, create_and_export_script, audio_and_beats, welcome_guide, and inspector_tour actions', () => {
+  it('should trigger all default guide actions in order', () => {
     modal.open();
 
     // Quick Start
@@ -274,19 +283,24 @@ describe('GuideHubModal', () => {
     modal.listContainer.children[2].children[1].trigger('click');
     expect(mockTimelineEditor.createScriptGuide.start).toHaveBeenCalled();
 
-    // Audio and Beats Interactive Guide
+    // Timeline Controls Interactive Guide
     modal.open();
     modal.listContainer.children[3].children[1].trigger('click');
+    expect(mockTimelineEditor.timelineControlsGuide.start).toHaveBeenCalled();
+
+    // Audio and Beats Interactive Guide
+    modal.open();
+    modal.listContainer.children[4].children[1].trigger('click');
     expect(mockTimelineEditor.audioBeatsGuide.start).toHaveBeenCalled();
 
     // Welcome Overview Guide
     modal.open();
-    modal.listContainer.children[4].children[1].trigger('click');
+    modal.listContainer.children[5].children[1].trigger('click');
     expect(mockTimelineEditor.welcomeGuide.start).toHaveBeenCalled();
 
     // Inspector Tour
     modal.open();
-    modal.listContainer.children[6].children[1].trigger('click');
+    modal.listContainer.children[7].children[1].trigger('click');
     expect(mockTimelineEditor.tourGuide.startInspectorTour).toHaveBeenCalled();
   });
 

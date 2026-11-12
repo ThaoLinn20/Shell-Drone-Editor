@@ -152,6 +152,29 @@ export class GuideHubModal {
         }
       },
       {
+        id: 'timeline_controls',
+        title: () =>
+          t('editor.guideHub.timelineControlsTitle') ||
+          'Timeline Editing and Mouse Controls',
+        desc: () =>
+          t('editor.guideHub.timelineControlsDesc') ||
+          'Practice dragging and resizing blocks, picking Anchor Head on the Ruler, Copy and Paste, and using left-click versus right-click menus.',
+        badge: () =>
+          t('editor.guideHub.timelineControlsBadge') || '7 steps',
+        tags: ['important', 'basic'],
+        actionLabel: () =>
+          t('editor.guideHub.startBtn') || 'Start Guide',
+        variant: 'primary',
+        execute: () => {
+          if (
+            this.timelineEditor &&
+            this.timelineEditor.timelineControlsGuide
+          ) {
+            this.timelineEditor.timelineControlsGuide.start();
+          }
+        }
+      },
+      {
         id: 'audio_and_beats',
         title: () =>
           t('editor.guideHub.audioBeatsTitle') ||
