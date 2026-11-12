@@ -1,29 +1,20 @@
-# Firework & Drone Show Studio
+# Firework & Drone Show Studio (3D Firework & Drone Simulation and Choreography)
 
 [English](README.md) | [Tiếng Việt](README-vn.md) | [日本語](README-ja.md) | [简体中文](README-zh.md)
 
-**Firework & Drone Show Studio** is a 3D simulation software for fireworks and drones. The software supports firework choreography scripting, drone formation design, and complete choreography for combined drone and firework shows.
+**Firework & Drone Show Studio (FDShowStudio)** is a 3D simulation software for fireworks and drones. The software supports `designing` fireworks, `scripting` firework choreography, `designing` drone formations and `animation`, and `first-person / immersive mode` to directly experience the entire show.  
+
+**[Download](https://github.com/ThAolInh20/Shell-Drone_3d/releases)** | **[Youtube - Guide](https://www.youtube.com/@FDShowStudio)** | **[Facebook](https://www.facebook.com/profile.php?id=61590294455683)** | **[Drive](https://drive.google.com/drive/folders/1EmwjGVQZtYNiXvxZ18y393_701s_m1dN)**
 
 ---
-
-<video src="public/preview/preview-ds.mp4" controls width="100%"></video>
 
 ## Key Advantages & Highlights
 
-- **Realistic 3D Environment:** Delivers a 99% realistic simulation experience.
-- **Diverse Firework Library:** Over a hundred built-in firework templates and effects, combinable to create up to 500 new firework variations.
-- **Standardized JSON Data Storage:** Synchronized, easy to share and transfer.
-- **Stable Performance:** Guaranteed stable execution for 100-200 simultaneous fireworks.
-- **Professional & Modern UI:** Standardized workflow tailored for creators and editors.
-
----
-
-## Target Users
-
-- **Event Organizers and Show Production Companies:** Create intuitive 3D simulations and realistic previews for `firework` and `drone` scenarios.
-- **Firework & Drone Show Enthusiasts:** Craft both professional and creative amateur drone and firework choreography scripts.
-- **Pyrotechnic Designers:** Design and customize physics-based particle firework effects.
-- **Drone Formation Designers:** Design, customize drone swarm formations and choreograph drone animations.
+- **Realistic 3D Environment**
+- **Diverse Firework Library**
+- **Standardized JSON Data Storage**
+- **Stable Performance**
+- **Professional & Modern UI**
 
 ---
 
@@ -31,7 +22,6 @@
 
 ### 1. Interactive 3D Simulation Space
 - Free-form 3D stage environment featuring an orbital camera system supporting grandstand, bird-eye, and technical perspectives.
-- Night-sky simulation environment with realistic starfields, dynamic lighting, and ground reflections.
 
 ![show-preview](/public/preview/show-preview.png)
 
@@ -62,58 +52,9 @@
 
 ## Download & Installation
 
-### For End Users
-
 1. Visit the project's **[GitHub Releases](https://github.com/ThAolInh20/Shell-Drone_3d/releases)** page.
 2. Download the latest installer for Windows in `.exe` or compressed `.zip` format.
 3. Extract or run the installer to start using the software.
-
-*Note: If the Windows SmartScreen security prompt appears, click `More Info` and select `Run anyway` to continue.*
-
----
-
-## Developer Guide
-
-The project requires **[Node.js](https://nodejs.org/)** version 18 or higher.
-
-### Step 1: Clone Repository and Install Dependencies
-```bash
-git clone https://github.com/ThAolInh20/Shell-Drone-Editor.git
-cd shell-drone-animation
-npm install
-```
-
-### Step 2: Launch the Application
-
-#### Desktop App with Electron (Recommended)
-Launch the standalone desktop application with direct file saving and system navigation:
-```bash
-npm run electron:dev
-```
-
-#### Web Browser Mode
-Start the Vite development server:
-```bash
-npm run dev
-```
-Then access the local address displayed in the terminal (default is `http://localhost:5173/`).
-
-### Step 3: Package Application
-To compile and package into a complete Windows Desktop installer:
-```bash
-npm run electron:build
-```
-The packaged installer will be saved in the `dist-electron` directory.
-
----
-
-## Quick Keyboard Shortcuts
-
-- **Space:** Play or pause the show simulation.
-- **Ctrl + T:** Open the timeline editor.
-- **Ctrl + 1:** Switch to the Main Timeline Choreography Editor.
-- **Ctrl + 2:** Switch to the 3D Static Drone Formation Studio.
-- **Ctrl + 3:** Switch to the Drone Step & Transition Editor.
 
 ---
 

@@ -2,19 +2,19 @@
 
 [English](README.md) | [Tiếng Việt](README-vn.md) | [日本語](README-ja.md) | [简体中文](README-zh.md)
 
-**Firework & Drone Show Studio** là phần mềm mô phỏng 3D cho pháo hoa và drone. Phần mềm hỗ trợ `thiết kế` pháo hoa, `biên kịch` kịch bản pháo hoa, `thiết kế` đội hình drone, và animation cho biên đạo đầy đủ cho 1 show trình diễn drone kết hợp với pháo hoa.
+**Firework & Drone Show Studio (FDShowStudio)** là phần mềm mô phỏng 3D cho pháo hoa và drone. Phần mềm hỗ trợ `thiết kế` pháo hoa, `biên kịch` kịch bản pháo hoa, `thiết kế` đội hình và `animation` drone, `nhập vai` để trải nghiệm trực tiếp toàn bộ kịch bản.  
+
+**[Download](https://github.com/ThAolInh20/Shell-Drone_3d/releases)** | **[Youtube - Guide](https://www.youtube.com/@FDShowStudio)** | **[Facebook](https://www.facebook.com/profile.php?id=61590294455683)** | **[Drive](https://drive.google.com/drive/folders/1EmwjGVQZtYNiXvxZ18y393_701s_m1dN)**
 
 ---
 
-<video src="public/preview/preview-ds.mp4" controls width="100%"></video>
-
 ## Giá trị nổi bật của giải pháp
 
-- **Môi trường 3d chân thực:** Đảm bảo trải nghiệm chân thực 99%. 
-- **Thư viện pháo hoa đa dạng:** Hơn trăm mẫu pháo hoa và hiệu ứng tích hợp sẵn, có thể kết hợp để tạo thành loại pháo hoa mới lên tới 500 mẫu.
-- **Toàn bộ dữ liệu lưu dưới dạng JSON:** Đồng bộ, dễ dàng chia sẻ.
-- **Đảm bảo chạy ổn định:** cho 100-200 pháo hoa cùng 1 lúc.
-- **Giao diện chuyên nghiệp hiện đại:** Chuẩn hóa workflow cho Editor.
+- **Môi trường 3D chân thực**
+- **Thư viện pháo hoa đa dạng**
+- **Toàn bộ dữ liệu lưu dưới dạng JSON**
+- **Đảm bảo chạy ổn định**
+- **Giao diện chuyên nghiệp hiện đại**
 
 ---
 
@@ -22,7 +22,6 @@
 
 ### 1. Không gian Mô phỏng 3D Tương tác
 - Khung cảnh biểu diễn 3D tự do với hệ thống camera quỹ đạo linh hoạt, hỗ trợ thay đổi góc nhìn khán đài, góc nhìn từ trên cao hoặc góc nhìn kỹ thuật.
-- Mô phỏng môi trường ban đêm, bầu trời sao, hiệu ứng ánh sáng động và mặt đất phản chiếu.
 
 ![show-preview](/public/preview/show-preview.png)
 

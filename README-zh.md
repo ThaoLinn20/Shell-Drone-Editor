@@ -2,28 +2,19 @@
 
 [English](README.md) | [Tiếng Việt](README-vn.md) | [日本語](README-ja.md) | [简体中文](README-zh.md)
 
-**Firework & Drone Show Studio** 是一款专为烟花与无人机打造的 3D 模拟软件。支持烟花剧本编排、无人机编队设计，以及无人机与烟花结合表演的完整舞台编导。
+**Firework & Drone Show Studio (FDShowStudio)** 是一款专为烟花与无人机打造的 3D 模拟软件。支持烟花`设计`、烟花剧本`编排`、无人机编队`造型`与`动画`制作，以及`第一人称/沉浸式体验`直接预览整场表演。  
+
+**[Download](https://github.com/ThAolInh20/Shell-Drone_3d/releases)** | **[Youtube - Guide](https://www.youtube.com/@FDShowStudio)** | **[Facebook](https://www.facebook.com/profile.php?id=61590294455683)** | **[Drive](https://drive.google.com/drive/folders/1EmwjGVQZtYNiXvxZ18y393_701s_m1dN)**
 
 ---
-
-<video src="public/preview/preview-ds.mp4" controls width="100%"></video>
 
 ## 核心优势与亮点
 
-- **逼真的 3D 仿真环境：** 保证 99% 的拟真模拟体验。
-- **丰富的烟花效果库：** 内置百余种烟花预设与特效，支持组合创造多达 500 种全新烟花样式。
-- **统一的 JSON 数据存储：** 标准化同步，便于快速分享与协作。
-- **出色的运行稳定性：** 确保 100-200 发烟花同屏并发稳定流畅运行。
-- **现代专业的交互界面：** 为创作者量身定制的标准编辑器工作流。
-
----
-
-## 目标用户群体
-
-- **活动策划与演出制作机构：** 为“烟花”和“无人机”表演剧本构建直观的 3D 仿真模拟与真实预演。
-- **烟花与无人机表演艺术爱好者：** 创作专业级及创意业余级的烟花与无人机编排脚本。
-- **烟花特效设计师：** 自定义设计与微调基于物理特性的烟花粒子特效。
-- **无人机编队设计师：** 设计并自定义无人机集群编队，构建流畅的无人机飞行动画。
+- **逼真的 3D 仿真环境**
+- **丰富的烟花效果库**
+- **统一的 JSON 数据存储**
+- **出色的运行稳定性**
+- **现代专业的交互界面**
 
 ---
 
@@ -31,7 +22,6 @@
 
 ### 1. 交互式 3D 模拟空间
 - 自由三维舞台场景，搭载灵活的轨道摄像机系统，支持看台视角、俯瞰视角和专业技术视角切换。
-- 夜空环境模拟，具备真实星空、动态光影及地面反射效果。
 
 ![show-preview](/public/preview/show-preview.png)
 
@@ -62,58 +52,9 @@
 
 ## 下载与安装
 
-### 最终用户指南
-
 1. 访问项目的 **[GitHub Releases](https://github.com/ThAolInh20/Shell-Drone_3d/releases)** 页面。
 2. 下载适用于 Windows 的最新安装程序（`.exe` 或压缩包 `.zip` 格式）。
 3. 解压或运行安装程序即可开始使用软件。
-
-*注意：若系统弹出 Windows SmartScreen 安全提示，请点击“更多信息 (More Info)”并选择“仍要运行 (Run anyway)”继续。*
-
----
-
-## 开发者运行指南
-
-本项目运行环境需要 **[Node.js](https://nodejs.org/)** 18 或更高版本。
-
-### 步骤 1：克隆仓库并安装依赖
-```bash
-git clone https://github.com/ThAolInh20/Shell-Drone-Editor.git
-cd shell-drone-animation
-npm install
-```
-
-### 步骤 2：启动应用程序
-
-#### Electron 桌面应用模式（推荐）
-启动具备直接文件保存与快速导航功能的独立桌面应用：
-```bash
-npm run electron:dev
-```
-
-#### Web 浏览器模式
-启动 Vite 开发服务器：
-```bash
-npm run dev
-```
-随后访问终端中显示的本地地址（默认为 `http://localhost:5173/`）。
-
-### 步骤 3：打包构建
-编译并打包为完整的 Windows 桌面安装包：
-```bash
-npm run electron:build
-```
-打包生成的文件将保存在 `dist-electron` 目录下。
-
----
-
-## 快捷键一览
-
-- **Space：** 播放或暂停模拟演示。
-- **Ctrl + S：** 在桌面端直接保存剧本修改至源文件。
-- **Ctrl + 1：** 切换至主时间线编排编辑器。
-- **Ctrl + 2：** 切换至 3D 静态无人机编队工作室。
-- **Ctrl + 3：** 切换至无人机步骤与过渡动画编辑器。
 
 ---
 
