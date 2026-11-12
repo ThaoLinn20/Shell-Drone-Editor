@@ -142,12 +142,14 @@ export class PropertyInspector {
     container,
     onUpdate,
     presetOptions = ['random'],
-    onHelpClick = null
+    onHelpClick = null,
+    onPreview = null
   ) {
     this.container = container;
     this.onUpdate = onUpdate;
     this.presetOptions = presetOptions;
     this.onHelpClick = onHelpClick;
+    this.onPreview = onPreview;
     this.selectedEvent = null;
     this.selectedEvents = [];
     this.activeStageIndex = 0;
@@ -201,6 +203,21 @@ export class PropertyInspector {
 
   isBatchMode() {
     return Array.isArray(this.selectedEvents) && this.selectedEvents.length > 1;
+  }
+
+  hasPreviewableSelection(targets = this.getBatchTargets()) {
+    if (!Array.isArray(targets) || targets.length === 0) {
+      return false;
+    }
+    return targets.some((item) => {
+      if (!item || item._deleted) {
+        return false;
+      }
+      if (item.type === 'group' && Array.isArray(item.children)) {
+        return this.hasPreviewableSelection(item.children);
+      }
+      return item.type !== 'audio' && item.type !== 'droneshow';
+    });
   }
 
   getBatchTargets() {
@@ -685,6 +702,116 @@ export class PropertyInspector {
   }
 
   render() {
+    this.renderBody();
+    if (this.selectedEvent) {
+      this.appendStickyPreviewBar();
+    }
+  }
+
+  appendStickyPreviewBar() {
+    const isBatch = this.isBatchMode();
+    const hasPreviewable = this.hasPreviewableSelection();
+    const previewBar = document.createElement('div');
+    previewBar.className = 'inspector-preview-bar';
+    previewBar.style.position = 'sticky';
+    previewBar.style.bottom = '-16px';
+    previewBar.style.zIndex = '5';
+    previewBar.style.background = 'rgba(12, 16, 24, 0.98)';
+    previewBar.style.margin = '12px -16px -16px -16px';
+    previewBar.style.padding = '10px 16px 12px 16px';
+    previewBar.style.borderTop = '1px solid rgba(255, 255, 255, 0.1)';
+
+    const previewBtn = document.createElement('button');
+    previewBtn.className = 'inspector-preview-btn';
+    previewBtn.type = 'button';
+    previewBtn.disabled = !hasPreviewable;
+
+    if (isBatch) {
+      const tpl =
+        t('editor.inspector.previewSelectedBtn') ||
+        'Preview Selected {count}';
+      previewBtn.textContent = tpl.replace(
+        '{count}',
+        String(this.selectedEvents.length)
+      );
+    } else {
+      previewBtn.textContent =
+        t('editor.inspector.previewBtn') ||
+        'Preview Sequence';
+    }
+
+    previewBtn.title = hasPreviewable
+      ? (
+        t('editor.inspector.previewTooltip') ||
+        'Launch only the selected sequence without playing the timeline'
+      )
+      : (
+        t('editor.inspector.previewUnsupported') ||
+        'Preview is available for firework sequences only'
+      );
+
+    previewBtn.style.width = '100%';
+    previewBtn.style.padding = '8px 12px';
+    previewBtn.style.borderRadius = '6px';
+    previewBtn.style.fontSize = '12px';
+    previewBtn.style.fontWeight = 'bold';
+    previewBtn.style.fontFamily = 'inherit';
+    previewBtn.style.transition = 'all 0.15s ease';
+
+    if (hasPreviewable) {
+      previewBtn.style.background = 'rgba(0, 229, 255, 0.16)';
+      previewBtn.style.border = '1px solid rgba(0, 229, 255, 0.5)';
+      previewBtn.style.color = '#00e5ff';
+      previewBtn.style.cursor = 'pointer';
+
+      previewBtn.addEventListener(
+        'mouseenter',
+        () => {
+          previewBtn.style.background = 'rgba(0, 229, 255, 0.28)';
+          previewBtn.style.borderColor = '#00e5ff';
+        }
+      );
+      previewBtn.addEventListener(
+        'mouseleave',
+        () => {
+          previewBtn.style.background = 'rgba(0, 229, 255, 0.16)';
+          previewBtn.style.borderColor = 'rgba(0, 229, 255, 0.5)';
+        }
+      );
+      previewBtn.addEventListener(
+        'click',
+        (e) => {
+          if (e && typeof e.stopPropagation === 'function') {
+            e.stopPropagation();
+          }
+          const targets = this.getBatchTargets();
+          if (typeof this.onPreview === 'function') {
+            this.onPreview(targets);
+          }
+          previewBtn.style.background = 'rgba(0, 229, 255, 0.42)';
+          setTimeout(() => {
+            previewBtn.style.background = 'rgba(0, 229, 255, 0.16)';
+          }, 220);
+          globalEventBus.emit(
+            'inspector:preview-triggered',
+            {
+              count: targets.length
+            }
+          );
+        }
+      );
+    } else {
+      previewBtn.style.background = 'rgba(255, 255, 255, 0.05)';
+      previewBtn.style.border = '1px solid rgba(255, 255, 255, 0.12)';
+      previewBtn.style.color = 'rgba(255, 255, 255, 0.4)';
+      previewBtn.style.cursor = 'not-allowed';
+    }
+
+    previewBar.appendChild(previewBtn);
+    this.container.appendChild(previewBar);
+  }
+
+  renderBody() {
     this.container.innerHTML = '';
 
     const headerWrapper = document.createElement('div');

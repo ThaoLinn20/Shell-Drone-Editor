@@ -9,6 +9,7 @@ export class ShowDirector {
     this.isPlaying = false;
     this.audioPlayers = new Map();
     this.dispatcher = dispatcher || new ShowEventDispatcher();
+    this.previewQueue = [];
   }
 
   loadScript(scriptConfig) {
@@ -76,6 +77,7 @@ export class ShowDirector {
   }
 
   play() {
+    this.stopPreview();
     this.isPlaying = true;
     if (this.droneSequencer) this.droneSequencer.play();
   }
@@ -87,6 +89,7 @@ export class ShowDirector {
   }
 
   stop() {
+    this.stopPreview();
     this.isPlaying = false;
     this.elapsedTime = 0;
     this.sequencer.clear();
@@ -97,7 +100,114 @@ export class ShowDirector {
     if (this.droneSequencer) this.droneSequencer.stop();
   }
 
+  flattenPreviewEvents(sequences = [], parentTime = null) {
+    if (!Array.isArray(sequences)) {
+      return [];
+    }
+
+    const result = [];
+    sequences.forEach((seq) => {
+      if (!seq || seq._deleted) {
+        return;
+      }
+
+      const effectiveTime =
+        parentTime !== null
+          ? (
+            seq.timeOffset !== undefined
+              ? parentTime + seq.timeOffset
+              : (seq.time !== undefined ? seq.time : parentTime)
+          )
+          : (seq.time || 0);
+
+      if (seq.type === 'group' && Array.isArray(seq.children)) {
+        const nested = this.flattenPreviewEvents(
+          seq.children,
+          effectiveTime
+        );
+        result.push(...nested);
+        return;
+      }
+
+      if (seq.type === 'audio' || seq.type === 'droneshow') {
+        return;
+      }
+
+      result.push({
+        event: {
+          ...seq,
+          time: effectiveTime
+        },
+        time: effectiveTime
+      });
+    });
+
+    return result;
+  }
+
+  previewEvents(sequences = []) {
+    const flattened = this.flattenPreviewEvents(sequences);
+    if (flattened.length === 0) {
+      return false;
+    }
+
+    const minTime = Math.min(
+      ...flattened.map((item) => item.time)
+    );
+    const pending = [];
+
+    flattened.forEach((item) => {
+      const delayRemaining = Math.max(
+        0,
+        item.time - minTime
+      );
+      if (delayRemaining <= 1e-6) {
+        this.executeEvent(item.event);
+      } else {
+        pending.push({
+          event: item.event,
+          delayRemaining
+        });
+      }
+    });
+
+    if (pending.length > 0) {
+      this.previewQueue.push(...pending);
+      this.previewQueue.sort(
+        (a, b) => a.delayRemaining - b.delayRemaining
+      );
+    }
+
+    return true;
+  }
+
+  stopPreview() {
+    this.previewQueue = [];
+  }
+
+  updatePreviewQueue(deltaTime) {
+    if (
+      !Array.isArray(this.previewQueue) ||
+      this.previewQueue.length === 0
+    ) {
+      return;
+    }
+
+    const remaining = [];
+    this.previewQueue.forEach((item) => {
+      item.delayRemaining -= deltaTime;
+      if (item.delayRemaining <= 1e-6) {
+        this.executeEvent(item.event);
+      } else {
+        remaining.push(item);
+      }
+    });
+
+    this.previewQueue = remaining;
+  }
+
   update(deltaTime) {
+    this.updatePreviewQueue(deltaTime);
     if (!this.isPlaying) return;
 
     this.elapsedTime += deltaTime;

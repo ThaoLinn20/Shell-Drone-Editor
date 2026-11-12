@@ -616,6 +616,9 @@ export class TimelineEditor {
         if (this.tourGuide) {
           this.tourGuide.startInspectorTour();
         }
+      },
+      (selectedTargets) => {
+        this.previewInspectorSelection(selectedTargets);
       }
     );
 
@@ -1271,6 +1274,28 @@ export class TimelineEditor {
     } else {
       this.inspector.container.style.bottom = '12px';
     }
+  }
+
+  previewInspectorSelection(selectedTargets = null) {
+    const targets =
+      Array.isArray(selectedTargets) && selectedTargets.length > 0
+        ? selectedTargets
+        : this.selectedEvents;
+    if (
+      !Array.isArray(targets) ||
+      targets.length === 0 ||
+      !this.showDirector ||
+      typeof this.showDirector.previewEvents !== 'function'
+    ) {
+      return false;
+    }
+
+    if (this.showDirector.isPlaying) {
+      this.showDirector.pause();
+      globalEventBus.emit('timeline:playback-paused');
+    }
+
+    return this.showDirector.previewEvents(targets);
   }
 
   togglePlay() {
