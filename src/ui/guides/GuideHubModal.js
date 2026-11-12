@@ -1,9 +1,10 @@
-import { t } from '../config/lang/i18n.js';
-import { globalEventBus } from '../core/EventBus.js';
+import { t } from '../../config/lang/i18n.js';
+import { globalEventBus } from '../../core/EventBus.js';
 import {
   createModalButton,
   createModalShell
-} from './ModalShell.js';
+} from '../ModalShell.js';
+import { INSPECTOR_GUIDE_CONFIGS } from './inspectorGuideConfigs.js';
 
 export const GUIDE_TAGS = {
   all: {
@@ -27,13 +28,29 @@ export const GUIDE_TAGS = {
     color: '#34d399',
     border: 'rgba(16, 185, 129, 0.4)'
   },
+  custom_sequence: {
+    id: 'custom_sequence',
+    label: () => t('editor.guideHub.tagCustomSequence') || 'Custom Sequence',
+    order: 3,
+    bg: 'rgba(56, 189, 248, 0.16)',
+    color: '#38bdf8',
+    border: 'rgba(56, 189, 248, 0.42)'
+  },
   intro: {
     id: 'intro',
     label: () => t('editor.guideHub.tagIntro') || 'Overview',
-    order: 3,
+    order: 4,
     bg: 'rgba(148, 163, 184, 0.16)',
     color: '#cbd5e1',
     border: 'rgba(148, 163, 184, 0.35)'
+  },
+  audio: {
+    id: 'audio',
+    label: () => t('editor.guideHub.tagAudio') || 'Audio',
+    order: 5,
+    bg: 'rgba(236, 72, 153, 0.16)',
+    color: '#f472b6',
+    border: 'rgba(236, 72, 153, 0.4)'
   }
 };
 
@@ -108,9 +125,9 @@ export class GuideHubModal {
           'Export and Reuse Block Clusters',
         desc: () =>
           t('editor.guideHub.reuseBlocksDesc') ||
-          'Select multiple blocks, export them via Block Context Menu, and add them back via Empty Space Context Menu.',
+          'Add 2 blocks with Add Sequence, select multiple blocks, export them via Block Context Menu, and add them back via Empty Space Context Menu.',
         badge: () =>
-          t('editor.guideHub.reuseBlocksBadge') || '3 steps',
+          t('editor.guideHub.reuseBlocksBadge') || '5 steps',
         tags: ['important', 'basic'],
         actionLabel: () =>
           t('editor.guideHub.startBtn') || 'Start Guide',
@@ -140,6 +157,49 @@ export class GuideHubModal {
         execute: () => {
           if (this.timelineEditor && this.timelineEditor.createScriptGuide) {
             this.timelineEditor.createScriptGuide.start();
+          }
+        }
+      },
+      {
+        id: 'timeline_controls',
+        title: () =>
+          t('editor.guideHub.timelineControlsTitle') ||
+          'Timeline Editing and Mouse Controls',
+        desc: () =>
+          t('editor.guideHub.timelineControlsDesc') ||
+          'Practice dragging and resizing blocks, picking Anchor Head on the Ruler, Copy and Paste, and using left-click versus right-click menus.',
+        badge: () =>
+          t('editor.guideHub.timelineControlsBadge') || '7 steps',
+        tags: ['important', 'basic'],
+        actionLabel: () =>
+          t('editor.guideHub.startBtn') || 'Start Guide',
+        variant: 'primary',
+        execute: () => {
+          if (
+            this.timelineEditor &&
+            this.timelineEditor.timelineControlsGuide
+          ) {
+            this.timelineEditor.timelineControlsGuide.start();
+          }
+        }
+      },
+      {
+        id: 'audio_and_beats',
+        title: () =>
+          t('editor.guideHub.audioBeatsTitle') ||
+          'Import Audio and Tap Beats',
+        desc: () =>
+          t('editor.guideHub.audioBeatsDesc') ||
+          'Import an MP3 or WAV track, try Auto Detect Beats and Clear All Beats, then tap B live along with the music.',
+        badge: () =>
+          t('editor.guideHub.audioBeatsBadge') || '11 steps',
+        tags: ['audio'],
+        actionLabel: () =>
+          t('editor.guideHub.startBtn') || 'Start Guide',
+        variant: 'primary',
+        execute: () => {
+          if (this.timelineEditor && this.timelineEditor.audioBeatsGuide) {
+            this.timelineEditor.audioBeatsGuide.start();
           }
         }
       },
@@ -202,7 +262,29 @@ export class GuideHubModal {
             this.timelineEditor.tourGuide.startInspectorTour();
           }
         }
-      }
+      },
+      ...INSPECTOR_GUIDE_CONFIGS.map((cfg) => ({
+        id: cfg.id,
+        title: () =>
+          t(`editor.guideHub.${cfg.i18nKey}GuideTitle`) || cfg.id,
+        desc: () =>
+          t(`editor.guideHub.${cfg.i18nKey}GuideDesc`) || '',
+        badge: () =>
+          t(`editor.guideHub.${cfg.i18nKey}GuideBadge`) ||
+          `${cfg.steps.length} steps`,
+        tags: ['custom_sequence'],
+        actionLabel: () =>
+          t('editor.guideHub.startBtn') || 'Start Guide',
+        variant: 'primary',
+        execute: () => {
+          if (
+            this.timelineEditor &&
+            typeof this.timelineEditor.startInspectorGuide === 'function'
+          ) {
+            this.timelineEditor.startInspectorGuide(cfg.id);
+          }
+        }
+      }))
     ];
   }
 

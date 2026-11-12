@@ -3,7 +3,7 @@ import {
   WelcomeGuideStateMachine,
   WELCOME_GUIDE_STEPS,
   WELCOME_GUIDE_STORAGE_KEY
-} from '../../src/ui/WelcomeGuideStateMachine.js';
+} from '../../../src/ui/guides/WelcomeGuideStateMachine.js';
 
 function createMemoryStorage() {
   const map = new Map();
@@ -179,8 +179,8 @@ describe('WelcomeGuideFlow with TimelineEditor and GuideHubModal', () => {
       open: vi.fn()
     });
 
-    const { TimelineEditor } = await import('../../src/ui/TimelineEditor.js');
-    const { WELCOME_GUIDE_STEPS: STEPS } = await import('../../src/ui/WelcomeGuideStateMachine.js');
+    const { TimelineEditor } = await import('../../../src/ui/TimelineEditor.js');
+    const { WELCOME_GUIDE_STEPS: STEPS } = await import('../../../src/ui/guides/WelcomeGuideStateMachine.js');
 
     const mockDirector = {
       elapsedTime: 0,

@@ -3,7 +3,7 @@ import {
   OnboardingStateMachine,
   ONBOARDING_STEPS,
   ONBOARDING_STORAGE_KEY
-} from '../../src/ui/OnboardingStateMachine.js';
+} from '../../../src/ui/guides/OnboardingStateMachine.js';
 
 function createMemoryStorage() {
   const map = new Map();
@@ -191,11 +191,11 @@ describe('ShowLibraryModal and TimelineEditor show loading', () => {
       open: vi.fn()
     });
 
-    const libMod = await import('../../src/ui/ShowLibraryModal.js');
+    const libMod = await import('../../../src/ui/ShowLibraryModal.js');
     ShowLibraryModal = libMod.ShowLibraryModal;
-    const editorMod = await import('../../src/ui/TimelineEditor.js');
+    const editorMod = await import('../../../src/ui/TimelineEditor.js');
     TimelineEditor = editorMod.TimelineEditor;
-    const busMod = await import('../../src/core/EventBus.js');
+    const busMod = await import('../../../src/core/EventBus.js');
     globalEventBus = busMod.globalEventBus;
   });
 

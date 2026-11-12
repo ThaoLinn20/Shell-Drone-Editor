@@ -1,7 +1,8 @@
-import { t } from '../config/lang/i18n.js';
-import { globalEventBus } from '../core/EventBus.js';
-import { showToast } from '../utils/Toast.js';
+import { t } from '../../config/lang/i18n.js';
+import { globalEventBus } from '../../core/EventBus.js';
+import { showToast } from '../../utils/Toast.js';
 import { InteractiveSpotlight } from './InteractiveSpotlight.js';
+import { buildStepNavigationActions } from './guideFlowHelpers.js';
 import {
   OnboardingStateMachine,
   ONBOARDING_STEPS
@@ -63,6 +64,12 @@ export class OnboardingFlow {
       this.timelineEditor.welcomeGuide.stateMachine?.isActive
     ) {
       this.timelineEditor.welcomeGuide.stateMachine.dismiss();
+    }
+    if (
+      this.timelineEditor?.audioBeatsGuide &&
+      this.timelineEditor.audioBeatsGuide.stateMachine?.isActive
+    ) {
+      this.timelineEditor.audioBeatsGuide.stateMachine.dismiss();
     }
     this.spotlight.initDOM();
     this.bindWindowListeners();
@@ -195,43 +202,32 @@ export class OnboardingFlow {
   }
 
   getStepActions(step) {
-    if (step !== ONBOARDING_STEPS.DOWNLOAD_SCRIPTS) {
-      return [];
-    }
-
-    if (this.stateMachine.waitingForDownload) {
-      return [
-        {
-          label:
-            t('editor.onboarding.openDriveAgainBtn') || 'Open Drive again',
-          primary: false,
-          onClick: () => {
-            this.timelineEditor?.openScriptsDrive();
-          }
-        },
-        {
-          label:
-            t('editor.onboarding.downloadedContinueBtn') ||
-            'I have downloaded, choose folder',
-          primary: true,
-          onClick: () => {
-            this.stateMachine.advanceToSelectFolder();
-          }
-        }
-      ];
-    }
-
-    return [
-      {
+    const extraActions = [];
+    if (
+      step === ONBOARDING_STEPS.DOWNLOAD_SCRIPTS &&
+      this.stateMachine.waitingForDownload
+    ) {
+      extraActions.push({
         label:
-          t('editor.onboarding.alreadyHaveFolderBtn') ||
-          'I already have a scripts folder',
+          t('editor.onboarding.openDriveAgainBtn') || 'Open Drive again',
         primary: false,
         onClick: () => {
-          this.stateMachine.advanceToSelectFolder();
+          this.timelineEditor?.openScriptsDrive();
         }
-      }
-    ];
+      });
+    }
+
+    return buildStepNavigationActions({
+      stepIndex: this.stateMachine.getStepIndex(),
+      totalSteps: this.stateMachine.getTotalSteps(),
+      onPrev: () => {
+        this.stateMachine.previousStep();
+      },
+      onNext: () => {
+        this.stateMachine.nextStep();
+      },
+      extraActions
+    });
   }
 
   renderCurrentStep() {

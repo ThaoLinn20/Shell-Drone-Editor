@@ -1,6 +1,10 @@
-import { t } from '../config/lang/i18n.js';
-import { globalEventBus } from '../core/EventBus.js';
+import { t } from '../../config/lang/i18n.js';
+import { globalEventBus } from '../../core/EventBus.js';
 import { InteractiveSpotlight } from './InteractiveSpotlight.js';
+import {
+  buildStepNavigationActions,
+  prepareGuideFlowStart
+} from './guideFlowHelpers.js';
 import {
   WelcomeGuideStateMachine,
   WELCOME_GUIDE_STEPS
@@ -32,29 +36,8 @@ export class WelcomeGuideFlow {
   }
 
   start() {
-    if (!this.timelineEditor) {
+    if (!prepareGuideFlowStart(this.timelineEditor, this)) {
       return;
-    }
-    if (!this.timelineEditor.visible) {
-      this.timelineEditor.toggle();
-    }
-    if (
-      this.timelineEditor.onboardingFlow &&
-      this.timelineEditor.onboardingFlow.stateMachine?.isActive
-    ) {
-      this.timelineEditor.onboardingFlow.stateMachine.dismiss();
-    }
-    if (
-      this.timelineEditor.reuseBlocksGuide &&
-      this.timelineEditor.reuseBlocksGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.reuseBlocksGuide.stateMachine.dismiss();
-    }
-    if (
-      this.timelineEditor.createScriptGuide &&
-      this.timelineEditor.createScriptGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.createScriptGuide.stateMachine.dismiss();
     }
 
     this.spotlight.initDOM();
@@ -138,7 +121,16 @@ export class WelcomeGuideFlow {
       desc: config.desc,
       progressText: config.progressText,
       skipLabel: t('editor.onboarding.skipBtn') || 'Skip',
-      actions: [],
+      actions: buildStepNavigationActions({
+        stepIndex: this.stateMachine.getStepIndex(),
+        totalSteps: this.stateMachine.getTotalSteps(),
+        onPrev: () => {
+          this.stateMachine.previousStep();
+        },
+        onNext: () => {
+          this.stateMachine.nextStep();
+        }
+      }),
       onDismiss: () => {
         this.stateMachine.dismiss();
       },

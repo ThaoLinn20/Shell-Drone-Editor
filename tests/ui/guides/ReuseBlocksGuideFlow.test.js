@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   ReuseBlocksStateMachine,
   REUSE_GUIDE_STEPS
-} from '../../src/ui/ReuseBlocksStateMachine.js';
+} from '../../../src/ui/guides/ReuseBlocksStateMachine.js';
 
 function createEventBus() {
   const listeners = new Map();
@@ -38,23 +38,44 @@ describe('ReuseBlocksStateMachine', () => {
     machine = new ReuseBlocksStateMachine(eventBus);
   });
 
-  it('should walk through all 3 interactive steps and complete on JSON import', () => {
-    machine.start(0);
+  it('should walk through all 5 interactive steps including sequence explanation and complete on JSON import', () => {
+    machine.start();
     expect(machine.isActive).toBe(true);
-    expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.SELECT_MULTIPLE);
-    expect(machine.selectedCount).toBe(0);
+    expect(machine.getTotalSteps()).toBe(5);
+    expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS);
+    expect(machine.addedBlocksCount).toBe(0);
 
-    // Selecting 1 block updates progress but stays on Step 1
+    // Context-menu add does not satisfy Step 1 toolbar add
+    eventBus.emit('timeline:sequence-added', { source: 'context_menu', time: 1 });
+    expect(machine.addedBlocksCount).toBe(0);
+    expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS);
+
+    // Adding 1st block from toolbar updates count while staying on Step 1
+    eventBus.emit('timeline:sequence-added', { source: 'toolbar', time: 0 });
+    expect(machine.addedBlocksCount).toBe(1);
+    expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS);
+
+    // Adding 2nd block from toolbar advances to Step 2 (EXPLAIN_SEQUENCE)
+    eventBus.emit('timeline:sequence-added', { source: 'toolbar', time: 2 });
+    expect(machine.addedBlocksCount).toBe(2);
+    expect(machine.selectedCount).toBe(0);
+    expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE);
+
+    // Clicking Next advances Step 2 -> Step 3 (SELECT_MULTIPLE)
+    machine.advanceFromExplainSequence();
+    expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.SELECT_MULTIPLE);
+
+    // Selecting 1 block updates progress but stays on Step 2
     eventBus.emit('timeline:selection-changed', { selectedCount: 1 });
     expect(machine.selectedCount).toBe(1);
     expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.SELECT_MULTIPLE);
 
-    // Selecting 2+ blocks advances to Step 2
+    // Selecting 2+ blocks advances to Step 3
     eventBus.emit('timeline:selection-changed', { selectedCount: 2 });
     expect(machine.selectedCount).toBe(2);
     expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.EXPORT_SELECTED);
 
-    // Block context menu opens -> tracks menu state while staying in Step 2
+    // Block context menu opens -> tracks menu state while staying in Step 3
     const mockMenu = { id: 'menu' };
     eventBus.emit('timeline:context-menu-shown', {
       targetType: 'block',
@@ -63,7 +84,7 @@ describe('ReuseBlocksStateMachine', () => {
     expect(machine.activeContextMenuType).toBe('block');
     expect(machine.activeContextMenuElement).toBe(mockMenu);
 
-    // Export succeeds -> advances to Step 3
+    // Export succeeds -> advances to Step 4
     eventBus.emit('timeline:blocks-exported', {
       exportedCount: 2,
       onlySelected: true,
@@ -86,13 +107,19 @@ describe('ReuseBlocksStateMachine', () => {
     });
     expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.COMPLETED);
     expect(machine.isActive).toBe(false);
+    expect(eventBus.listenerCount('timeline:sequence-added')).toBe(0);
     expect(eventBus.listenerCount('timeline:selection-changed')).toBe(0);
     expect(eventBus.listenerCount('timeline:blocks-exported')).toBe(0);
     expect(eventBus.listenerCount('timeline:json-imported')).toBe(0);
   });
 
-  it('should fall back to select_multiple if all blocks are deselected during Step 2', () => {
-    machine.start(0);
+  it('should fall back to select_multiple if all blocks are deselected during Step 4', () => {
+    machine.start();
+    eventBus.emit('timeline:sequence-added', { source: 'toolbar', time: 0 });
+    eventBus.emit('timeline:sequence-added', { source: 'toolbar', time: 2 });
+    machine.advanceFromExplainSequence();
+    expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.SELECT_MULTIPLE);
+
     eventBus.emit('timeline:selection-changed', { selectedCount: 2 });
     expect(machine.currentStep).toBe(REUSE_GUIDE_STEPS.EXPORT_SELECTED);
 
@@ -175,15 +202,15 @@ describe('ReuseBlocksGuideFlow', () => {
       open: vi.fn()
     });
 
-    const flowMod = await import('../../src/ui/ReuseBlocksGuideFlow.js');
+    const flowMod = await import('../../../src/ui/guides/ReuseBlocksGuideFlow.js');
     ReuseBlocksGuideFlow = flowMod.ReuseBlocksGuideFlow;
-    const editorMod = await import('../../src/ui/TimelineEditor.js');
+    const editorMod = await import('../../../src/ui/TimelineEditor.js');
     TimelineEditor = editorMod.TimelineEditor;
-    const busMod = await import('../../src/core/EventBus.js');
+    const busMod = await import('../../../src/core/EventBus.js');
     globalEventBus = busMod.globalEventBus;
   });
 
-  it('should seed 2 sample blocks when timeline has fewer than 2 blocks and clear selection', () => {
+  it('should start at add_two_blocks targeting addBtn, nudge anchorTime on 1st add, and clear selection on Step 2', () => {
     const mockDirector = {
       elapsedTime: 0,
       isPlaying: false,
@@ -195,14 +222,31 @@ describe('ReuseBlocksGuideFlow', () => {
     const editor = new TimelineEditor(mockDirector, null);
     editor.sequences = [];
     editor.selectedEvents = [{ time: 1 }];
+    editor.anchorTime = 0;
 
     const flow = new ReuseBlocksGuideFlow(editor, globalEventBus);
     flow.start();
 
-    expect(editor.sequences.length).toBe(2);
     expect(editor.selectedEvents).toEqual([]);
-    expect(flow.stateMachine.currentStep).toBe(REUSE_GUIDE_STEPS.SELECT_MULTIPLE);
+    expect(flow.stateMachine.currentStep).toBe(REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS);
+    expect(flow.getStepConfig(REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS).getTarget()).toBe(editor.addBtn);
     expect(flow.spotlight.isVisible).toBe(true);
+
+    // Click Add Sequence twice via editor.addSequence
+    editor.addSequence(editor.anchorTime, 'toolbar');
+    expect(flow.stateMachine.currentStep).toBe(REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS);
+    expect(editor.anchorTime).toBe(2.0);
+
+    editor.addSequence(editor.anchorTime, 'toolbar');
+    expect(editor.sequences.length).toBe(2);
+    expect(flow.stateMachine.currentStep).toBe(REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE);
+    expect(editor.selectedEvents).toEqual([]);
+    const actions = flow.getStepActions(REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE);
+    expect(actions.length).toBe(2);
+    expect(actions[0].primary).toBe(false);
+    expect(actions[1].primary).toBe(true);
+    actions[1].onClick();
+    expect(flow.stateMachine.currentStep).toBe(REUSE_GUIDE_STEPS.SELECT_MULTIPLE);
 
     flow.destroy();
   });

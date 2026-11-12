@@ -1,7 +1,11 @@
-import { t } from '../config/lang/i18n.js';
-import { globalEventBus } from '../core/EventBus.js';
-import { showToast } from '../utils/Toast.js';
+import { t } from '../../config/lang/i18n.js';
+import { globalEventBus } from '../../core/EventBus.js';
+import { showToast } from '../../utils/Toast.js';
 import { InteractiveSpotlight } from './InteractiveSpotlight.js';
+import {
+  buildStepNavigationActions,
+  prepareGuideFlowStart
+} from './guideFlowHelpers.js';
 import {
   ReuseBlocksStateMachine,
   REUSE_GUIDE_STEPS
@@ -13,61 +17,19 @@ export class ReuseBlocksGuideFlow {
     this.eventBus = eventBus;
     this.stateMachine = new ReuseBlocksStateMachine(eventBus);
     this.spotlight = new InteractiveSpotlight();
+    this.clearedSelectionForSelectStep = false;
 
     this.stateMachine.onChange = (step) => {
       this.handleStepChange(step);
     };
   }
 
-  ensureSampleBlocks() {
-    if (!this.timelineEditor || !Array.isArray(this.timelineEditor.sequences)) {
-      return;
-    }
-    const active = this.timelineEditor.sequences.filter((s) => !s._deleted);
-    if (active.length >= 2) {
-      return;
-    }
-
-    const neededTimes = [1.0, 3.0];
-    for (let i = active.length; i < 2; i++) {
-      this.timelineEditor.sequences.push({
-        time: neededTimes[i] || (i + 1) * 2,
-        type: 'sequence',
-        pattern: 'sweep-left',
-        count: 5,
-        duration: 0.1,
-        preset: 'crysanthemum'
-      });
-    }
-  }
-
   start() {
-    if (!this.timelineEditor) {
+    if (!prepareGuideFlowStart(this.timelineEditor, this)) {
       return;
     }
-    if (!this.timelineEditor.visible) {
-      this.timelineEditor.toggle();
-    }
-    if (
-      this.timelineEditor.onboardingFlow &&
-      this.timelineEditor.onboardingFlow.stateMachine?.isActive
-    ) {
-      this.timelineEditor.onboardingFlow.stateMachine.dismiss();
-    }
-    if (
-      this.timelineEditor.welcomeGuide &&
-      this.timelineEditor.welcomeGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.welcomeGuide.stateMachine.dismiss();
-    }
-    if (
-      this.timelineEditor.createScriptGuide &&
-      this.timelineEditor.createScriptGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.createScriptGuide.stateMachine.dismiss();
-    }
 
-    this.ensureSampleBlocks();
+    this.clearedSelectionForSelectStep = false;
     this.timelineEditor.selectedEvents = [];
     if (this.timelineEditor.inspector) {
       this.timelineEditor.inspector.hide();
@@ -77,7 +39,43 @@ export class ReuseBlocksGuideFlow {
     }
 
     this.spotlight.initDOM();
-    this.stateMachine.start(0);
+    this.stateMachine.start();
+  }
+
+  prepareStepSideEffects(step) {
+    const editor = this.timelineEditor;
+    if (!editor) {
+      return;
+    }
+
+    if (
+      step === REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS &&
+      this.stateMachine.addedBlocksCount === 1 &&
+      typeof editor.setAnchorTime === 'function'
+    ) {
+      editor.setAnchorTime(
+        (editor.anchorTime || 0) + 2.0,
+        false
+      );
+      return;
+    }
+
+    if (
+      (
+        step === REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE ||
+        step === REUSE_GUIDE_STEPS.SELECT_MULTIPLE
+      ) &&
+      !this.clearedSelectionForSelectStep
+    ) {
+      this.clearedSelectionForSelectStep = true;
+      editor.selectedEvents = [];
+      if (editor.inspector) {
+        editor.inspector.hide();
+      }
+      if (typeof editor.renderTracks === 'function') {
+        editor.renderTracks();
+      }
+    }
   }
 
   handleStepChange(step) {
@@ -97,6 +95,7 @@ export class ReuseBlocksGuideFlow {
       return;
     }
 
+    this.prepareStepSideEffects(step);
     this.renderCurrentStep();
   }
 
@@ -104,6 +103,38 @@ export class ReuseBlocksGuideFlow {
     const editor = this.timelineEditor;
     const menuType = this.stateMachine.activeContextMenuType;
     const menuEl = this.stateMachine.activeContextMenuElement;
+
+    if (step === REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS) {
+      const added = this.stateMachine.addedBlocksCount;
+      const progressTpl =
+        t('editor.reuseBlocksGuide.addBlocksProgress') ||
+        'Blocks added: {count} of 2';
+      return {
+        title:
+          t('editor.reuseBlocksGuide.addBlocksTitle') ||
+          'Add 2 Sequence Blocks',
+        desc:
+          t('editor.reuseBlocksGuide.addBlocksDesc') ||
+          'Click the Add Sequence button on the toolbar twice to place 2 firework blocks onto the timeline.',
+        progressText: progressTpl.replace('{count}', String(added)),
+        getTarget: () => editor?.addBtn || editor?.toolbar
+      };
+    }
+
+    if (step === REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE) {
+      return {
+        title:
+          t('editor.reuseBlocksGuide.explainSeqTitle') ||
+          'What Is a Sequence Block',
+        desc:
+          t('editor.reuseBlocksGuide.explainSeqDesc') ||
+          'Each colored block on the timeline is a Sequence representing a timed series of firework shots with its own start time, launch pattern, effect preset, and duration.',
+        progressText:
+          t('editor.reuseBlocksGuide.explainSeqHint') ||
+          'Review the 2 Sequence blocks on the timeline, then click Next to select them',
+        getTarget: () => editor?.tracksArea || editor?.trackContainer
+      };
+    }
 
     if (step === REUSE_GUIDE_STEPS.SELECT_MULTIPLE) {
       const count = this.stateMachine.selectedCount;
@@ -198,6 +229,19 @@ export class ReuseBlocksGuideFlow {
     return null;
   }
 
+  getStepActions() {
+    return buildStepNavigationActions({
+      stepIndex: this.stateMachine.getStepIndex(),
+      totalSteps: this.stateMachine.getTotalSteps(),
+      onPrev: () => {
+        this.stateMachine.previousStep();
+      },
+      onNext: () => {
+        this.stateMachine.nextStep();
+      }
+    });
+  }
+
   renderCurrentStep() {
     if (!this.stateMachine.isActive) {
       return;
@@ -225,7 +269,7 @@ export class ReuseBlocksGuideFlow {
       desc: config.desc,
       progressText: config.progressText,
       skipLabel: t('editor.onboarding.skipBtn') || 'Skip',
-      actions: [],
+      actions: this.getStepActions(this.stateMachine.currentStep),
       onDismiss: () => {
         this.stateMachine.dismiss();
       },

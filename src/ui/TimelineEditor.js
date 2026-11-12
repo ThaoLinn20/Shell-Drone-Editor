@@ -1,7 +1,13 @@
 import * as THREE from 'three';
 import { PropertyInspector } from './PropertyInspector.js';
 import demoShow from '../config/sequences/demoShow.json';
-import { t } from '../config/lang/i18n.js';
+import {
+  getLanguage,
+  setLanguage,
+  SUPPORTED_LANGUAGES,
+  t
+} from '../config/lang/i18n.js';
+import { CustomSelect } from './CustomSelect.js';
 import { globalEventBus } from '../core/EventBus.js';
 import { fileStorage } from '../core/FileStorageAdapter.js';
 import {
@@ -10,14 +16,18 @@ import {
 } from '../editor/ui/utils/Modal.js';
 import { showToast } from '../utils/Toast.js';
 import { WaveformGenerator } from '../utils/WaveformGenerator.js';
-import { TimelineTourGuide } from './TimelineTourGuide.js';
+import { TimelineTourGuide } from './guides/TimelineTourGuide.js';
 import { TimelineContextMenu } from './TimelineContextMenu.js';
 import { ShowLibraryModal } from './ShowLibraryModal.js';
-import { OnboardingFlow } from './OnboardingFlow.js';
-import { GuideHubModal } from './GuideHubModal.js';
-import { ReuseBlocksGuideFlow } from './ReuseBlocksGuideFlow.js';
-import { CreateScriptGuideFlow } from './CreateScriptGuideFlow.js';
-import { WelcomeGuideFlow } from './WelcomeGuideFlow.js';
+import { OnboardingFlow } from './guides/OnboardingFlow.js';
+import { GuideHubModal } from './guides/GuideHubModal.js';
+import { ReuseBlocksGuideFlow } from './guides/ReuseBlocksGuideFlow.js';
+import { CreateScriptGuideFlow } from './guides/CreateScriptGuideFlow.js';
+import { WelcomeGuideFlow } from './guides/WelcomeGuideFlow.js';
+import { AudioBeatsGuideFlow } from './guides/AudioBeatsGuideFlow.js';
+import { TimelineControlsGuideFlow } from './guides/TimelineControlsGuideFlow.js';
+import { INSPECTOR_GUIDE_CONFIGS } from './guides/inspectorGuideConfigs.js';
+import { InspectorSectionGuideFlow } from './guides/InspectorSectionGuideFlow.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 
 
@@ -65,6 +75,15 @@ export class TimelineEditor {
     this.reuseBlocksGuide = new ReuseBlocksGuideFlow(this);
     this.createScriptGuide = new CreateScriptGuideFlow(this);
     this.welcomeGuide = new WelcomeGuideFlow(this);
+    this.audioBeatsGuide = new AudioBeatsGuideFlow(this);
+    this.timelineControlsGuide = new TimelineControlsGuideFlow(this);
+    this.inspectorGuides = {};
+    INSPECTOR_GUIDE_CONFIGS.forEach((cfg) => {
+      this.inspectorGuides[cfg.id] = new InspectorSectionGuideFlow(
+        this,
+        cfg
+      );
+    });
     this.guideHubModal = new GuideHubModal(this);
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
@@ -292,6 +311,7 @@ export class TimelineEditor {
     addAudioOpt.addEventListener('click', (e) => {
       e.stopPropagation();
       dropdownMenu.style.display = 'none';
+      globalEventBus.emit('timeline:audio-picker-opened');
       this.mediaFileInput.accept = '.mp3, .wav, audio/*';
       this.mediaFileInput.click();
     });
@@ -302,15 +322,34 @@ export class TimelineEditor {
     addFileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const isVisible = dropdownMenu.style.display === 'flex';
-      dropdownMenu.style.display = isVisible ? 'none' : 'flex';
+      const nextOpen = !isVisible;
+      dropdownMenu.style.display = nextOpen ? 'flex' : 'none';
+      globalEventBus.emit(
+        'timeline:add-file-menu-toggled',
+        {
+          isOpen: nextOpen
+        }
+      );
     });
 
     document.addEventListener('click', () => {
+      const wasOpen = dropdownMenu.style.display === 'flex';
       dropdownMenu.style.display = 'none';
+      if (wasOpen) {
+        globalEventBus.emit(
+          'timeline:add-file-menu-toggled',
+          {
+            isOpen: false
+          }
+        );
+      }
     });
 
     addFileDropdownContainer.appendChild(addFileBtn);
     addFileDropdownContainer.appendChild(dropdownMenu);
+    this.addFileBtn = addFileBtn;
+    this.addFileDropdown = dropdownMenu;
+    this.addAudioOpt = addAudioOpt;
 
     this.fileIndicatorContainer = document.createElement('div');
     this.fileIndicatorContainer.style.display = 'inline-flex';
@@ -350,7 +389,6 @@ export class TimelineEditor {
     helpBtn.style.border = '1px solid #486581';
     helpBtn.style.borderRadius = '4px';
     helpBtn.style.cursor = 'pointer';
-    helpBtn.style.marginLeft = 'auto';
     helpBtn.addEventListener(
       'click',
       () => {
@@ -358,6 +396,56 @@ export class TimelineEditor {
       }
     );
     this.helpBtn = helpBtn;
+
+    const langSelect = new CustomSelect({
+      options: SUPPORTED_LANGUAGES,
+      value: getLanguage(),
+      enableSearch: false,
+      fieldName: 'timeline-language',
+      className: 'timeline-lang-select',
+      onChange: async (nextLang) => {
+        if (!nextLang || nextLang === getLanguage()) {
+          return;
+        }
+        const confirmed = await customConfirm(
+          t('editor.timelineTour.languageSwitchConfirmMessage') ||
+            'Switching the language will reload the application and any unsaved script changes may be lost. Do you want to continue?',
+          t('editor.timelineTour.languageSwitchConfirmTitle') ||
+            'Switch Language'
+        );
+        if (!confirmed) {
+          langSelect.setValue(
+            getLanguage(),
+            false
+          );
+          return;
+        }
+        setLanguage(nextLang);
+        if (
+          typeof window !== 'undefined' &&
+          window.location &&
+          typeof window.location.reload === 'function'
+        ) {
+          window.location.reload();
+        }
+      }
+    });
+    langSelect.element.style.width = '115px';
+    langSelect.element.style.flexShrink = '0';
+    langSelect.element.title = t('editor.timelineTour.languageTooltip') ||
+      'Change display language';
+    langSelect.trigger.style.padding = '3px 8px';
+    langSelect.trigger.style.background = '#273544';
+    langSelect.trigger.style.border = '1px solid #486581';
+    this.langSelect = langSelect;
+
+    const rightActionsGroup = document.createElement('div');
+    rightActionsGroup.style.display = 'flex';
+    rightActionsGroup.style.alignItems = 'center';
+    rightActionsGroup.style.gap = '6px';
+    rightActionsGroup.style.marginLeft = 'auto';
+    rightActionsGroup.appendChild(helpBtn);
+    rightActionsGroup.appendChild(langSelect.element);
 
     const libraryBtn = document.createElement('button');
     libraryBtn.textContent =
@@ -389,7 +477,7 @@ export class TimelineEditor {
     toolbar.appendChild(this.fileIndicatorContainer);
     toolbar.appendChild(this.fileInput);
     toolbar.appendChild(this.mediaFileInput);
-    toolbar.appendChild(helpBtn);
+    toolbar.appendChild(rightActionsGroup);
 
     leftPanel.appendChild(toolbar);
 
@@ -456,7 +544,8 @@ export class TimelineEditor {
       );
       this.setAnchorTime(
         time,
-        true
+        true,
+        'ruler'
       );
     });
     this.ruler.addEventListener('contextmenu', (e) => {
@@ -516,7 +605,8 @@ export class TimelineEditor {
       );
       this.setAnchorTime(
         time,
-        true
+        true,
+        'empty_space_context'
       );
       this.contextMenu.show(
         e.clientX,
@@ -590,6 +680,9 @@ export class TimelineEditor {
         if (this.tourGuide) {
           this.tourGuide.startInspectorTour();
         }
+      },
+      (selectedTargets) => {
+        this.previewInspectorSelection(selectedTargets);
       }
     );
 
@@ -1010,6 +1103,12 @@ export class TimelineEditor {
           offset: s.time - minTime
         };
       });
+      globalEventBus.emit(
+        'timeline:copied',
+        {
+          count: this.clipboardEvents.length
+        }
+      );
     }
   }
 
@@ -1042,6 +1141,14 @@ export class TimelineEditor {
       }
 
       this.renderTracks();
+      globalEventBus.emit(
+        'timeline:pasted',
+        {
+          count: newPastedEvents.length,
+          anchorTime: this.anchorTime,
+          events: newPastedEvents
+        }
+      );
     }
   }
 
@@ -1233,12 +1340,42 @@ export class TimelineEditor {
     }
   }
 
+  startInspectorGuide(guideId) {
+    const flow = this.inspectorGuides && this.inspectorGuides[guideId];
+    if (flow && typeof flow.start === 'function') {
+      flow.start();
+    }
+  }
+
+  previewInspectorSelection(selectedTargets = null) {
+    const targets =
+      Array.isArray(selectedTargets) && selectedTargets.length > 0
+        ? selectedTargets
+        : this.selectedEvents;
+    if (
+      !Array.isArray(targets) ||
+      targets.length === 0 ||
+      !this.showDirector ||
+      typeof this.showDirector.previewEvents !== 'function'
+    ) {
+      return false;
+    }
+
+    if (this.showDirector.isPlaying) {
+      this.showDirector.pause();
+      globalEventBus.emit('timeline:playback-paused');
+    }
+
+    return this.showDirector.previewEvents(targets);
+  }
+
   togglePlay() {
     if (this.showDirector.isPlaying) {
       this.showDirector.pause();
       if (this.showDirector.fireworkSystem && this.showDirector.fireworkSystem.burstAll) {
         this.showDirector.fireworkSystem.burstAll();
       }
+      globalEventBus.emit('timeline:playback-paused');
     } else {
       this.seek(this.anchorTime);
       this.showDirector.play();
@@ -1273,7 +1410,7 @@ export class TimelineEditor {
     return result;
   }
 
-  setAnchorTime(time, shouldSeek = true) {
+  setAnchorTime(time, shouldSeek = true, source = 'programmatic') {
     const clampedTime = Math.max(
       0,
       time
@@ -1283,8 +1420,51 @@ export class TimelineEditor {
       this.anchorHead.style.left =
         (clampedTime * this.pixelsPerSecond) + 'px';
     }
+    globalEventBus.emit(
+      'timeline:anchor-changed',
+      {
+        time: clampedTime,
+        shouldSeek,
+        source
+      }
+    );
     if (shouldSeek) {
       this.seek(clampedTime);
+      let matchedBeat = null;
+      let matchedSeq = null;
+      let minDiff = 0.4;
+      if (Array.isArray(this.sequences)) {
+        this.sequences.forEach((s) => {
+          if (
+            s &&
+            !s._deleted &&
+            s.type === 'audio' &&
+            Array.isArray(s.beats)
+          ) {
+            s.beats.forEach((b) => {
+              const absTime = s.time + b;
+              const diff = Math.abs(absTime - clampedTime);
+              if (diff < minDiff) {
+                minDiff = diff;
+                matchedBeat = b;
+                matchedSeq = s;
+              }
+            });
+          }
+        });
+      }
+      if (matchedSeq !== null && matchedBeat !== null) {
+        globalEventBus.emit(
+          'audio:beat-focused',
+          {
+            beatTime: matchedBeat,
+            absoluteTime: matchedSeq.time + matchedBeat,
+            audioEvent: matchedSeq
+          }
+        );
+      } else {
+        globalEventBus.emit('audio:beat-unfocused');
+      }
     }
   }
 
@@ -1367,6 +1547,12 @@ export class TimelineEditor {
       const currentTime = this.showDirector.elapsedTime;
       this.showDirector.loadScript(this.getFlattenedSequences());
       this.showDirector.seek(currentTime);
+      globalEventBus.emit(
+        'timeline:audio-imported',
+        {
+          event: newSeq
+        }
+      );
     });
 
     audio.addEventListener('error', () => {
@@ -1558,6 +1744,9 @@ export class TimelineEditor {
       this.blockDomMap.set(seq, block);
       block.className = `timeline-event-block timeline-block-${seq.type}`;
       block.dataset.eventType = seq.type;
+      block.dataset.selected = this.selectedEvents.includes(seq)
+        ? 'true'
+        : 'false';
       const startX = seq.time * this.pixelsPerSecond;
       const visualDurationVal = seq.uiDuration !== undefined ? seq.uiDuration : (seq.duration || 0);
       const width = Math.max(visualDurationVal * this.pixelsPerSecond, this.minBlockWidth);
@@ -1757,6 +1946,15 @@ export class TimelineEditor {
                 );
                 this.renderTracks();
                 this.inspector.render();
+                globalEventBus.emit(
+                  'audio:beat-deleted',
+                  {
+                    beatTime,
+                    beatCount: seq.beats.length,
+                    source: 'dblclick',
+                    audioEvent: seq
+                  }
+                );
               }
             );
 
@@ -1764,6 +1962,11 @@ export class TimelineEditor {
               'mousedown',
               (e) => {
                 e.stopPropagation();
+                this.setAnchorTime(
+                  seq.time + beatTime,
+                  true,
+                  'beat_dot'
+                );
                 this.selectedEvents = [seq];
                 this.inspector.show(seq);
                 this.renderTracks();
@@ -1837,6 +2040,11 @@ export class TimelineEditor {
       });
 
       const resizeHandle = document.createElement('div');
+      resizeHandle.className = 'timeline-block-resize-handle';
+      if (!resizeHandle.dataset) {
+        resizeHandle.dataset = {};
+      }
+      resizeHandle.dataset.role = 'resize-handle';
       resizeHandle.style.position = 'absolute';
       resizeHandle.style.right = '0';
       resizeHandle.style.top = '0';
@@ -2104,6 +2312,39 @@ export class TimelineEditor {
       this.ctrlClickedSeq = null;
     }
 
+    const wasDragging = this.isDragging && this.draggedEvent;
+    const draggedEvent = this.draggedEvent;
+    const hasMovedBlock = Boolean(
+      wasDragging &&
+      (
+        (
+          this.selectedEvents &&
+          this.selectedEvents.some(
+            (s) => s.initialTime !== undefined && Math.abs(s.time - s.initialTime) > 1e-4
+          )
+        ) ||
+        (
+          draggedEvent.initialTime !== undefined &&
+          Math.abs(draggedEvent.time - draggedEvent.initialTime) > 1e-4
+        )
+      )
+    );
+
+    const wasResizing = this.isResizing && this.resizedEvent;
+    const resizedEvent = this.resizedEvent;
+    const resizedDuration = resizedEvent
+      ? (
+        resizedEvent.uiDuration !== undefined
+          ? resizedEvent.uiDuration
+          : (resizedEvent.duration || 0)
+      )
+      : 0;
+    const hasResizedBlock = Boolean(
+      wasResizing &&
+      this.initialDuration !== undefined &&
+      Math.abs(resizedDuration - this.initialDuration) > 1e-4
+    );
+
     this.isDragging = false;
     this.draggedEvent = null;
     this.isResizing = false;
@@ -2112,6 +2353,27 @@ export class TimelineEditor {
       this.selectedEvents.forEach(s => {
         delete s.initialTime;
       });
+    }
+
+    if (hasMovedBlock) {
+      globalEventBus.emit(
+        'timeline:block-moved',
+        {
+          event: draggedEvent,
+          time: draggedEvent.time,
+          selectedCount: this.selectedEvents ? this.selectedEvents.length : 0
+        }
+      );
+    }
+
+    if (hasResizedBlock) {
+      globalEventBus.emit(
+        'timeline:block-resized',
+        {
+          event: resizedEvent,
+          duration: resizedDuration
+        }
+      );
     }
   }
 
@@ -2846,6 +3108,15 @@ export class TimelineEditor {
           ) {
             this.inspector.render();
           }
+          globalEventBus.emit(
+            'audio:beat-deleted',
+            {
+              beatTime: closestBeat,
+              beatCount: audioSeq.beats.length,
+              source: 'double_press_b',
+              audioEvent: audioSeq
+            }
+          );
         }
       } else {
         // Single press: Thêm beat
@@ -2875,6 +3146,15 @@ export class TimelineEditor {
           ) {
             this.inspector.render();
           }
+          globalEventBus.emit(
+            'audio:beat-tapped',
+            {
+              beatTime: roundedTime,
+              beatCount: audioSeq.beats.length,
+              isPlaying: Boolean(this.showDirector?.isPlaying),
+              audioEvent: audioSeq
+            }
+          );
         }
       }
     }

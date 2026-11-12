@@ -4,6 +4,8 @@ export class InteractiveSpotlight {
     this.tooltipCard = null;
     this.positionRafId = null;
     this.currentGetTarget = null;
+    this.currentGetTooltipAnchor = null;
+    this.currentPlacement = 'auto';
     this.isVisible = false;
 
     this.boundUpdatePosition = this.updatePosition.bind(this);
@@ -20,7 +22,8 @@ export class InteractiveSpotlight {
     this.highlightBox.style.border = '2px solid #00e5ff';
     this.highlightBox.style.borderRadius = '6px';
     this.highlightBox.style.pointerEvents = 'none';
-    this.highlightBox.style.transition = 'all 0.2s ease-out';
+    this.highlightBox.style.transition =
+      'top 0.2s ease-out, left 0.2s ease-out, width 0.2s ease-out, height 0.2s ease-out';
     this.highlightBox.style.zIndex = '100015';
 
     this.tooltipCard = document.createElement('div');
@@ -78,13 +81,22 @@ export class InteractiveSpotlight {
     skipLabel = 'Skip',
     actions = [],
     onDismiss,
-    getTarget
+    getTarget,
+    getTooltipAnchor = null,
+    placement = 'auto',
+    dimBackdrop = true
   }) {
     if (!this.tooltipCard || !this.highlightBox) {
       this.initDOM();
     }
 
+    this.highlightBox.style.boxShadow = dimBackdrop
+      ? '0 0 0 9999px rgba(0, 0, 0, 0.55), 0 0 16px #00e5ff'
+      : '0 0 0 9999px rgba(0, 0, 0, 0), 0 0 16px #00e5ff';
+
     this.currentGetTarget = getTarget || null;
+    this.currentGetTooltipAnchor = getTooltipAnchor || null;
+    this.currentPlacement = placement || 'auto';
     this.tooltipCard.innerHTML = '';
 
     const headerRow = document.createElement('div');
@@ -183,7 +195,14 @@ export class InteractiveSpotlight {
         btn.style.fontSize = '12px';
         btn.style.borderRadius = '4px';
         btn.style.cursor = 'pointer';
-        if (act.primary) {
+        if (act.variant === 'accent') {
+          btn.style.background = '#10b981';
+          btn.style.border = '1px solid #34d399';
+          btn.style.color = '#000000';
+          btn.style.fontWeight = 'bold';
+          btn.style.padding = '6px 12px';
+          btn.style.boxShadow = '0 0 12px rgba(16, 185, 129, 0.45)';
+        } else if (act.primary) {
           btn.style.background = '#00bcd4';
           btn.style.border = 'none';
           btn.style.color = '#000000';
@@ -244,7 +263,53 @@ export class InteractiveSpotlight {
       return;
     }
 
-    const rect = targetEl.getBoundingClientRect();
+    const baseRect = targetEl.getBoundingClientRect();
+    let rect = {
+      top: baseRect.top,
+      left: baseRect.left,
+      bottom: baseRect.bottom !== undefined ? baseRect.bottom : baseRect.top + baseRect.height,
+      right: baseRect.right !== undefined ? baseRect.right : baseRect.left + baseRect.width,
+      width: baseRect.width,
+      height: baseRect.height
+    };
+
+    if (
+      targetEl.dataset?.fieldName &&
+      typeof document !== 'undefined' &&
+      typeof document.querySelector === 'function'
+    ) {
+      const openMenu = document.querySelector(
+        `.custom-select-menu[data-field-name="${targetEl.dataset.fieldName}"]`
+      );
+      if (
+        openMenu &&
+        openMenu.style?.display !== 'none' &&
+        typeof openMenu.getBoundingClientRect === 'function'
+      ) {
+        const menuRect = openMenu.getBoundingClientRect();
+        if (menuRect && menuRect.width > 0 && menuRect.height > 0) {
+          const top = Math.min(rect.top, menuRect.top);
+          const left = Math.min(rect.left, menuRect.left);
+          const bottom = Math.max(
+            rect.bottom,
+            menuRect.bottom !== undefined ? menuRect.bottom : menuRect.top + menuRect.height
+          );
+          const right = Math.max(
+            rect.right,
+            menuRect.right !== undefined ? menuRect.right : menuRect.left + menuRect.width
+          );
+          rect = {
+            top,
+            left,
+            bottom,
+            right,
+            width: right - left,
+            height: bottom - top
+          };
+        }
+      }
+    }
+
     const margin = 4;
 
     this.highlightBox.style.top =
@@ -259,22 +324,51 @@ export class InteractiveSpotlight {
     const viewportW = typeof window !== 'undefined' ? window.innerWidth : 1280;
     const viewportH = typeof window !== 'undefined' ? window.innerHeight : 800;
 
-    let top = rect.top - cardHeight - 16;
-    if (top < 10) {
-      top = Math.min(
-        viewportH - cardHeight - 10,
-        rect.bottom + 16
-      );
-    }
-    let left = rect.left;
-    if (left + cardWidth > viewportW - 10) {
+    const anchorEl =
+      typeof this.currentGetTooltipAnchor === 'function'
+        ? this.currentGetTooltipAnchor()
+        : null;
+    const anchorRect =
+      anchorEl && typeof anchorEl.getBoundingClientRect === 'function'
+        ? anchorEl.getBoundingClientRect()
+        : rect;
+
+    let top;
+    let left;
+
+    if (
+      this.currentPlacement === 'left' &&
+      anchorRect.left >= cardWidth + 24
+    ) {
       left = Math.max(
         10,
-        viewportW - cardWidth - 10
+        anchorRect.left - cardWidth - 16
       );
-    }
-    if (left < 10) {
-      left = 10;
+      top = Math.max(
+        10,
+        Math.min(
+          viewportH - cardHeight - 10,
+          anchorRect.top
+        )
+      );
+    } else {
+      top = rect.top - cardHeight - 16;
+      if (top < 10) {
+        top = Math.min(
+          viewportH - cardHeight - 10,
+          rect.bottom + 16
+        );
+      }
+      left = rect.left;
+      if (left + cardWidth > viewportW - 10) {
+        left = Math.max(
+          10,
+          viewportW - cardWidth - 10
+        );
+      }
+      if (left < 10) {
+        left = 10;
+      }
     }
 
     this.tooltipCard.style.top = top + 'px';

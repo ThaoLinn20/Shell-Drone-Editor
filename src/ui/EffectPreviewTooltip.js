@@ -32,7 +32,7 @@ export class EffectPreviewTooltip {
     this.container.id = 'effect-preview-tooltip';
     this.container.style.cssText = `
       position: fixed;
-      z-index: 99999;
+      z-index: 100019;
       width: 240px;
       background: #0f141f;
       border: 1px solid #28334a;

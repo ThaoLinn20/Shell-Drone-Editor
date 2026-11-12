@@ -22,9 +22,9 @@ describe('TimelineTourGuide Component', () => {
   let domElements = [];
 
   beforeAll(async () => {
-    const tourMod = await import('../../src/ui/TimelineTourGuide.js');
+    const tourMod = await import('../../../src/ui/guides/TimelineTourGuide.js');
     TimelineTourGuide = tourMod.TimelineTourGuide;
-    const busMod = await import('../../src/core/EventBus.js');
+    const busMod = await import('../../../src/core/EventBus.js');
     globalEventBus = busMod.globalEventBus;
   });
 

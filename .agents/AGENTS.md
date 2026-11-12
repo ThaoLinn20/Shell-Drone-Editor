@@ -122,4 +122,17 @@
 - **Boundary Condition Testing**:
   - Whenever supporting a numeric multiplier, write unit tests asserting that boundary values (e.g. `0.01x`, `5.0x`) flow untouched to the simulation and produce proportionally scaled particles or lifetimes.
 
+## Directory Organization, Modularity & Separation of Responsibilities
+- **Avoid Flat Folder Dumping**:
+  - NEVER pile multi-file feature families or repetitive sub-modules directly into a flat parent directory (such as placing all guide flows, state machines, and spotlights directly in `src/ui/` or `tests/ui/`).
+  - Reserve top-level layer folders (`src/ui/`, `src/systems/`, `src/core/`) for primary orchestrators, standalone core widgets, and cross-cutting primitives.
+  - When a cohesive sub-feature spans multiple related files or introduces a repeatable module pair/pattern (for example, paired `*Flow.js` + `*StateMachine.js` files, or 3 or more modules belonging to one domain), organize them under a dedicated domain subfolder (e.g., `src/ui/guides/`).
+- **Mirror Test Directory Hierarchy**:
+  - Keep `tests/` synchronized with `src/` folder organization: whenever modules are placed in or moved to a subfolder under `src/` (e.g., `src/ui/guides/`), place their corresponding unit and integration tests under the mirrored subfolder in `tests/` (e.g., `tests/ui/guides/`).
+- **Separate Concerns & Eliminate Duplicated Boilerplate**:
+  - Strictly separate pure domain/state logic from DOM rendering and orchestration: keep state transitions in pure DOM-free state machines, UI orchestration in focused flow/controller modules, and shared visual scaffolding in reusable presenters (such as `InteractiveSpotlight.js`).
+  - Whenever multiple features repeat similar setup, event-binding, teardown, or UI workflows, extract a shared helper, composable utility, or data-driven template instead of duplicating logic across sibling files.
+- **Keep Templates & Docs Aligned**:
+  - Whenever introducing a new subfolder or structural pattern, immediately update related workspace skill instructions (e.g., `.agents/skills/*/SKILL.md`) and structural references (`STRUCTURE.md`) so future tasks scaffold files in the right location.
+
 

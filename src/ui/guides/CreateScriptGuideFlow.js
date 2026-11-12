@@ -1,7 +1,11 @@
-import { t } from '../config/lang/i18n.js';
-import { globalEventBus } from '../core/EventBus.js';
-import { showToast } from '../utils/Toast.js';
+import { t } from '../../config/lang/i18n.js';
+import { globalEventBus } from '../../core/EventBus.js';
+import { showToast } from '../../utils/Toast.js';
 import { InteractiveSpotlight } from './InteractiveSpotlight.js';
+import {
+  buildStepNavigationActions,
+  prepareGuideFlowStart
+} from './guideFlowHelpers.js';
 import {
   CreateScriptStateMachine,
   CREATE_SCRIPT_STEPS
@@ -20,29 +24,8 @@ export class CreateScriptGuideFlow {
   }
 
   start() {
-    if (!this.timelineEditor) {
+    if (!prepareGuideFlowStart(this.timelineEditor, this)) {
       return;
-    }
-    if (!this.timelineEditor.visible) {
-      this.timelineEditor.toggle();
-    }
-    if (
-      this.timelineEditor.onboardingFlow &&
-      this.timelineEditor.onboardingFlow.stateMachine?.isActive
-    ) {
-      this.timelineEditor.onboardingFlow.stateMachine.dismiss();
-    }
-    if (
-      this.timelineEditor.reuseBlocksGuide &&
-      this.timelineEditor.reuseBlocksGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.reuseBlocksGuide.stateMachine.dismiss();
-    }
-    if (
-      this.timelineEditor.welcomeGuide &&
-      this.timelineEditor.welcomeGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.welcomeGuide.stateMachine.dismiss();
     }
 
     this.spotlight.initDOM();
@@ -242,7 +225,16 @@ export class CreateScriptGuideFlow {
       desc: config.desc,
       progressText: config.progressText,
       skipLabel: t('editor.onboarding.skipBtn') || 'Skip',
-      actions: [],
+      actions: buildStepNavigationActions({
+        stepIndex: this.stateMachine.getStepIndex(),
+        totalSteps: this.stateMachine.getTotalSteps(),
+        onPrev: () => {
+          this.stateMachine.previousStep();
+        },
+        onNext: () => {
+          this.stateMachine.nextStep();
+        }
+      }),
       onDismiss: () => {
         this.stateMachine.dismiss();
       },

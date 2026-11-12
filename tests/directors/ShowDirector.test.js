@@ -157,4 +157,62 @@ describe('ShowDirector', () => {
       })
     }));
   });
+
+  it('should preview selected sequences immediately with relative timing without mutating timeline state', () => {
+    const seq1 = { time: 12.0, type: 'single', preset: 'ring' };
+    const seq2 = { time: 13.5, type: 'sequence', pattern: 'sweep-left', count: 4 };
+    const audioEvt = { time: 10.0, type: 'audio', url: 'music.mp3' };
+    const droneEvt = { time: 11.0, type: 'droneshow', name: 'Drone' };
+
+    director.elapsedTime = 5.0;
+    const started = director.previewEvents([audioEvt, droneEvt, seq1, seq2]);
+
+    expect(started).toBe(true);
+    expect(director.isPlaying).toBe(false);
+    expect(director.elapsedTime).toBe(5.0);
+    // Earliest firework (12.0s) executes immediately at t=0
+    expect(mockFireworkSystem.launchRandom).toHaveBeenCalledTimes(1);
+    expect(mockFireworkSystem.launchRandom).toHaveBeenCalledWith(
+      'ring',
+      expect.any(Object)
+    );
+    expect(mockSequencer.playPattern).not.toHaveBeenCalled();
+
+    // Advance dt by 1.0s (still 0.5s remaining for seq2)
+    director.update(1.0);
+    expect(director.elapsedTime).toBe(5.0);
+    expect(mockSequencer.playPattern).not.toHaveBeenCalled();
+
+    // Advance dt by 0.6s -> seq2 fires at +1.5s relative offset
+    director.update(0.6);
+    expect(mockSequencer.playPattern).toHaveBeenCalledTimes(1);
+    expect(director.previewQueue.length).toBe(0);
+  });
+
+  it('should flatten group children for preview, allow overlapping clicks, and clear queue on play or stop', () => {
+    const group = {
+      time: 20.0,
+      type: 'group',
+      children: [
+        { timeOffset: 0, type: 'single', preset: 'peony' },
+        { timeOffset: 1.0, type: 'single', preset: 'willow' },
+        { timeOffset: 0.5, type: 'audio', url: 'skip.mp3' }
+      ]
+    };
+
+    expect(director.previewEvents([{ time: 0, type: 'audio', url: 'x.mp3' }])).toBe(false);
+
+    expect(director.previewEvents([group])).toBe(true);
+    expect(mockFireworkSystem.launchRandom).toHaveBeenCalledTimes(1);
+    expect(director.previewQueue.length).toBe(1);
+
+    // Consecutive preview call appends rather than cancelling in-flight preview
+    expect(director.previewEvents([group])).toBe(true);
+    expect(mockFireworkSystem.launchRandom).toHaveBeenCalledTimes(2);
+    expect(director.previewQueue.length).toBe(2);
+
+    // play() clears pending previewQueue so main show playback stays clean
+    director.play();
+    expect(director.previewQueue.length).toBe(0);
+  });
 });

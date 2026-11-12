@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release-windows:
     runs-on: windows-latest
@@ -16,6 +20,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Configure git HTTPS for GitHub dependencies
+        run: |
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,8 +44,12 @@ jobs:
         run: npm run electron:publish
 
       - name: Update GitHub Release notes from RELEASE_NOTES.md
-        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit "${{ github.ref_name }}" --notes-file RELEASE_NOTES.md --title "${{ github.ref_name }}"
+        run: |
+          $tag = if ("${{ github.ref }}".StartsWith("refs/tags/")) { "${{ github.ref_name }}" } else { "v" + (node -p "require('./package.json').version") }
+          if (gh release view $tag 2>$null) {
+            gh release edit $tag --notes-file RELEASE_NOTES.md --title $tag --draft=false
+          }
 
