@@ -56,6 +56,12 @@ export class WelcomeGuideFlow {
     ) {
       this.timelineEditor.createScriptGuide.stateMachine.dismiss();
     }
+    if (
+      this.timelineEditor.audioBeatsGuide &&
+      this.timelineEditor.audioBeatsGuide.stateMachine?.isActive
+    ) {
+      this.timelineEditor.audioBeatsGuide.stateMachine.dismiss();
+    }
 
     this.spotlight.initDOM();
     this.stateMachine.start();

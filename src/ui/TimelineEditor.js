@@ -18,6 +18,7 @@ import { GuideHubModal } from './GuideHubModal.js';
 import { ReuseBlocksGuideFlow } from './ReuseBlocksGuideFlow.js';
 import { CreateScriptGuideFlow } from './CreateScriptGuideFlow.js';
 import { WelcomeGuideFlow } from './WelcomeGuideFlow.js';
+import { AudioBeatsGuideFlow } from './AudioBeatsGuideFlow.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 
 
@@ -65,6 +66,7 @@ export class TimelineEditor {
     this.reuseBlocksGuide = new ReuseBlocksGuideFlow(this);
     this.createScriptGuide = new CreateScriptGuideFlow(this);
     this.welcomeGuide = new WelcomeGuideFlow(this);
+    this.audioBeatsGuide = new AudioBeatsGuideFlow(this);
     this.guideHubModal = new GuideHubModal(this);
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
@@ -292,6 +294,7 @@ export class TimelineEditor {
     addAudioOpt.addEventListener('click', (e) => {
       e.stopPropagation();
       dropdownMenu.style.display = 'none';
+      globalEventBus.emit('timeline:audio-picker-opened');
       this.mediaFileInput.accept = '.mp3, .wav, audio/*';
       this.mediaFileInput.click();
     });
@@ -302,15 +305,34 @@ export class TimelineEditor {
     addFileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const isVisible = dropdownMenu.style.display === 'flex';
-      dropdownMenu.style.display = isVisible ? 'none' : 'flex';
+      const nextOpen = !isVisible;
+      dropdownMenu.style.display = nextOpen ? 'flex' : 'none';
+      globalEventBus.emit(
+        'timeline:add-file-menu-toggled',
+        {
+          isOpen: nextOpen
+        }
+      );
     });
 
     document.addEventListener('click', () => {
+      const wasOpen = dropdownMenu.style.display === 'flex';
       dropdownMenu.style.display = 'none';
+      if (wasOpen) {
+        globalEventBus.emit(
+          'timeline:add-file-menu-toggled',
+          {
+            isOpen: false
+          }
+        );
+      }
     });
 
     addFileDropdownContainer.appendChild(addFileBtn);
     addFileDropdownContainer.appendChild(dropdownMenu);
+    this.addFileBtn = addFileBtn;
+    this.addFileDropdown = dropdownMenu;
+    this.addAudioOpt = addAudioOpt;
 
     this.fileIndicatorContainer = document.createElement('div');
     this.fileIndicatorContainer.style.display = 'inline-flex';
@@ -1239,6 +1261,7 @@ export class TimelineEditor {
       if (this.showDirector.fireworkSystem && this.showDirector.fireworkSystem.burstAll) {
         this.showDirector.fireworkSystem.burstAll();
       }
+      globalEventBus.emit('timeline:playback-paused');
     } else {
       this.seek(this.anchorTime);
       this.showDirector.play();
@@ -1285,6 +1308,41 @@ export class TimelineEditor {
     }
     if (shouldSeek) {
       this.seek(clampedTime);
+      let matchedBeat = null;
+      let matchedSeq = null;
+      let minDiff = 0.4;
+      if (Array.isArray(this.sequences)) {
+        this.sequences.forEach((s) => {
+          if (
+            s &&
+            !s._deleted &&
+            s.type === 'audio' &&
+            Array.isArray(s.beats)
+          ) {
+            s.beats.forEach((b) => {
+              const absTime = s.time + b;
+              const diff = Math.abs(absTime - clampedTime);
+              if (diff < minDiff) {
+                minDiff = diff;
+                matchedBeat = b;
+                matchedSeq = s;
+              }
+            });
+          }
+        });
+      }
+      if (matchedSeq !== null && matchedBeat !== null) {
+        globalEventBus.emit(
+          'audio:beat-focused',
+          {
+            beatTime: matchedBeat,
+            absoluteTime: matchedSeq.time + matchedBeat,
+            audioEvent: matchedSeq
+          }
+        );
+      } else {
+        globalEventBus.emit('audio:beat-unfocused');
+      }
     }
   }
 
@@ -1367,6 +1425,12 @@ export class TimelineEditor {
       const currentTime = this.showDirector.elapsedTime;
       this.showDirector.loadScript(this.getFlattenedSequences());
       this.showDirector.seek(currentTime);
+      globalEventBus.emit(
+        'timeline:audio-imported',
+        {
+          event: newSeq
+        }
+      );
     });
 
     audio.addEventListener('error', () => {
@@ -1757,6 +1821,15 @@ export class TimelineEditor {
                 );
                 this.renderTracks();
                 this.inspector.render();
+                globalEventBus.emit(
+                  'audio:beat-deleted',
+                  {
+                    beatTime,
+                    beatCount: seq.beats.length,
+                    source: 'dblclick',
+                    audioEvent: seq
+                  }
+                );
               }
             );
 
@@ -1764,6 +1837,10 @@ export class TimelineEditor {
               'mousedown',
               (e) => {
                 e.stopPropagation();
+                this.setAnchorTime(
+                  seq.time + beatTime,
+                  true
+                );
                 this.selectedEvents = [seq];
                 this.inspector.show(seq);
                 this.renderTracks();
@@ -2846,6 +2923,15 @@ export class TimelineEditor {
           ) {
             this.inspector.render();
           }
+          globalEventBus.emit(
+            'audio:beat-deleted',
+            {
+              beatTime: closestBeat,
+              beatCount: audioSeq.beats.length,
+              source: 'double_press_b',
+              audioEvent: audioSeq
+            }
+          );
         }
       } else {
         // Single press: Thêm beat
@@ -2875,6 +2961,15 @@ export class TimelineEditor {
           ) {
             this.inspector.render();
           }
+          globalEventBus.emit(
+            'audio:beat-tapped',
+            {
+              beatTime: roundedTime,
+              beatCount: audioSeq.beats.length,
+              isPlaying: Boolean(this.showDirector?.isPlaying),
+              audioEvent: audioSeq
+            }
+          );
         }
       }
     }

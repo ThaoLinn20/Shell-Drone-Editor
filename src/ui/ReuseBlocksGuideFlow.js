@@ -66,6 +66,12 @@ export class ReuseBlocksGuideFlow {
     ) {
       this.timelineEditor.createScriptGuide.stateMachine.dismiss();
     }
+    if (
+      this.timelineEditor.audioBeatsGuide &&
+      this.timelineEditor.audioBeatsGuide.stateMachine?.isActive
+    ) {
+      this.timelineEditor.audioBeatsGuide.stateMachine.dismiss();
+    }
 
     this.ensureSampleBlocks();
     this.timelineEditor.selectedEvents = [];

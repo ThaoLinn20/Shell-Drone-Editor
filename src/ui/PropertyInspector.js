@@ -3046,6 +3046,7 @@ export class PropertyInspector {
 
     const autoBtn = document.createElement('button');
     autoBtn.className = 'btn';
+    autoBtn.dataset.inspectorAction = 'auto-detect-beats';
     autoBtn.style.background = '#9c27b0';
     autoBtn.style.color = '#fff';
     autoBtn.textContent =
@@ -3090,6 +3091,13 @@ export class PropertyInspector {
           event.beats = beats;
           this.triggerUpdate();
           this.render();
+          globalEventBus.emit(
+            'audio:beats-auto-detected',
+            {
+              count: Array.isArray(beats) ? beats.length : 0,
+              event
+            }
+          );
         } catch (err) {
           alert(
             (t('editor.inspector.fields.analyzeError') ||
@@ -3108,6 +3116,7 @@ export class PropertyInspector {
 
     const clearBtn = document.createElement('button');
     clearBtn.className = 'btn btn-secondary';
+    clearBtn.dataset.inspectorAction = 'clear-all-beats';
     clearBtn.textContent =
       t('editor.inspector.fields.clearBeatsBtn') ||
       'Xoa tat ca nhip';
@@ -3124,6 +3133,12 @@ export class PropertyInspector {
           event.beats = [];
           this.triggerUpdate();
           this.render();
+          globalEventBus.emit(
+            'audio:beats-cleared',
+            {
+              event
+            }
+          );
         }
       }
     );

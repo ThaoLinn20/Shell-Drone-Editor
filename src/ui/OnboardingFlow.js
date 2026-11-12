@@ -64,6 +64,12 @@ export class OnboardingFlow {
     ) {
       this.timelineEditor.welcomeGuide.stateMachine.dismiss();
     }
+    if (
+      this.timelineEditor?.audioBeatsGuide &&
+      this.timelineEditor.audioBeatsGuide.stateMachine?.isActive
+    ) {
+      this.timelineEditor.audioBeatsGuide.stateMachine.dismiss();
+    }
     this.spotlight.initDOM();
     this.bindWindowListeners();
     this.stateMachine.restart();

@@ -34,6 +34,14 @@ export const GUIDE_TAGS = {
     bg: 'rgba(148, 163, 184, 0.16)',
     color: '#cbd5e1',
     border: 'rgba(148, 163, 184, 0.35)'
+  },
+  audio: {
+    id: 'audio',
+    label: () => t('editor.guideHub.tagAudio') || 'Audio',
+    order: 4,
+    bg: 'rgba(236, 72, 153, 0.16)',
+    color: '#f472b6',
+    border: 'rgba(236, 72, 153, 0.4)'
   }
 };
 
@@ -140,6 +148,26 @@ export class GuideHubModal {
         execute: () => {
           if (this.timelineEditor && this.timelineEditor.createScriptGuide) {
             this.timelineEditor.createScriptGuide.start();
+          }
+        }
+      },
+      {
+        id: 'audio_and_beats',
+        title: () =>
+          t('editor.guideHub.audioBeatsTitle') ||
+          'Import Audio and Tap Beats',
+        desc: () =>
+          t('editor.guideHub.audioBeatsDesc') ||
+          'Import an MP3 or WAV track, try Auto Detect Beats and Clear All Beats, then tap B live along with the music.',
+        badge: () =>
+          t('editor.guideHub.audioBeatsBadge') || '11 steps',
+        tags: ['audio'],
+        actionLabel: () =>
+          t('editor.guideHub.startBtn') || 'Start Guide',
+        variant: 'primary',
+        execute: () => {
+          if (this.timelineEditor && this.timelineEditor.audioBeatsGuide) {
+            this.timelineEditor.audioBeatsGuide.start();
           }
         }
       },
