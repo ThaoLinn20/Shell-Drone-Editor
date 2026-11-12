@@ -1,4 +1,6 @@
 export const REUSE_GUIDE_STEPS = {
+  ADD_TWO_BLOCKS: 'add_two_blocks',
+  EXPLAIN_SEQUENCE: 'explain_sequence',
   SELECT_MULTIPLE: 'select_multiple',
   EXPORT_SELECTED: 'export_selected',
   REIMPORT_EMPTY_SPACE: 'reimport_empty_space',
@@ -7,6 +9,8 @@ export const REUSE_GUIDE_STEPS = {
 };
 
 const STEP_ORDER = [
+  REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS,
+  REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE,
   REUSE_GUIDE_STEPS.SELECT_MULTIPLE,
   REUSE_GUIDE_STEPS.EXPORT_SELECTED,
   REUSE_GUIDE_STEPS.REIMPORT_EMPTY_SPACE
@@ -16,6 +20,8 @@ export class ReuseBlocksStateMachine {
   constructor(eventBus) {
     this.eventBus = eventBus;
     this.currentStep = null;
+    this.addedBlocksCount = 0;
+    this.targetBlocksCount = 2;
     this.selectedCount = 0;
     this.activeContextMenuType = null;
     this.activeContextMenuElement = null;
@@ -32,13 +38,12 @@ export class ReuseBlocksStateMachine {
     return STEP_ORDER.length;
   }
 
-  start(initialSelectedCount = 0) {
-    this.selectedCount = Number(initialSelectedCount) || 0;
+  start() {
+    this.addedBlocksCount = 0;
+    this.selectedCount = 0;
     this.activeContextMenuType = null;
     this.activeContextMenuElement = null;
-    this.currentStep = this.selectedCount >= 2
-      ? REUSE_GUIDE_STEPS.EXPORT_SELECTED
-      : REUSE_GUIDE_STEPS.SELECT_MULTIPLE;
+    this.currentStep = REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS;
     this.isActive = true;
     this.bindEvents();
     this.notify();
@@ -61,6 +66,10 @@ export class ReuseBlocksStateMachine {
       });
     };
 
+    subscribe(
+      'timeline:sequence-added',
+      (payload) => this.handleSequenceAdded(payload)
+    );
     subscribe(
       'timeline:selection-changed',
       (payload) => this.handleSelectionChanged(payload)
@@ -93,6 +102,34 @@ export class ReuseBlocksStateMachine {
       });
     }
     this.listeners = [];
+  }
+
+  handleSequenceAdded(payload = {}) {
+    if (!this.isActive) {
+      return;
+    }
+    if (
+      this.currentStep === REUSE_GUIDE_STEPS.ADD_TWO_BLOCKS &&
+      payload.source !== 'context_menu'
+    ) {
+      this.addedBlocksCount += 1;
+      if (this.addedBlocksCount >= this.targetBlocksCount) {
+        this.selectedCount = 0;
+        this.currentStep = REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE;
+      }
+      this.notify();
+    }
+  }
+
+  advanceFromExplainSequence() {
+    if (!this.isActive) {
+      return;
+    }
+    if (this.currentStep === REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE) {
+      this.selectedCount = 0;
+      this.currentStep = REUSE_GUIDE_STEPS.SELECT_MULTIPLE;
+      this.notify();
+    }
   }
 
   handleSelectionChanged(payload = {}) {

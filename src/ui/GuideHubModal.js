@@ -116,9 +116,9 @@ export class GuideHubModal {
           'Export and Reuse Block Clusters',
         desc: () =>
           t('editor.guideHub.reuseBlocksDesc') ||
-          'Select multiple blocks, export them via Block Context Menu, and add them back via Empty Space Context Menu.',
+          'Add 2 blocks with Add Sequence, select multiple blocks, export them via Block Context Menu, and add them back via Empty Space Context Menu.',
         badge: () =>
-          t('editor.guideHub.reuseBlocksBadge') || '3 steps',
+          t('editor.guideHub.reuseBlocksBadge') || '5 steps',
         tags: ['important', 'basic'],
         actionLabel: () =>
           t('editor.guideHub.startBtn') || 'Start Guide',
