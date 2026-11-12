@@ -115,6 +115,34 @@ export class CreateScriptStateMachine {
     this.listeners = [];
   }
 
+  previousStep() {
+    if (!this.isActive) {
+      return;
+    }
+    const idx = this.getStepIndex();
+    if (idx > 0) {
+      this.currentStep = STEP_ORDER[idx - 1];
+      this.activeContextMenuType = null;
+      this.activeContextMenuElement = null;
+      this.notify();
+    }
+  }
+
+  nextStep() {
+    if (!this.isActive) {
+      return;
+    }
+    const idx = this.getStepIndex();
+    if (idx >= 0 && idx + 1 < STEP_ORDER.length) {
+      this.currentStep = STEP_ORDER[idx + 1];
+      this.activeContextMenuType = null;
+      this.activeContextMenuElement = null;
+      this.notify();
+      return;
+    }
+    this.complete();
+  }
+
   handleNewScriptConfirmOpened() {
     if (!this.isActive) {
       return;

@@ -242,9 +242,10 @@ describe('ReuseBlocksGuideFlow', () => {
     expect(flow.stateMachine.currentStep).toBe(REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE);
     expect(editor.selectedEvents).toEqual([]);
     const actions = flow.getStepActions(REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE);
-    expect(actions.length).toBe(1);
-    expect(actions[0].primary).toBe(true);
-    actions[0].onClick();
+    expect(actions.length).toBe(2);
+    expect(actions[0].primary).toBe(false);
+    expect(actions[1].primary).toBe(true);
+    actions[1].onClick();
     expect(flow.stateMachine.currentStep).toBe(REUSE_GUIDE_STEPS.SELECT_MULTIPLE);
 
     flow.destroy();

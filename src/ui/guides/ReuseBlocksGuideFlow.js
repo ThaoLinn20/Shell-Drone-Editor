@@ -2,7 +2,10 @@ import { t } from '../../config/lang/i18n.js';
 import { globalEventBus } from '../../core/EventBus.js';
 import { showToast } from '../../utils/Toast.js';
 import { InteractiveSpotlight } from './InteractiveSpotlight.js';
-import { prepareGuideFlowStart } from './guideFlowHelpers.js';
+import {
+  buildStepNavigationActions,
+  prepareGuideFlowStart
+} from './guideFlowHelpers.js';
 import {
   ReuseBlocksStateMachine,
   REUSE_GUIDE_STEPS
@@ -226,19 +229,17 @@ export class ReuseBlocksGuideFlow {
     return null;
   }
 
-  getStepActions(step) {
-    if (step !== REUSE_GUIDE_STEPS.EXPLAIN_SEQUENCE) {
-      return [];
-    }
-    return [
-      {
-        label: t('editor.timelineTour.nextBtn') || 'Next',
-        primary: true,
-        onClick: () => {
-          this.stateMachine.advanceFromExplainSequence();
-        }
+  getStepActions() {
+    return buildStepNavigationActions({
+      stepIndex: this.stateMachine.getStepIndex(),
+      totalSteps: this.stateMachine.getTotalSteps(),
+      onPrev: () => {
+        this.stateMachine.previousStep();
+      },
+      onNext: () => {
+        this.stateMachine.nextStep();
       }
-    ];
+    });
   }
 
   renderCurrentStep() {

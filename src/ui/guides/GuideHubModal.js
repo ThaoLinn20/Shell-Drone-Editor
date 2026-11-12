@@ -4,6 +4,7 @@ import {
   createModalButton,
   createModalShell
 } from '../ModalShell.js';
+import { INSPECTOR_GUIDE_CONFIGS } from './inspectorGuideConfigs.js';
 
 export const GUIDE_TAGS = {
   all: {
@@ -27,10 +28,18 @@ export const GUIDE_TAGS = {
     color: '#34d399',
     border: 'rgba(16, 185, 129, 0.4)'
   },
+  custom_sequence: {
+    id: 'custom_sequence',
+    label: () => t('editor.guideHub.tagCustomSequence') || 'Custom Sequence',
+    order: 3,
+    bg: 'rgba(56, 189, 248, 0.16)',
+    color: '#38bdf8',
+    border: 'rgba(56, 189, 248, 0.42)'
+  },
   intro: {
     id: 'intro',
     label: () => t('editor.guideHub.tagIntro') || 'Overview',
-    order: 3,
+    order: 4,
     bg: 'rgba(148, 163, 184, 0.16)',
     color: '#cbd5e1',
     border: 'rgba(148, 163, 184, 0.35)'
@@ -38,7 +47,7 @@ export const GUIDE_TAGS = {
   audio: {
     id: 'audio',
     label: () => t('editor.guideHub.tagAudio') || 'Audio',
-    order: 4,
+    order: 5,
     bg: 'rgba(236, 72, 153, 0.16)',
     color: '#f472b6',
     border: 'rgba(236, 72, 153, 0.4)'
@@ -253,7 +262,29 @@ export class GuideHubModal {
             this.timelineEditor.tourGuide.startInspectorTour();
           }
         }
-      }
+      },
+      ...INSPECTOR_GUIDE_CONFIGS.map((cfg) => ({
+        id: cfg.id,
+        title: () =>
+          t(`editor.guideHub.${cfg.i18nKey}GuideTitle`) || cfg.id,
+        desc: () =>
+          t(`editor.guideHub.${cfg.i18nKey}GuideDesc`) || '',
+        badge: () =>
+          t(`editor.guideHub.${cfg.i18nKey}GuideBadge`) ||
+          `${cfg.steps.length} steps`,
+        tags: ['custom_sequence'],
+        actionLabel: () =>
+          t('editor.guideHub.startBtn') || 'Start Guide',
+        variant: 'primary',
+        execute: () => {
+          if (
+            this.timelineEditor &&
+            typeof this.timelineEditor.startInspectorGuide === 'function'
+          ) {
+            this.timelineEditor.startInspectorGuide(cfg.id);
+          }
+        }
+      }))
     ];
   }
 

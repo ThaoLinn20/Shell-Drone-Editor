@@ -112,6 +112,10 @@ export class CustomSelect {
     // 2. Dropdown Menu
     this.menu = document.createElement('div');
     this.menu.className = 'custom-select-menu';
+    if (!this.menu.dataset) {
+      this.menu.dataset = {};
+    }
+    this.menu.dataset.fieldName = this.fieldName;
     this.menu.style.cssText = `
       position: fixed;
       display: none;
@@ -119,7 +123,7 @@ export class CustomSelect {
       border: 1px solid #334155;
       border-radius: 6px;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
-      z-index: 100000;
+      z-index: 100018;
       max-height: 280px;
       overflow-y: auto;
       min-width: 180px;

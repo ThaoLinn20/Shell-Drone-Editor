@@ -1,3 +1,5 @@
+import { t } from '../../config/lang/i18n.js';
+
 const GUIDE_FLOW_KEYS = [
   'onboardingFlow',
   'reuseBlocksGuide',
@@ -27,6 +29,23 @@ export function dismissOtherActiveGuides(
       flow.stateMachine.dismiss();
     }
   });
+
+  if (
+    timelineEditor.inspectorGuides &&
+    typeof timelineEditor.inspectorGuides === 'object'
+  ) {
+    Object.values(timelineEditor.inspectorGuides).forEach((flow) => {
+      if (
+        flow &&
+        flow !== currentFlow &&
+        flow.stateMachine &&
+        flow.stateMachine.isActive &&
+        typeof flow.stateMachine.dismiss === 'function'
+      ) {
+        flow.stateMachine.dismiss();
+      }
+    });
+  }
 }
 
 export function prepareGuideFlowStart(
@@ -49,5 +68,33 @@ export function prepareGuideFlowStart(
     currentFlow
   );
   return true;
+}
+
+export function buildStepNavigationActions({
+  stepIndex,
+  totalSteps,
+  onPrev,
+  onNext,
+  extraActions = []
+}) {
+  const actions = Array.isArray(extraActions) ? [...extraActions] : [];
+  if (stepIndex > 0 && typeof onPrev === 'function') {
+    actions.push({
+      label: t('editor.timelineTour.prevBtn') || 'Previous',
+      primary: false,
+      onClick: onPrev
+    });
+  }
+  if (typeof onNext === 'function') {
+    actions.push({
+      label:
+        stepIndex >= totalSteps - 1
+          ? (t('editor.timelineTour.finishBtn') || 'Finish')
+          : (t('editor.timelineTour.nextBtn') || 'Next'),
+      primary: true,
+      onClick: onNext
+    });
+  }
+  return actions;
 }
 

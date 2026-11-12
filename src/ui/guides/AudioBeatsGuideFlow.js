@@ -2,7 +2,10 @@ import { t } from '../../config/lang/i18n.js';
 import { globalEventBus } from '../../core/EventBus.js';
 import { showToast } from '../../utils/Toast.js';
 import { InteractiveSpotlight } from './InteractiveSpotlight.js';
-import { prepareGuideFlowStart } from './guideFlowHelpers.js';
+import {
+  buildStepNavigationActions,
+  prepareGuideFlowStart
+} from './guideFlowHelpers.js';
 import {
   AudioBeatsStateMachine,
   AUDIO_BEATS_STEPS
@@ -337,19 +340,17 @@ export class AudioBeatsGuideFlow {
     return null;
   }
 
-  getStepActions(step) {
-    if (step !== AUDIO_BEATS_STEPS.EXPLAIN_BEATS) {
-      return [];
-    }
-    return [
-      {
-        label: t('editor.timelineTour.nextBtn') || 'Next',
-        primary: true,
-        onClick: () => {
-          this.stateMachine.advanceFromExplainBeats();
-        }
+  getStepActions() {
+    return buildStepNavigationActions({
+      stepIndex: this.stateMachine.getStepIndex(),
+      totalSteps: this.stateMachine.getTotalSteps(),
+      onPrev: () => {
+        this.stateMachine.previousStep();
+      },
+      onNext: () => {
+        this.stateMachine.nextStep();
       }
-    ];
+    });
   }
 
   renderCurrentStep() {

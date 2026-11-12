@@ -1,7 +1,10 @@
 import { t } from '../../config/lang/i18n.js';
 import { globalEventBus } from '../../core/EventBus.js';
 import { InteractiveSpotlight } from './InteractiveSpotlight.js';
-import { prepareGuideFlowStart } from './guideFlowHelpers.js';
+import {
+  buildStepNavigationActions,
+  prepareGuideFlowStart
+} from './guideFlowHelpers.js';
 import {
   WelcomeGuideStateMachine,
   WELCOME_GUIDE_STEPS
@@ -118,7 +121,16 @@ export class WelcomeGuideFlow {
       desc: config.desc,
       progressText: config.progressText,
       skipLabel: t('editor.onboarding.skipBtn') || 'Skip',
-      actions: [],
+      actions: buildStepNavigationActions({
+        stepIndex: this.stateMachine.getStepIndex(),
+        totalSteps: this.stateMachine.getTotalSteps(),
+        onPrev: () => {
+          this.stateMachine.previousStep();
+        },
+        onNext: () => {
+          this.stateMachine.nextStep();
+        }
+      }),
       onDismiss: () => {
         this.stateMachine.dismiss();
       },

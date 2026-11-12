@@ -310,6 +310,19 @@ export class PropertyInspector {
     }, 250);
   }
 
+  emitFieldChanged(fieldName, value = undefined) {
+    if (!fieldName) {
+      return;
+    }
+    globalEventBus.emit(
+      'inspector:field-changed',
+      {
+        fieldName,
+        value
+      }
+    );
+  }
+
   isCometEvent(event) {
     if (!event) {
       return false;
@@ -1078,6 +1091,11 @@ export class PropertyInspector {
             }
 
             const fieldWrapper = document.createElement('div');
+            if (!fieldWrapper.dataset) {
+              fieldWrapper.dataset = {};
+            }
+            fieldWrapper.dataset.fieldName = field.name;
+            fieldWrapper.dataset.groupKey = group.groupKey;
             if (field.span === 2) {
               fieldWrapper.className = 'inspector-field-span-2';
             }
@@ -1158,7 +1176,10 @@ export class PropertyInspector {
       return;
     }
 
-    const handleValueChange = (rawVal) => {
+    const handleValueChange = (
+      rawVal,
+      shouldEmitGuideEvent = true
+    ) => {
       let val = rawVal;
       if (field.type === 'number') {
         val = val === '' ? undefined : parseFloat(val);
@@ -1270,6 +1291,12 @@ export class PropertyInspector {
       if (field.type === 'select') {
         this.render();
       }
+      if (shouldEmitGuideEvent) {
+        this.emitFieldChanged(
+          field.name,
+          val
+        );
+      }
     };
 
     let input;
@@ -1367,11 +1394,17 @@ export class PropertyInspector {
       });
 
       input.addEventListener('input', (e) => {
-        handleValueChange(e.target.value);
+        handleValueChange(
+          e.target.value,
+          false
+        );
       });
 
       input.addEventListener('change', (e) => {
-        handleValueChange(e.target.value);
+        handleValueChange(
+          e.target.value,
+          true
+        );
       });
     }
 
@@ -1470,6 +1503,7 @@ export class PropertyInspector {
       });
       this.onUpdate();
       this.render();
+      this.emitFieldChanged(field.name);
     });
 
     container.appendChild(input);
@@ -1571,6 +1605,7 @@ export class PropertyInspector {
       previousValidVal = finalVal;
       applySliderValue(finalVal);
       this.triggerUpdate();
+      this.emitFieldChanged(field.name);
     });
 
     // Inline typing interaction for valueBadge
@@ -2436,6 +2471,7 @@ export class PropertyInspector {
           });
         });
         this.triggerUpdate();
+        this.emitFieldChanged(field.name);
       },
       availableEffectTags: TIMED_EFFECT_TAGS
     });
@@ -2807,6 +2843,7 @@ export class PropertyInspector {
         });
         this.onUpdate();
         this.render(); // Redraw selection outline
+        this.emitFieldChanged('color');
       });
 
       container.appendChild(badge);
@@ -2857,6 +2894,7 @@ export class PropertyInspector {
       }
       this.onUpdate();
       this.render();
+      this.emitFieldChanged(field.name);
     });
 
     customInput.addEventListener('input', (e) => {
@@ -2872,6 +2910,9 @@ export class PropertyInspector {
 
     customInput.addEventListener('change', () => {
       this.render();
+      if (customCb.checked) {
+        this.emitFieldChanged('color');
+      }
     });
 
     const customLabel = document.createElement('label');

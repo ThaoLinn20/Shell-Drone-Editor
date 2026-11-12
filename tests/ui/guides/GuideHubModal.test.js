@@ -102,6 +102,7 @@ describe('GuideHubModal', () => {
       timelineControlsGuide: {
         start: vi.fn()
       },
+      startInspectorGuide: vi.fn(),
       tourGuide: {
         startTour: vi.fn(),
         startInspectorTour: vi.fn(),
@@ -127,7 +128,7 @@ describe('GuideHubModal', () => {
     vi.restoreAllMocks();
   });
 
-  it('should render all 8 default guides sorted with important/basic first and support custom guides', () => {
+  it('should render all 13 default guides sorted with important/basic first and support custom guides', () => {
     modal.registerGuide({
       id: 'custom_guide',
       title: 'Custom Guide',
@@ -142,7 +143,7 @@ describe('GuideHubModal', () => {
 
     expect(modal.isVisible).toBe(true);
     expect(modal.overlay.style.display).toBe('flex');
-    expect(modal.listContainer.children.length).toBe(9);
+    expect(modal.listContainer.children.length).toBe(14);
     expect(modal.listContainer.children[0].dataset.guideId).toBe('quick_start');
     expect(modal.listContainer.children[1].dataset.guideId).toBe('reuse_blocks');
     expect(modal.listContainer.children[2].dataset.guideId).toBe('create_and_export_script');
@@ -151,7 +152,12 @@ describe('GuideHubModal', () => {
     expect(modal.listContainer.children[5].dataset.guideId).toBe('welcome_guide');
     expect(modal.listContainer.children[6].dataset.guideId).toBe('timeline_tour');
     expect(modal.listContainer.children[7].dataset.guideId).toBe('inspector_tour');
-    expect(modal.listContainer.children[8].dataset.guideId).toBe('custom_guide');
+    expect(modal.listContainer.children[8].dataset.guideId).toBe('inspector_core_settings');
+    expect(modal.listContainer.children[9].dataset.guideId).toBe('inspector_composition');
+    expect(modal.listContainer.children[10].dataset.guideId).toBe('inspector_visual_effects');
+    expect(modal.listContainer.children[11].dataset.guideId).toBe('inspector_sound_settings');
+    expect(modal.listContainer.children[12].dataset.guideId).toBe('inspector_geometry_offsets');
+    expect(modal.listContainer.children[13].dataset.guideId).toBe('custom_guide');
 
     const guides = modal.getDefaultGuides();
     expect(guides.find((g) => g.id === 'quick_start').tags).toEqual([
@@ -165,6 +171,9 @@ describe('GuideHubModal', () => {
     expect(guides.find((g) => g.id === 'timeline_controls').tags).toEqual([
       'important',
       'basic'
+    ]);
+    expect(guides.find((g) => g.id === 'inspector_core_settings').tags).toEqual([
+      'custom_sequence'
     ]);
     expect(guides.find((g) => g.id === 'audio_and_beats').tags).toEqual([
       'audio'
@@ -196,6 +205,15 @@ describe('GuideHubModal', () => {
     expect(modal.listContainer.children[1].dataset.guideId).toBe('timeline_tour');
     expect(modal.listContainer.children[2].dataset.guideId).toBe('inspector_tour');
     expect(modal.searchInput).toBe(initialSearchInput);
+
+    const customSeqChip = modal.tagsContainer.children.find(
+      (chip) => chip.dataset.tagId === 'custom_sequence'
+    );
+    expect(customSeqChip).toBeDefined();
+    customSeqChip.trigger('click');
+    expect(modal.listContainer.children.length).toBe(5);
+    expect(modal.listContainer.children[0].dataset.guideId).toBe('inspector_core_settings');
+    expect(modal.listContainer.children[4].dataset.guideId).toBe('inspector_geometry_offsets');
 
     const basicChip = modal.tagsContainer.children.find(
       (chip) => chip.dataset.tagId === 'basic'
@@ -243,7 +261,7 @@ describe('GuideHubModal', () => {
     expect(modal.activeTag).toBe('all');
     expect(modal.searchQuery).toBe('');
     expect(modal.searchInput.value).toBe('');
-    expect(modal.listContainer.children.length).toBe(8);
+    expect(modal.listContainer.children.length).toBe(13);
   });
 
   it('should close modal before executing guide action', () => {
@@ -302,6 +320,13 @@ describe('GuideHubModal', () => {
     modal.open();
     modal.listContainer.children[7].children[1].trigger('click');
     expect(mockTimelineEditor.tourGuide.startInspectorTour).toHaveBeenCalled();
+
+    // Custom Sequence Core Settings Guide
+    modal.open();
+    modal.listContainer.children[8].children[1].trigger('click');
+    expect(mockTimelineEditor.startInspectorGuide).toHaveBeenCalledWith(
+      'inspector_core_settings'
+    );
   });
 
   it('should close when pressing Escape or clicking overlay backdrop', () => {

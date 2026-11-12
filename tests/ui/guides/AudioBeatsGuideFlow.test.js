@@ -312,8 +312,9 @@ describe('AudioBeatsGuideFlow with TimelineEditor and PropertyInspector', () => 
     expect(flow.getStepConfig(AUDIO_BEATS_STEPS.AUTO_DETECT_BEATS).getTarget()).toBe(mockAutoBtn);
 
     const explainActions = flow.getStepActions(AUDIO_BEATS_STEPS.EXPLAIN_BEATS);
-    expect(explainActions.length).toBe(1);
-    expect(explainActions[0].primary).toBe(true);
+    expect(explainActions.length).toBe(2);
+    expect(explainActions[0].primary).toBe(false);
+    expect(explainActions[1].primary).toBe(true);
 
     // Selecting beat dot / seeking near beat transitions SELECT_BEAT_ON_TIMELINE -> DELETE_ONE_BEAT
     audioSeq.beats = [1.5, 3.0];

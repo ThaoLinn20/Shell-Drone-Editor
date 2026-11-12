@@ -140,6 +140,32 @@ export class WelcomeGuideStateMachine {
     this.listeners = [];
   }
 
+  previousStep() {
+    if (!this.isActive) {
+      return;
+    }
+    const idx = this.getStepIndex();
+    if (idx > 0) {
+      this.currentStep = STEP_ORDER[idx - 1];
+      this.persistState();
+      this.notify();
+    }
+  }
+
+  nextStep() {
+    if (!this.isActive) {
+      return;
+    }
+    const idx = this.getStepIndex();
+    if (idx >= 0 && idx + 1 < STEP_ORDER.length) {
+      this.currentStep = STEP_ORDER[idx + 1];
+      this.persistState();
+      this.notify();
+      return;
+    }
+    this.complete();
+  }
+
   handleGuideHubOpened() {
     if (!this.isActive) {
       return;

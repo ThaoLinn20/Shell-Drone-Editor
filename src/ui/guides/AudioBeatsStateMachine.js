@@ -143,6 +143,30 @@ export class AudioBeatsStateMachine {
     this.listeners = [];
   }
 
+  previousStep() {
+    if (!this.isActive) {
+      return;
+    }
+    const idx = this.getStepIndex();
+    if (idx > 0) {
+      this.currentStep = STEP_ORDER[idx - 1];
+      this.notify();
+    }
+  }
+
+  nextStep() {
+    if (!this.isActive) {
+      return;
+    }
+    const idx = this.getStepIndex();
+    if (idx >= 0 && idx + 1 < STEP_ORDER.length) {
+      this.currentStep = STEP_ORDER[idx + 1];
+      this.notify();
+      return;
+    }
+    this.complete();
+  }
+
   handleAddFileMenuToggled(payload = {}) {
     if (!this.isActive) {
       return;

@@ -20,6 +20,8 @@ import { CreateScriptGuideFlow } from './guides/CreateScriptGuideFlow.js';
 import { WelcomeGuideFlow } from './guides/WelcomeGuideFlow.js';
 import { AudioBeatsGuideFlow } from './guides/AudioBeatsGuideFlow.js';
 import { TimelineControlsGuideFlow } from './guides/TimelineControlsGuideFlow.js';
+import { INSPECTOR_GUIDE_CONFIGS } from './guides/inspectorGuideConfigs.js';
+import { InspectorSectionGuideFlow } from './guides/InspectorSectionGuideFlow.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 
 
@@ -69,6 +71,13 @@ export class TimelineEditor {
     this.welcomeGuide = new WelcomeGuideFlow(this);
     this.audioBeatsGuide = new AudioBeatsGuideFlow(this);
     this.timelineControlsGuide = new TimelineControlsGuideFlow(this);
+    this.inspectorGuides = {};
+    INSPECTOR_GUIDE_CONFIGS.forEach((cfg) => {
+      this.inspectorGuides[cfg.id] = new InspectorSectionGuideFlow(
+        this,
+        cfg
+      );
+    });
     this.guideHubModal = new GuideHubModal(this);
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
@@ -1273,6 +1282,13 @@ export class TimelineEditor {
       this.inspector.container.style.bottom = `${height + 12}px`;
     } else {
       this.inspector.container.style.bottom = '12px';
+    }
+  }
+
+  startInspectorGuide(guideId) {
+    const flow = this.inspectorGuides && this.inspectorGuides[guideId];
+    if (flow && typeof flow.start === 'function') {
+      flow.start();
     }
   }
 
