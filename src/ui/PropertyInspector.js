@@ -354,6 +354,7 @@ export class PropertyInspector {
     if (event.type === 'sequence') {
       const pattern = event.pattern;
       return typeof pattern === 'string' && (
+        pattern === 'random' ||
         pattern.startsWith('sweep') ||
         pattern.startsWith('fan') ||
         pattern.startsWith('cascade-slope') ||
@@ -1912,6 +1913,15 @@ export class PropertyInspector {
         });
       }
     );
+    this.renderTadpoleColorControls(
+      wrapper,
+      targetEvent,
+      (prop, val) => {
+        targets.forEach((evt) => {
+          evt[prop] = val;
+        });
+      }
+    );
 
     parent.appendChild(wrapper);
   }
@@ -2323,6 +2333,153 @@ export class PropertyInspector {
     container.appendChild(row);
   }
 
+  renderTadpoleColorControls(container, target, onBatchUpdate = null) {
+    const isTadpoleActive = Boolean(
+      target['tadpole-flurry'] ||
+      target.tadpoleFlurry ||
+      target.tadpole_flurry ||
+      target.preset?.shellType === 'chrysanthemum_tadpole_burst' ||
+      target.shellType === 'chrysanthemum_tadpole_burst' ||
+      (Array.isArray(target.effects) && target.effects.some((e) => {
+        const k = (typeof e === 'object' && e !== null ? (e.type || e.key) : e);
+        return k === 'tadpole-flurry' || k === 'tadpole_flurry';
+      }))
+    );
+    if (!isTadpoleActive) return;
+
+    const row = document.createElement('div');
+    row.className = 'inspector-tadpole-color-controls';
+    row.style.display = 'flex';
+    row.style.flexDirection = 'column';
+    row.style.gap = '6px';
+    row.style.marginTop = '6px';
+    row.style.padding = '8px 10px';
+    row.style.background = 'rgba(244, 63, 94, 0.08)';
+    row.style.border = '1px solid rgba(244, 63, 94, 0.25)';
+    row.style.borderRadius = '6px';
+
+    const headerRow = document.createElement('div');
+    headerRow.style.display = 'flex';
+    headerRow.style.alignItems = 'center';
+    headerRow.style.justifyContent = 'space-between';
+    headerRow.style.gap = '8px';
+
+    const headerLabel = document.createElement('label');
+    headerLabel.style.fontSize = '11px';
+    headerLabel.style.color = '#fda4af';
+    headerLabel.style.fontWeight = '600';
+    headerLabel.textContent = t('editor.inspector.fields.tadpoleColor')
+      || en?.editor?.inspector?.fields?.tadpoleColor
+      || 'Tadpole Particle Color';
+
+    const autoBtn = document.createElement('button');
+    autoBtn.type = 'button';
+    autoBtn.className = 'inspector-mini-btn';
+    autoBtn.style.fontSize = '10px';
+    autoBtn.style.padding = '1px 6px';
+    autoBtn.style.background = 'transparent';
+    autoBtn.style.border = '1px solid rgba(244, 63, 94, 0.4)';
+    autoBtn.style.color = '#fda4af';
+    autoBtn.style.borderRadius = '3px';
+    autoBtn.style.cursor = 'pointer';
+    autoBtn.textContent = target.tadpoleColor
+      ? (t('editor.inspector.fields.inheritColor') || 'Inherit Color')
+      : (t('editor.inspector.fields.autoColor') || 'Auto');
+
+    headerRow.appendChild(headerLabel);
+    headerRow.appendChild(autoBtn);
+    row.appendChild(headerRow);
+
+    const swatchesRow = document.createElement('div');
+    swatchesRow.style.display = 'flex';
+    swatchesRow.style.alignItems = 'center';
+    swatchesRow.style.gap = '6px';
+    swatchesRow.style.flexWrap = 'wrap';
+
+    const COLOR_MAP = editorConfig.colorMap || {};
+    const popularKeys = [
+      'gold',
+      'white',
+      'cyan',
+      'lime',
+      'magenta',
+      'orange',
+      'red',
+      'blue'
+    ];
+
+    popularKeys.forEach((key) => {
+      const hex = COLOR_MAP[key];
+      if (!hex) return;
+      const badge = document.createElement('div');
+      badge.className = 'color-badge';
+      badge.style.width = '16px';
+      badge.style.height = '16px';
+      badge.style.borderRadius = '50%';
+      badge.style.backgroundColor = hex;
+      badge.style.cursor = 'pointer';
+      badge.style.border = target.tadpoleColor === hex
+        ? '2px solid #ffffff'
+        : '1px solid rgba(255,255,255,0.2)';
+      badge.title = t(`editor.inspector.colors.${key}`) || key;
+
+      badge.addEventListener('click', () => {
+        this.triggerUpdate('beforeChange');
+        if (typeof onBatchUpdate === 'function') {
+          onBatchUpdate('tadpoleColor', hex);
+        } else {
+          target.tadpoleColor = hex;
+        }
+        this.triggerUpdate();
+        this.render();
+      });
+
+      swatchesRow.appendChild(badge);
+    });
+
+    const customInput = document.createElement('input');
+    customInput.type = 'color';
+    customInput.className = 'color-custom-input';
+    customInput.style.width = '24px';
+    customInput.style.height = '20px';
+    customInput.style.padding = '0';
+    customInput.style.border = 'none';
+    customInput.style.cursor = 'pointer';
+    customInput.style.background = 'transparent';
+    customInput.value = target.tadpoleColor ? target.tadpoleColor : '#fda4af';
+
+    customInput.addEventListener('input', (e) => {
+      const hex = e.target.value;
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('tadpoleColor', hex);
+      } else {
+        target.tadpoleColor = hex;
+      }
+      this.triggerUpdate();
+    });
+
+    customInput.addEventListener('change', () => {
+      this.render();
+    });
+
+    autoBtn.addEventListener('click', () => {
+      this.triggerUpdate('beforeChange');
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('tadpoleColor', null);
+      } else {
+        delete target.tadpoleColor;
+        delete target.tadpoleFlurryColor;
+      }
+      this.triggerUpdate();
+      this.render();
+    });
+
+    swatchesRow.appendChild(customInput);
+    row.appendChild(swatchesRow);
+
+    container.appendChild(row);
+  }
+
   renderEffectChips(parent, field) {
     const targetEvent = this.selectedEvent;
     if (!targetEvent) return;
@@ -2674,6 +2831,10 @@ export class PropertyInspector {
       subTarget
     );
     this.renderTerminalFlareControls(
+      modWrapper,
+      subTarget
+    );
+    this.renderTadpoleColorControls(
       modWrapper,
       subTarget
     );

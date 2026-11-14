@@ -407,5 +407,111 @@ describe('FireworkSequencer', () => {
       expect(task.options.effectOverrides.ringCount).toBe(6);
     }
   });
+
+  it('should use custom angle for random pattern in playPattern when useAngle is true', () => {
+    const customAngleRad = 0.35;
+    sequencer.playPattern('random', {
+      count: 5,
+      duration: 1.0,
+      useAngle: true,
+      angle: customAngleRad
+    });
+
+    expect(sequencer.activeTasks.length).toBe(5);
+    for (const task of sequencer.activeTasks) {
+      expect(task.options.angleOffset).toBe(customAngleRad);
+    }
+  });
+
+  it('should convert angle in degrees to radians when angle > PI in playPattern', () => {
+    const angleDeg = 30;
+    const expectedRad = (30 * Math.PI) / 180;
+    sequencer.playPattern('random', {
+      count: 3,
+      duration: 1.0,
+      useAngle: true,
+      angle: angleDeg
+    });
+
+    expect(sequencer.activeTasks.length).toBe(3);
+    for (const task of sequencer.activeTasks) {
+      expect(task.options.angleOffset).toBeCloseTo(expectedRad, 5);
+    }
+  });
+
+  it('should keep random angleOffset for random pattern when useAngle is false', () => {
+    sequencer.playPattern('random', {
+      count: 5,
+      duration: 1.0,
+      useAngle: false,
+      angle: 0.35
+    });
+
+    expect(sequencer.activeTasks.length).toBe(5);
+    const angles = sequencer.activeTasks.map((t) => t.options.angleOffset);
+    // At least one angle should differ from the custom angle
+    const allMatchCustom = angles.every((a) => a === 0.35);
+    expect(allMatchCustom).toBe(false);
+  });
+
+  it('should use custom angle for random pattern in playCometSequence when useAngle is true', () => {
+    const customAngleRad = 0.42;
+    sequencer.playCometSequence('random', {
+      count: 4,
+      duration: 1.0,
+      useAngle: true,
+      angle: customAngleRad
+    });
+
+    expect(sequencer.activeTasks.length).toBe(4);
+    for (const task of sequencer.activeTasks) {
+      expect(task.options.angleOffset).toBe(customAngleRad);
+    }
+  });
+
+  it('should keep random angleOffset for random pattern in playCometSequence when useAngle is false', () => {
+    sequencer.playCometSequence('random', {
+      count: 5,
+      duration: 1.0,
+      useAngle: false,
+      angle: 0.42
+    });
+
+    expect(sequencer.activeTasks.length).toBe(5);
+    const angles = sequencer.activeTasks.map((t) => t.options.angleOffset);
+    const allMatchCustom = angles.every((a) => a === 0.42);
+    expect(allMatchCustom).toBe(false);
+  });
+
+  it('should forward tadpoleColor and tadpoleFlurryColor in playPattern and playCometSequence', () => {
+    sequencer.playPattern('sweep-left', {
+      count: 2,
+      duration: 1.0,
+      tadpoleColor: '#00ffff',
+      tadpoleFlurryColor: '#ffd700'
+    });
+
+    expect(sequencer.activeTasks.length).toBe(2);
+    for (const task of sequencer.activeTasks) {
+      expect(task.options.effectOverrides).toBeDefined();
+      expect(task.options.effectOverrides.tadpoleColor).toBe('#00ffff');
+      expect(task.options.effectOverrides.tadpoleFlurryColor).toBe('#ffd700');
+    }
+
+    sequencer.activeTasks.length = 0;
+    sequencer.playCometSequence('sweep-left', {
+      count: 2,
+      duration: 1.0,
+      tadpoleColor: '#00ffff',
+      tadpoleFlurryColor: '#ffd700'
+    });
+
+    expect(sequencer.activeTasks.length).toBe(2);
+    for (const task of sequencer.activeTasks) {
+      expect(task.options.effectOverrides).toBeDefined();
+      expect(task.options.effectOverrides.tadpoleColor).toBe('#00ffff');
+      expect(task.options.effectOverrides.tadpoleFlurryColor).toBe('#ffd700');
+    }
+  });
 });
 

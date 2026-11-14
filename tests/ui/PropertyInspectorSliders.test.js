@@ -768,5 +768,61 @@ describe('PropertyInspector Sliders and Star Lifetime Multiplier', () => {
       const timeline = card.querySelector('.inspector-active-effects-container');
       expect(timeline).toBeDefined();
     });
+
+    it('should return true for hasAngleConfig when sequence pattern is random', () => {
+      const inspector = new PropertyInspector(
+        createMockElement('div'),
+        {},
+        null,
+        {}
+      );
+
+      expect(inspector.hasAngleConfig(null)).toBe(false);
+      expect(inspector.hasAngleConfig({
+        type: 'sequence',
+        pattern: 'random'
+      })).toBe(true);
+      expect(inspector.hasAngleConfig({
+        type: 'sequence',
+        pattern: 'sweep-left'
+      })).toBe(true);
+      expect(inspector.hasAngleConfig({
+        type: 'sequence',
+        pattern: 'fan'
+      })).toBe(true);
+      expect(inspector.hasAngleConfig({
+        type: 'sequence',
+        pattern: 'unknown-pattern'
+      })).toBe(false);
+    });
+
+    it('should render tadpole color controls when tadpole-flurry effect is present', () => {
+      const inspector = new PropertyInspector(
+        createMockElement('div'),
+        {},
+        null,
+        {}
+      );
+
+      const parentContainer = createMockElement('div');
+      const eventWithTadpole = {
+        type: 'sequence',
+        effects: ['tadpole-flurry'],
+        tadpoleColor: '#00ffff'
+      };
+
+      inspector.renderTadpoleColorControls(parentContainer, eventWithTadpole);
+      const control = parentContainer.querySelector('.inspector-tadpole-color-controls');
+      expect(control).toBeDefined();
+
+      const emptyContainer = createMockElement('div');
+      const eventWithoutTadpole = {
+        type: 'sequence',
+        effects: ['strobe']
+      };
+      inspector.renderTadpoleColorControls(emptyContainer, eventWithoutTadpole);
+      const absentControl = emptyContainer.querySelector('.inspector-tadpole-color-controls');
+      expect(absentControl).toBeNull();
+    });
   });
 });
