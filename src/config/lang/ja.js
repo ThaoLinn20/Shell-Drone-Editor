@@ -786,6 +786,7 @@ export default {
       individualTime: "個別時間",
       individualTimeTooltip: "各ブロックの時間位置は保持されます。タイムライン上でドラッグしてまとめて移動します。",
       batchDeleteBtn: "選択したブロックを削除",
+      batchSyncing: "同期中",
       empty: "オブジェクトが選択されていません。",
       deleteBtn: "イベント削除",
       addEffectPrompt: "+ エフェクトを追加...",

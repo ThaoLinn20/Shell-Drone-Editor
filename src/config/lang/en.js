@@ -795,6 +795,7 @@ export default {
       individualTime: "Individual Time",
       individualTimeTooltip: "Timeline positions are preserved. Drag blocks on timeline to move together.",
       batchDeleteBtn: "Delete Selected Blocks",
+      batchSyncing: "Syncing",
       empty: "No sequence selected.",
       deleteBtn: "Delete Sequence",
       addEffectPrompt: "+ Add Effect...",

@@ -795,6 +795,7 @@ export default {
       individualTime: "Vị trí thời gian riêng",
       individualTimeTooltip: "Vị trí thời gian được giữ nguyên. Kéo block trên timeline để di chuyển cùng nhau.",
       batchDeleteBtn: "Xóa các block đã chọn",
+      batchSyncing: "Đồng bộ",
       empty: "Chưa chọn đối tượng nào.",
       deleteBtn: "Xóa sự kiện",
       addEffectPrompt: "+ Thêm hiệu ứng...",

@@ -786,6 +786,7 @@ export default {
       individualTime: "独立时间",
       individualTimeTooltip: "保留各事件块的时间位置。在时间线上拖拽可整体移动。",
       batchDeleteBtn: "删除选中的事件块",
+      batchSyncing: "同步中",
       empty: "未选择任何对象。",
       deleteBtn: "删除事件",
       addEffectPrompt: "+ 添加效果...",
