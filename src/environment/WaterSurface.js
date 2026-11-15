@@ -64,6 +64,9 @@ export class WaterSurface {
       },
       uFlashIntensity: {
         value: 0.0
+      },
+      uReflectionBlur: {
+        value: 2.4
       }
     };
 
@@ -201,6 +204,7 @@ export class WaterSurface {
       uniform vec3 uFlashPos;
       uniform vec3 uFlashColor;
       uniform float uFlashIntensity;
+      uniform float uReflectionBlur;
 
       varying vec4 vProjectedCoord;
       varying vec3 vWorldPosition;
@@ -287,13 +291,13 @@ export class WaterSurface {
         vec2 reflUVFarUp = clamp(baseCoord + distortion * vec2(0.70, 2.10) + vec2(0.0, blurSpread.y * 2.2), vec2(0.001), vec2(0.999));
         vec2 reflUVFarDown = clamp(baseCoord + distortion * vec2(0.70, 0.15) - vec2(0.0, blurSpread.y * 2.2), vec2(0.001), vec2(0.999));
 
-        vec4 reflSampleCenter = texture2D(uReflectionTexture, reflUVCenter);
-        vec4 reflSampleUp = texture2D(uReflectionTexture, reflUVUp);
-        vec4 reflSampleDown = texture2D(uReflectionTexture, reflUVDown);
-        vec4 reflSampleLeft = texture2D(uReflectionTexture, reflUVLeft);
-        vec4 reflSampleRight = texture2D(uReflectionTexture, reflUVRight);
-        vec4 reflSampleFarUp = texture2D(uReflectionTexture, reflUVFarUp);
-        vec4 reflSampleFarDown = texture2D(uReflectionTexture, reflUVFarDown);
+        vec4 reflSampleCenter = texture2D(uReflectionTexture, reflUVCenter, uReflectionBlur);
+        vec4 reflSampleUp = texture2D(uReflectionTexture, reflUVUp, uReflectionBlur);
+        vec4 reflSampleDown = texture2D(uReflectionTexture, reflUVDown, uReflectionBlur);
+        vec4 reflSampleLeft = texture2D(uReflectionTexture, reflUVLeft, uReflectionBlur);
+        vec4 reflSampleRight = texture2D(uReflectionTexture, reflUVRight, uReflectionBlur);
+        vec4 reflSampleFarUp = texture2D(uReflectionTexture, reflUVFarUp, uReflectionBlur);
+        vec4 reflSampleFarDown = texture2D(uReflectionTexture, reflUVFarDown, uReflectionBlur);
 
         vec3 reflectionColor = (reflSampleCenter.rgb * 0.32) +
                                (reflSampleUp.rgb + reflSampleDown.rgb) * 0.18 +
@@ -319,14 +323,15 @@ export class WaterSurface {
         }
 
         // Moonlight Specular Highlight and Shimmer Column
+        // Tightened specular exponents prevent giant white plastic/foil wash on the water
         if (uMoonIntensity > 0.001) {
           vec3 halfVec = normalize(uMoonDirection + viewDir);
           float NdotH = max(dot(normal, halfVec), 0.0);
-          float moonSpec = pow(NdotH, 64.0) * 0.45 * uMoonIntensity;
+          float moonSpec = pow(NdotH, 180.0) * 0.45 * uMoonIntensity;
 
           vec3 reflectDir = reflect(-viewDir, normal);
           float RdotL = max(dot(reflectDir, uMoonDirection), 0.0);
-          float moonStreak = pow(RdotL, 20.0) * 0.55 * uMoonIntensity;
+          float moonStreak = pow(RdotL, 120.0) * 0.55 * uMoonIntensity * spatialModulation;
 
           finalColor += uMoonColor * (moonSpec + moonStreak);
         }
@@ -412,6 +417,12 @@ export class WaterSurface {
 
   setWaveDistortion(strength) {
     this.uniforms.uDistortionStrength.value = strength;
+  }
+
+  setReflectionBlur(bias) {
+    if (this.uniforms?.uReflectionBlur) {
+      this.uniforms.uReflectionBlur.value = Math.max(0.0, Number(bias) || 0.0);
+    }
   }
 
   setResolution(width, height) {

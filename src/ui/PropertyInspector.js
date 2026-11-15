@@ -251,6 +251,26 @@ export class PropertyInspector {
     return false;
   }
 
+  mutateBatchSecondBurstChild(mutatorFn, options = {}) {
+    const targets = this.getBatchTargets();
+    if (!targets || targets.length === 0) return;
+
+    const idx = this.activeChildShellIndex || 0;
+    if (!options.skipBeforeChange) {
+      this.triggerUpdate('beforeChange');
+    }
+
+    for (let i = 0; i < targets.length; i++) {
+      const target = targets[i];
+      const child = target?.secondBurst?.childShells?.[idx];
+      if (child && typeof child === 'object') {
+        mutatorFn(child, target.secondBurst, target);
+      }
+    }
+
+    this.triggerUpdate();
+  }
+
   show(event, selectedEvents = null) {
     if (this.debounceTimeout) {
       clearTimeout(this.debounceTimeout);
@@ -354,6 +374,7 @@ export class PropertyInspector {
     if (event.type === 'sequence') {
       const pattern = event.pattern;
       return typeof pattern === 'string' && (
+        pattern === 'random' ||
         pattern.startsWith('sweep') ||
         pattern.startsWith('fan') ||
         pattern.startsWith('cascade-slope') ||
@@ -1912,6 +1933,15 @@ export class PropertyInspector {
         });
       }
     );
+    this.renderTadpoleColorControls(
+      wrapper,
+      targetEvent,
+      (prop, val) => {
+        targets.forEach((evt) => {
+          evt[prop] = val;
+        });
+      }
+    );
 
     parent.appendChild(wrapper);
   }
@@ -2323,6 +2353,153 @@ export class PropertyInspector {
     container.appendChild(row);
   }
 
+  renderTadpoleColorControls(container, target, onBatchUpdate = null) {
+    const isTadpoleActive = Boolean(
+      target['tadpole-flurry'] ||
+      target.tadpoleFlurry ||
+      target.tadpole_flurry ||
+      target.preset?.shellType === 'chrysanthemum_tadpole_burst' ||
+      target.shellType === 'chrysanthemum_tadpole_burst' ||
+      (Array.isArray(target.effects) && target.effects.some((e) => {
+        const k = (typeof e === 'object' && e !== null ? (e.type || e.key) : e);
+        return k === 'tadpole-flurry' || k === 'tadpole_flurry';
+      }))
+    );
+    if (!isTadpoleActive) return;
+
+    const row = document.createElement('div');
+    row.className = 'inspector-tadpole-color-controls';
+    row.style.display = 'flex';
+    row.style.flexDirection = 'column';
+    row.style.gap = '6px';
+    row.style.marginTop = '6px';
+    row.style.padding = '8px 10px';
+    row.style.background = 'rgba(244, 63, 94, 0.08)';
+    row.style.border = '1px solid rgba(244, 63, 94, 0.25)';
+    row.style.borderRadius = '6px';
+
+    const headerRow = document.createElement('div');
+    headerRow.style.display = 'flex';
+    headerRow.style.alignItems = 'center';
+    headerRow.style.justifyContent = 'space-between';
+    headerRow.style.gap = '8px';
+
+    const headerLabel = document.createElement('label');
+    headerLabel.style.fontSize = '11px';
+    headerLabel.style.color = '#fda4af';
+    headerLabel.style.fontWeight = '600';
+    headerLabel.textContent = t('editor.inspector.fields.tadpoleColor')
+      || en?.editor?.inspector?.fields?.tadpoleColor
+      || 'Tadpole Particle Color';
+
+    const autoBtn = document.createElement('button');
+    autoBtn.type = 'button';
+    autoBtn.className = 'inspector-mini-btn';
+    autoBtn.style.fontSize = '10px';
+    autoBtn.style.padding = '1px 6px';
+    autoBtn.style.background = 'transparent';
+    autoBtn.style.border = '1px solid rgba(244, 63, 94, 0.4)';
+    autoBtn.style.color = '#fda4af';
+    autoBtn.style.borderRadius = '3px';
+    autoBtn.style.cursor = 'pointer';
+    autoBtn.textContent = target.tadpoleColor
+      ? (t('editor.inspector.fields.inheritColor') || 'Inherit Color')
+      : (t('editor.inspector.fields.autoColor') || 'Auto');
+
+    headerRow.appendChild(headerLabel);
+    headerRow.appendChild(autoBtn);
+    row.appendChild(headerRow);
+
+    const swatchesRow = document.createElement('div');
+    swatchesRow.style.display = 'flex';
+    swatchesRow.style.alignItems = 'center';
+    swatchesRow.style.gap = '6px';
+    swatchesRow.style.flexWrap = 'wrap';
+
+    const COLOR_MAP = editorConfig.colorMap || {};
+    const popularKeys = [
+      'gold',
+      'white',
+      'cyan',
+      'lime',
+      'magenta',
+      'orange',
+      'red',
+      'blue'
+    ];
+
+    popularKeys.forEach((key) => {
+      const hex = COLOR_MAP[key];
+      if (!hex) return;
+      const badge = document.createElement('div');
+      badge.className = 'color-badge';
+      badge.style.width = '16px';
+      badge.style.height = '16px';
+      badge.style.borderRadius = '50%';
+      badge.style.backgroundColor = hex;
+      badge.style.cursor = 'pointer';
+      badge.style.border = target.tadpoleColor === hex
+        ? '2px solid #ffffff'
+        : '1px solid rgba(255,255,255,0.2)';
+      badge.title = t(`editor.inspector.colors.${key}`) || key;
+
+      badge.addEventListener('click', () => {
+        this.triggerUpdate('beforeChange');
+        if (typeof onBatchUpdate === 'function') {
+          onBatchUpdate('tadpoleColor', hex);
+        } else {
+          target.tadpoleColor = hex;
+        }
+        this.triggerUpdate();
+        this.render();
+      });
+
+      swatchesRow.appendChild(badge);
+    });
+
+    const customInput = document.createElement('input');
+    customInput.type = 'color';
+    customInput.className = 'color-custom-input';
+    customInput.style.width = '24px';
+    customInput.style.height = '20px';
+    customInput.style.padding = '0';
+    customInput.style.border = 'none';
+    customInput.style.cursor = 'pointer';
+    customInput.style.background = 'transparent';
+    customInput.value = target.tadpoleColor ? target.tadpoleColor : '#fda4af';
+
+    customInput.addEventListener('input', (e) => {
+      const hex = e.target.value;
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('tadpoleColor', hex);
+      } else {
+        target.tadpoleColor = hex;
+      }
+      this.triggerUpdate();
+    });
+
+    customInput.addEventListener('change', () => {
+      this.render();
+    });
+
+    autoBtn.addEventListener('click', () => {
+      this.triggerUpdate('beforeChange');
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('tadpoleColor', null);
+      } else {
+        delete target.tadpoleColor;
+        delete target.tadpoleFlurryColor;
+      }
+      this.triggerUpdate();
+      this.render();
+    });
+
+    swatchesRow.appendChild(customInput);
+    row.appendChild(swatchesRow);
+
+    container.appendChild(row);
+  }
+
   renderEffectChips(parent, field) {
     const targetEvent = this.selectedEvent;
     if (!targetEvent) return;
@@ -2479,8 +2656,10 @@ export class PropertyInspector {
     parent.appendChild(container);
   }
 
-  renderSubTargetEffects(card, subTarget, getDuration) {
+  renderSubTargetEffects(card, subTarget, getDuration, options = {}) {
     if (!card || !subTarget) return;
+
+    const onMutate = typeof options === 'function' ? options : options?.onMutate;
 
     // 1. Structural Modifiers Row (Triggered Effects: burst-smoke, pistil, apex-hang, slow-burst)
     const modWrapper = document.createElement('div');
@@ -2591,76 +2770,83 @@ export class PropertyInspector {
       chip.addEventListener(
         'click',
         () => {
-          this.triggerUpdate('beforeChange');
           const currentActive = checkKeyActive(subTarget, mod.key);
           const nextState = !currentActive;
 
-          if (mod.key === 'burst-smoke') {
-            if (nextState) {
-              subTarget.burstSmoke = true;
-              subTarget['burst-smoke'] = true;
-            } else {
-              delete subTarget.burstSmoke;
-              delete subTarget['burst-smoke'];
-              delete subTarget.burst_smoke;
+          const applyToggle = (targetObj) => {
+            if (mod.key === 'burst-smoke') {
+              if (nextState) {
+                targetObj.burstSmoke = true;
+                targetObj['burst-smoke'] = true;
+              } else {
+                delete targetObj.burstSmoke;
+                delete targetObj['burst-smoke'];
+                delete targetObj.burst_smoke;
+              }
+            } else if (mod.key === 'pistil') {
+              targetObj.pistil = nextState;
+            } else if (mod.key === 'apex-hang') {
+              if (nextState) {
+                targetObj.apexHang = true;
+                targetObj['apex-hang'] = true;
+              } else {
+                delete targetObj.apexHang;
+                delete targetObj['apex-hang'];
+              }
+            } else if (mod.key === 'slow-burst') {
+              if (nextState) {
+                targetObj.slowBurst = true;
+                targetObj['slow-burst'] = true;
+              } else {
+                delete targetObj.slowBurst;
+                delete targetObj['slow-burst'];
+                delete targetObj.slow_burst;
+              }
+            } else if (mod.key === 'cascade-wave') {
+              if (nextState) {
+                targetObj.cascadeWave = true;
+                targetObj['cascade-wave'] = true;
+              } else {
+                delete targetObj.cascadeWave;
+                delete targetObj['cascade-wave'];
+                delete targetObj.cascade_wave;
+              }
+            } else if (mod.key === 'terminal-flare') {
+              if (nextState) {
+                targetObj.terminalFlare = true;
+                targetObj['terminal-flare'] = true;
+              } else {
+                delete targetObj.terminalFlare;
+                delete targetObj['terminal-flare'];
+                delete targetObj.terminal_flare;
+                delete targetObj.terminalFlareTriggerRatio;
+                delete targetObj.terminalFlareDuration;
+                delete targetObj.terminalFlareIntensity;
+                delete targetObj.terminalFlareSizeMultiplier;
+              }
             }
-          } else if (mod.key === 'pistil') {
-            subTarget.pistil = nextState;
-          } else if (mod.key === 'apex-hang') {
-            if (nextState) {
-              subTarget.apexHang = true;
-              subTarget['apex-hang'] = true;
-            } else {
-              delete subTarget.apexHang;
-              delete subTarget['apex-hang'];
-            }
-          } else if (mod.key === 'slow-burst') {
-            if (nextState) {
-              subTarget.slowBurst = true;
-              subTarget['slow-burst'] = true;
-            } else {
-              delete subTarget.slowBurst;
-              delete subTarget['slow-burst'];
-              delete subTarget.slow_burst;
-            }
-          } else if (mod.key === 'cascade-wave') {
-            if (nextState) {
-              subTarget.cascadeWave = true;
-              subTarget['cascade-wave'] = true;
-            } else {
-              delete subTarget.cascadeWave;
-              delete subTarget['cascade-wave'];
-              delete subTarget.cascade_wave;
-            }
-          } else if (mod.key === 'terminal-flare') {
-            if (nextState) {
-              subTarget.terminalFlare = true;
-              subTarget['terminal-flare'] = true;
-            } else {
-              delete subTarget.terminalFlare;
-              delete subTarget['terminal-flare'];
-              delete subTarget.terminal_flare;
-              delete subTarget.terminalFlareTriggerRatio;
-              delete subTarget.terminalFlareDuration;
-              delete subTarget.terminalFlareIntensity;
-              delete subTarget.terminalFlareSizeMultiplier;
-            }
-          }
 
-          if (!Array.isArray(subTarget.effects)) {
-            subTarget.effects = [];
-          }
-          if (nextState) {
-            if (!subTarget.effects.some((e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) === mod.key)) {
-              subTarget.effects.push(mod.key);
+            if (!Array.isArray(targetObj.effects)) {
+              targetObj.effects = [];
             }
+            if (nextState) {
+              if (!targetObj.effects.some((e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) === mod.key)) {
+                targetObj.effects.push(mod.key);
+              }
+            } else {
+              targetObj.effects = targetObj.effects.filter(
+                (e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) !== mod.key
+              );
+            }
+          };
+
+          if (typeof onMutate === 'function') {
+            onMutate(applyToggle);
           } else {
-            subTarget.effects = subTarget.effects.filter(
-              (e) => (typeof e === 'object' && e !== null ? (e.type || e.key) : e) !== mod.key
-            );
+            this.triggerUpdate('beforeChange');
+            applyToggle(subTarget);
+            this.triggerUpdate();
           }
-
-          this.triggerUpdate();
           this.render();
         }
       );
@@ -2669,13 +2855,36 @@ export class PropertyInspector {
     });
 
     modWrapper.appendChild(chipsRow);
+
+    const subBatchUpdate = typeof onMutate === 'function'
+      ? (key, val) => {
+          onMutate((st) => {
+            if (val === null || val === undefined) {
+              delete st[key];
+              if (key === 'tadpoleColor') {
+                delete st.tadpoleFlurryColor;
+              }
+            } else {
+              st[key] = val;
+            }
+          });
+        }
+      : null;
+
     this.renderCascadeWaveControls(
       modWrapper,
-      subTarget
+      subTarget,
+      subBatchUpdate
     );
     this.renderTerminalFlareControls(
       modWrapper,
-      subTarget
+      subTarget,
+      subBatchUpdate
+    );
+    this.renderTadpoleColorControls(
+      modWrapper,
+      subTarget,
+      subBatchUpdate
     );
     card.appendChild(modWrapper);
 
@@ -2775,30 +2984,38 @@ export class PropertyInspector {
           return getNormalizedEffects();
         },
         onChange: (updatedEffects) => {
-          this.triggerUpdate('beforeChange');
-          const existingModifiers = (Array.isArray(subTarget.effects) ? subTarget.effects : [])
-            .filter((e) => {
-              const key = typeof e === 'object' && e !== null ? (e.type || e.key) : e;
-              return TOGGLE_MODIFIER_TAGS.some((mod) => mod.key === key);
+          const applyEffectsUpdate = (targetObj) => {
+            const existingModifiers = (Array.isArray(targetObj.effects) ? targetObj.effects : [])
+              .filter((e) => {
+                const key = typeof e === 'object' && e !== null ? (e.type || e.key) : e;
+                return TOGGLE_MODIFIER_TAGS.some((mod) => mod.key === key);
+              });
+            targetObj.effects = [
+              ...JSON.parse(JSON.stringify(updatedEffects)),
+              ...existingModifiers
+            ];
+            TIMED_EFFECT_TAGS.forEach((tag) => {
+              delete targetObj[tag.key];
+              if (tag.key === 'no-trail') {
+                delete targetObj.noTrail;
+                delete targetObj.notrail;
+              }
+              if (tag.key === 'sync_strobe') {
+                delete targetObj.syncStrobe;
+              }
+              if (tag.key === 'dark_phase') {
+                delete targetObj.darkPhase;
+              }
             });
-          subTarget.effects = [
-            ...updatedEffects,
-            ...existingModifiers
-          ];
-          TIMED_EFFECT_TAGS.forEach((tag) => {
-            delete subTarget[tag.key];
-            if (tag.key === 'no-trail') {
-              delete subTarget.noTrail;
-              delete subTarget.notrail;
-            }
-            if (tag.key === 'sync_strobe') {
-              delete subTarget.syncStrobe;
-            }
-            if (tag.key === 'dark_phase') {
-              delete subTarget.darkPhase;
-            }
-          });
-          this.triggerUpdate();
+          };
+
+          if (typeof onMutate === 'function') {
+            onMutate(applyEffectsUpdate);
+          } else {
+            this.triggerUpdate('beforeChange');
+            applyEffectsUpdate(subTarget);
+            this.triggerUpdate();
+          }
         },
         availableEffectTags: TIMED_EFFECT_TAGS
       }
@@ -4489,10 +4706,14 @@ export class PropertyInspector {
     summaryLabel.style.fontWeight = 'bold';
     summaryLabel.style.color = '#ffffff';
     const localizedBurstTitle = t('editor.inspector.fields.secondBurst');
-    summaryLabel.textContent =
-      localizedBurstTitle && localizedBurstTitle !== 'editor.inspector.fields.secondBurst'
-        ? localizedBurstTitle
-        : (t('editor.inspector.groups.secondBurst') || 'Second Burst');
+    const baseTitle = localizedBurstTitle && localizedBurstTitle !== 'editor.inspector.fields.secondBurst'
+      ? localizedBurstTitle
+      : (t('editor.inspector.groups.secondBurst') || 'Second Burst');
+    const targets = this.getBatchTargets();
+    const syncCount = targets.filter((tgt) => tgt && tgt.secondBurst).length;
+    summaryLabel.textContent = this.isBatchMode() && syncCount > 1
+      ? `${baseTitle} (${t('editor.inspector.batchSyncing') || 'Syncing'} ${syncCount})`
+      : baseTitle;
 
     const summaryPercent = document.createElement('span');
     summaryPercent.style.fontSize = '11px';
@@ -4582,7 +4803,7 @@ export class PropertyInspector {
       addTabBtn.addEventListener('click', () => {
         this.triggerUpdate('beforeChange');
         const fallbackColors = ['#ffd700', '#00e5ff', '#ff3366', '#ffffff', '#a855f7'];
-        childShells.push({
+        const newChild = {
           ratio: 0.20,
           triggerTiming: 0.50,
           distributionMode: 'random',
@@ -4591,7 +4812,17 @@ export class PropertyInspector {
           color: fallbackColors[childShells.length % fallbackColors.length],
           scale: 0.35,
           effects: ['strobe']
+        };
+
+        const currentTargets = this.getBatchTargets();
+        currentTargets.forEach((target) => {
+          if (target && target.secondBurst && Array.isArray(target.secondBurst.childShells)) {
+            if (target.secondBurst.childShells.length < 5) {
+              target.secondBurst.childShells.push(JSON.parse(JSON.stringify(newChild)));
+            }
+          }
         });
+
         this.activeChildShellIndex = childShells.length - 1;
         this.triggerUpdate();
         this.render();
@@ -4657,7 +4888,14 @@ export class PropertyInspector {
 
         delBtn.addEventListener('click', () => {
           this.triggerUpdate('beforeChange');
-          childShells.splice(currentIdx, 1);
+          const currentTargets = this.getBatchTargets();
+          currentTargets.forEach((target) => {
+            if (target && target.secondBurst && Array.isArray(target.secondBurst.childShells)) {
+              if (target.secondBurst.childShells.length > 1 && currentIdx < target.secondBurst.childShells.length) {
+                target.secondBurst.childShells.splice(currentIdx, 1);
+              }
+            }
+          });
           this.activeChildShellIndex = Math.max(0, currentIdx - 1);
           this.triggerUpdate();
           this.render();
@@ -4701,14 +4939,18 @@ export class PropertyInspector {
       ratioSlider.value = currentRatio;
       ratioSlider.style.width = '100%';
 
+      let isSlidingRatio = false;
       ratioSlider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value) || 0.20;
-        activeChild.ratio = val;
+        this.mutateBatchSecondBurstChild((child) => {
+          child.ratio = val;
+        }, { skipBeforeChange: isSlidingRatio });
+        isSlidingRatio = true;
         ratioValText.textContent = `${Math.round(val * 100)}%`;
-        this.triggerUpdate();
       });
 
       ratioSlider.addEventListener('change', () => {
+        isSlidingRatio = false;
         this.render();
       });
 
@@ -4748,11 +4990,19 @@ export class PropertyInspector {
       timingSlider.value = currentTiming;
       timingSlider.style.width = '100%';
 
+      let isSlidingTiming = false;
       timingSlider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value) || 0.50;
-        activeChild.triggerTiming = val;
+        this.mutateBatchSecondBurstChild((child) => {
+          child.triggerTiming = val;
+        }, { skipBeforeChange: isSlidingTiming });
+        isSlidingTiming = true;
         timingValText.textContent = `${Math.round(val * 100)}%`;
-        this.triggerUpdate();
+      });
+
+      timingSlider.addEventListener('change', () => {
+        isSlidingTiming = false;
+        this.render();
       });
 
       timingWrapper.appendChild(timingSlider);
@@ -4810,9 +5060,9 @@ export class PropertyInspector {
 
         btn.addEventListener('click', () => {
           if (activeChild.distributionMode !== m.key) {
-            this.triggerUpdate('beforeChange');
-            activeChild.distributionMode = m.key;
-            this.triggerUpdate();
+            this.mutateBatchSecondBurstChild((child) => {
+              child.distributionMode = m.key;
+            });
             this.render();
           }
         });
@@ -4846,19 +5096,19 @@ export class PropertyInspector {
         category: PREVIEW_CATEGORIES.PRESET,
         fieldName: 'preset',
         onChange: (val) => {
-          this.triggerUpdate('beforeChange');
-          activeChild.preset = val;
-          if (val !== 'custom') {
-            const tmpl = getTemplateForPreset(val);
-            if (tmpl) {
-              activeChild.shapeType = tmpl.shape;
-              activeChild.dynamicsType = tmpl.dynamics;
-              activeChild.pistil = tmpl.modifiers.pistil;
-              activeChild.instantBurst = tmpl.modifiers.instantBurst;
-              activeChild.effects = [...tmpl.effects];
+          this.mutateBatchSecondBurstChild((child) => {
+            child.preset = val;
+            if (val !== 'custom') {
+              const tmpl = getTemplateForPreset(val);
+              if (tmpl) {
+                child.shapeType = tmpl.shape;
+                child.dynamicsType = tmpl.dynamics;
+                child.pistil = tmpl.modifiers.pistil;
+                child.instantBurst = tmpl.modifiers.instantBurst;
+                child.effects = [...tmpl.effects];
+              }
             }
-          }
-          this.triggerUpdate();
+          });
           this.render();
         }
       });
@@ -4895,9 +5145,9 @@ export class PropertyInspector {
         category: PREVIEW_CATEGORIES.SHAPE,
         fieldName: 'shapeType',
         onChange: (val) => {
-          this.triggerUpdate('beforeChange');
-          activeChild.shapeType = val;
-          this.triggerUpdate();
+          this.mutateBatchSecondBurstChild((child) => {
+            child.shapeType = val;
+          });
         }
       });
 
@@ -4926,9 +5176,9 @@ export class PropertyInspector {
         category: PREVIEW_CATEGORIES.DYNAMICS,
         fieldName: 'dynamicsType',
         onChange: (val) => {
-          this.triggerUpdate('beforeChange');
-          activeChild.dynamicsType = val;
-          this.triggerUpdate();
+          this.mutateBatchSecondBurstChild((child) => {
+            child.dynamicsType = val;
+          });
         }
       });
 
@@ -4957,9 +5207,10 @@ export class PropertyInspector {
       pistilInput.type = 'checkbox';
       pistilInput.checked = Boolean(activeChild.pistil);
       pistilInput.addEventListener('change', (e) => {
-        this.triggerUpdate('beforeChange');
-        activeChild.pistil = e.target.checked;
-        this.triggerUpdate();
+        const checked = e.target.checked;
+        this.mutateBatchSecondBurstChild((child) => {
+          child.pistil = checked;
+        });
         this.render();
       });
 
@@ -5022,9 +5273,9 @@ export class PropertyInspector {
         swatch.title = c.key;
 
         swatch.addEventListener('click', () => {
-          this.triggerUpdate('beforeChange');
-          activeChild.color = c.hex;
-          this.triggerUpdate();
+          this.mutateBatchSecondBurstChild((child) => {
+            child.color = c.hex;
+          });
           this.render();
         });
         colorPaletteRow.appendChild(swatch);
@@ -5041,9 +5292,10 @@ export class PropertyInspector {
       customColorInput.style.background = 'transparent';
 
       customColorInput.addEventListener('change', (e) => {
-        this.triggerUpdate('beforeChange');
-        activeChild.color = e.target.value;
-        this.triggerUpdate();
+        const hex = e.target.value;
+        this.mutateBatchSecondBurstChild((child) => {
+          child.color = hex;
+        });
         this.render();
       });
       colorPaletteRow.appendChild(customColorInput);
@@ -5085,11 +5337,19 @@ export class PropertyInspector {
       scaleSlider.value = currentScale;
       scaleSlider.style.width = '100%';
 
+      let isSlidingScale = false;
       scaleSlider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value) || 0.35;
-        activeChild.scale = val;
+        this.mutateBatchSecondBurstChild((child) => {
+          child.scale = val;
+        }, { skipBeforeChange: isSlidingScale });
+        isSlidingScale = true;
         scaleValText.textContent = `${val.toFixed(2)}x`;
-        this.triggerUpdate();
+      });
+
+      scaleSlider.addEventListener('change', () => {
+        isSlidingScale = false;
+        this.render();
       });
 
       scaleWrapper.appendChild(scaleSlider);
@@ -5115,9 +5375,9 @@ export class PropertyInspector {
         value: activeChild.burstSound || 'standard',
         fieldName: 'burstSound',
         onChange: (val) => {
-          this.triggerUpdate('beforeChange');
-          activeChild.burstSound = val;
-          this.triggerUpdate();
+          this.mutateBatchSecondBurstChild((child) => {
+            child.burstSound = val;
+          });
         }
       });
 
@@ -5142,7 +5402,12 @@ export class PropertyInspector {
       this.renderSubTargetEffects(
         card,
         activeChild,
-        calculateChildDuration
+        calculateChildDuration,
+        {
+          onMutate: (mutatorFn) => {
+            this.mutateBatchSecondBurstChild(mutatorFn);
+          }
+        }
       );
 
       container.appendChild(card);

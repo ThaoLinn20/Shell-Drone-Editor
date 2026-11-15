@@ -1,4 +1,5 @@
 import { evaluateWaveCurve } from '../utils/SplineMath.js';
+import { sequencerConfig } from '../config/sequencer.js';
 
 export class FireworkSequencer {
   constructor(fireworkSystem, cometSystem) {
@@ -342,6 +343,9 @@ export class FireworkSequencer {
           ratioX = Math.random();
           ratioY = config.ratioY !== undefined ? config.ratioY : Math.random();
           ratioZ = Math.random();
+          if (resolvedAngle !== undefined) {
+            angleOffset = resolvedAngle;
+          }
           break;
       }
 
@@ -397,6 +401,20 @@ export class FireworkSequencer {
         }
       }
 
+      const activeHeightJitter = config.heightJitter !== undefined
+        ? Number(config.heightJitter)
+        : (sequencerConfig.heightJitter || 0);
+      if (activeHeightJitter > 0) {
+        const jitterOffset = (Math.random() - 0.5) * 2 * activeHeightJitter;
+        ratioY = Math.max(
+          sequencerConfig.minRatioY,
+          Math.min(
+            sequencerConfig.maxRatioY,
+            ratioY + jitterOffset
+          )
+        );
+      }
+
       if (config.ratioZ !== undefined) ratioZ = config.ratioZ;
 
       let overrides = effectOverrides;
@@ -436,6 +454,8 @@ export class FireworkSequencer {
         || config.slowBurst !== undefined
         || config['tadpole-flurry'] !== undefined
         || config.tadpoleFlurry !== undefined
+        || config.tadpoleColor !== undefined
+        || config.tadpoleFlurryColor !== undefined
         || config['erratic-dart'] !== undefined
         || config.erraticDart !== undefined
         || config['long-burn'] !== undefined
@@ -471,6 +491,8 @@ export class FireworkSequencer {
         || config.terminalFlareDuration !== undefined
         || config.terminalFlareIntensity !== undefined
         || config.terminalFlareSizeMultiplier !== undefined
+        || config.tadpoleColor !== undefined
+        || config.tadpoleFlurryColor !== undefined
         || config.textWord !== undefined
         || config.textScale !== undefined
         || config.letterSpacing !== undefined
@@ -515,6 +537,8 @@ export class FireworkSequencer {
         if (config.slowBurst !== undefined) overrides['slow-burst'] = config.slowBurst;
         if (config['tadpole-flurry'] !== undefined) overrides['tadpole-flurry'] = config['tadpole-flurry'];
         if (config.tadpoleFlurry !== undefined) overrides['tadpole-flurry'] = config.tadpoleFlurry;
+        if (config.tadpoleColor !== undefined) overrides.tadpoleColor = config.tadpoleColor;
+        if (config.tadpoleFlurryColor !== undefined) overrides.tadpoleFlurryColor = config.tadpoleFlurryColor;
         if (config['erratic-dart'] !== undefined) overrides['erratic-dart'] = config['erratic-dart'];
         if (config.erraticDart !== undefined) overrides['erratic-dart'] = config.erraticDart;
         if (config['long-burn'] !== undefined) overrides['long-burn'] = config['long-burn'];
@@ -561,6 +585,8 @@ export class FireworkSequencer {
         if (config.terminalFlareDuration !== undefined) overrides.terminalFlareDuration = config.terminalFlareDuration;
         if (config.terminalFlareIntensity !== undefined) overrides.terminalFlareIntensity = config.terminalFlareIntensity;
         if (config.terminalFlareSizeMultiplier !== undefined) overrides.terminalFlareSizeMultiplier = config.terminalFlareSizeMultiplier;
+        if (config.tadpoleColor !== undefined) overrides.tadpoleColor = config.tadpoleColor;
+        if (config.tadpoleFlurryColor !== undefined) overrides.tadpoleFlurryColor = config.tadpoleFlurryColor;
         if (config.sound || config.launchSound || config.burstSound || config.crackleSound || config.soundVolume !== undefined) {
           overrides.sound = {
             launch: config.sound?.launch || config.launchSound || undefined,
@@ -654,7 +680,7 @@ export class FireworkSequencer {
 
     // Spread of the fan/sweep (from -45 deg to +45 deg)
     const maxAngleOffset = Math.PI / 4;
-    const hasCustomAngle = useAngle === true && angle !== undefined;
+    const hasCustomAngle = angle !== undefined && (useAngle === true || useAngle === undefined);
     const resolvedAngle = hasCustomAngle
       ? (Math.abs(angle) > Math.PI ? (angle * Math.PI / 180) : angle)
       : undefined;
@@ -928,7 +954,9 @@ export class FireworkSequencer {
           ratioX = Math.random();
           ratioY = config.ratioY !== undefined ? config.ratioY : Math.random();
           ratioZ = Math.random();
-          angleOffset = (Math.random() - 0.5) * maxAngleOffset * 2;
+          angleOffset = resolvedAngle !== undefined
+            ? resolvedAngle
+            : (Math.random() - 0.5) * maxAngleOffset * 2;
           break;
       }
 
@@ -984,6 +1012,20 @@ export class FireworkSequencer {
         }
       }
 
+      const activeHeightJitter = config.heightJitter !== undefined
+        ? Number(config.heightJitter)
+        : (sequencerConfig.heightJitter || 0);
+      if (activeHeightJitter > 0) {
+        const jitterOffset = (Math.random() - 0.5) * 2 * activeHeightJitter;
+        ratioY = Math.max(
+          sequencerConfig.minRatioY,
+          Math.min(
+            sequencerConfig.maxRatioY,
+            ratioY + jitterOffset
+          )
+        );
+      }
+
       let overrides = effectOverrides;
       if (spiralConfig) {
         overrides = {
@@ -1034,6 +1076,8 @@ export class FireworkSequencer {
         || config.terminalFlareDuration !== undefined
         || config.terminalFlareIntensity !== undefined
         || config.terminalFlareSizeMultiplier !== undefined
+        || config.tadpoleColor !== undefined
+        || config.tadpoleFlurryColor !== undefined
         || config.textWord !== undefined
         || config.textScale !== undefined
         || config.letterSpacing !== undefined
@@ -1098,6 +1142,8 @@ export class FireworkSequencer {
         if (config.terminalFlareDuration !== undefined) overrides.terminalFlareDuration = config.terminalFlareDuration;
         if (config.terminalFlareIntensity !== undefined) overrides.terminalFlareIntensity = config.terminalFlareIntensity;
         if (config.terminalFlareSizeMultiplier !== undefined) overrides.terminalFlareSizeMultiplier = config.terminalFlareSizeMultiplier;
+        if (config.tadpoleColor !== undefined) overrides.tadpoleColor = config.tadpoleColor;
+        if (config.tadpoleFlurryColor !== undefined) overrides.tadpoleFlurryColor = config.tadpoleFlurryColor;
         if (config.sound || config.launchSound || config.burstSound || config.crackleSound || config.soundVolume !== undefined) {
           overrides.sound = {
             launch: config.sound?.launch || config.launchSound || undefined,

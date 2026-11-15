@@ -18,11 +18,11 @@ export class PlanarReflector {
       initialWidth,
       initialHeight,
       {
-        minFilter: THREE.LinearFilter,
+        minFilter: THREE.LinearMipmapLinearFilter,
         magFilter: THREE.LinearFilter,
         format: THREE.RGBAFormat,
         type: THREE.HalfFloatType,
-        generateMipmaps: false,
+        generateMipmaps: true,
         depthBuffer: true,
         stencilBuffer: false
       }
