@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FireworkSequencer } from '../../src/directors/FireworkSequencer.js';
+import { sequencerConfig } from '../../src/config/sequencer.js';
 
 describe('FireworkSequencer', () => {
   let mockFireworkSystem;
@@ -295,6 +296,7 @@ describe('FireworkSequencer', () => {
       { x: 1.0, y: 0.3, angle: -0.25 }
     ];
 
+    // Default configuration applies organic height jitter automatically
     sequencer.playPattern('sweep-custom-curve', {
       count: 3,
       duration: 2.0,
@@ -307,14 +309,30 @@ describe('FireworkSequencer', () => {
     const task1 = sequencer.activeTasks[1];
     const task2 = sequencer.activeTasks[2];
 
-    expect(task0.options.ratioY).toBeCloseTo(0.3, 2);
+    expect(task0.options.ratioY).toBeGreaterThanOrEqual(0.3 - sequencerConfig.heightJitter - 0.001);
+    expect(task0.options.ratioY).toBeLessThanOrEqual(0.3 + sequencerConfig.heightJitter + 0.001);
     expect(task0.options.angleOffset).toBeCloseTo(0.25, 2);
 
-    expect(task1.options.ratioY).toBeCloseTo(0.9, 2);
+    expect(task1.options.ratioY).toBeGreaterThanOrEqual(0.9 - sequencerConfig.heightJitter - 0.001);
+    expect(task1.options.ratioY).toBeLessThanOrEqual(0.9 + sequencerConfig.heightJitter + 0.001);
     expect(task1.options.angleOffset).toBeCloseTo(0.0, 2);
 
-    expect(task2.options.ratioY).toBeCloseTo(0.3, 2);
+    expect(task2.options.ratioY).toBeGreaterThanOrEqual(0.3 - sequencerConfig.heightJitter - 0.001);
+    expect(task2.options.ratioY).toBeLessThanOrEqual(0.3 + sequencerConfig.heightJitter + 0.001);
     expect(task2.options.angleOffset).toBeCloseTo(-0.25, 2);
+
+    // When heightJitter: 0 is specified, heights match wave points deterministically
+    sequencer.activeTasks.length = 0;
+    sequencer.playPattern('sweep-custom-curve', {
+      count: 3,
+      duration: 2.0,
+      wavePoints,
+      heightJitter: 0
+    });
+
+    expect(sequencer.activeTasks[0].options.ratioY).toBeCloseTo(0.3, 2);
+    expect(sequencer.activeTasks[1].options.ratioY).toBeCloseTo(0.9, 2);
+    expect(sequencer.activeTasks[2].options.ratioY).toBeCloseTo(0.3, 2);
   });
 
   it('should apply custom wave curve points to comet sequences', () => {
@@ -326,7 +344,8 @@ describe('FireworkSequencer', () => {
     sequencer.playCometSequence('sweep-custom-curve', {
       count: 2,
       duration: 1.0,
-      wavePoints
+      wavePoints,
+      heightJitter: 0
     });
 
     expect(sequencer.activeTasks.length).toBe(2);
@@ -511,6 +530,55 @@ describe('FireworkSequencer', () => {
       expect(task.options.effectOverrides).toBeDefined();
       expect(task.options.effectOverrides.tadpoleColor).toBe('#00ffff');
       expect(task.options.effectOverrides.tadpoleFlurryColor).toBe('#ffd700');
+    }
+  });
+
+  it('should automatically apply default height jitter from sequencerConfig across launches', () => {
+    sequencer.playPattern('sweep', {
+      count: 10,
+      duration: 2.0,
+      ratioY: 0.7
+    });
+
+    expect(sequencer.activeTasks.length).toBe(10);
+
+    const heights = sequencer.activeTasks.map((t) => t.options.ratioY);
+    // At least some heights must differ from exactly 0.7 due to natural organic jitter
+    const hasVariance = heights.some((h) => Math.abs(h - 0.7) > 0.0001);
+    expect(hasVariance).toBe(true);
+
+    // All heights must remain within the max jitter bounds
+    for (const h of heights) {
+      expect(h).toBeGreaterThanOrEqual(0.7 - sequencerConfig.heightJitter - 0.0001);
+      expect(h).toBeLessThanOrEqual(0.7 + sequencerConfig.heightJitter + 0.0001);
+    }
+  });
+
+  it('should allow disabling height jitter with heightJitter: 0', () => {
+    sequencer.playPattern('sweep', {
+      count: 6,
+      duration: 1.0,
+      ratioY: 0.75,
+      heightJitter: 0
+    });
+
+    expect(sequencer.activeTasks.length).toBe(6);
+    for (const task of sequencer.activeTasks) {
+      expect(task.options.ratioY).toBe(0.75);
+    }
+  });
+
+  it('should clamp ratioY within sequencerConfig boundary limits', () => {
+    sequencer.playPattern('sweep', {
+      count: 4,
+      duration: 1.0,
+      ratioY: 0.02,
+      heightJitter: 0.1
+    });
+
+    for (const task of sequencer.activeTasks) {
+      expect(task.options.ratioY).toBeGreaterThanOrEqual(sequencerConfig.minRatioY);
+      expect(task.options.ratioY).toBeLessThanOrEqual(sequencerConfig.maxRatioY);
     }
   });
 });

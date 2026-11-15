@@ -1,4 +1,5 @@
 import { evaluateWaveCurve } from '../utils/SplineMath.js';
+import { sequencerConfig } from '../config/sequencer.js';
 
 export class FireworkSequencer {
   constructor(fireworkSystem, cometSystem) {
@@ -398,6 +399,20 @@ export class FireworkSequencer {
         if (isFlatPattern) {
           ratioY = config.ratioY;
         }
+      }
+
+      const activeHeightJitter = config.heightJitter !== undefined
+        ? Number(config.heightJitter)
+        : (sequencerConfig.heightJitter || 0);
+      if (activeHeightJitter > 0) {
+        const jitterOffset = (Math.random() - 0.5) * 2 * activeHeightJitter;
+        ratioY = Math.max(
+          sequencerConfig.minRatioY,
+          Math.min(
+            sequencerConfig.maxRatioY,
+            ratioY + jitterOffset
+          )
+        );
       }
 
       if (config.ratioZ !== undefined) ratioZ = config.ratioZ;
@@ -995,6 +1010,20 @@ export class FireworkSequencer {
         if (isFlatPattern) {
           ratioY = config.ratioY;
         }
+      }
+
+      const activeHeightJitter = config.heightJitter !== undefined
+        ? Number(config.heightJitter)
+        : (sequencerConfig.heightJitter || 0);
+      if (activeHeightJitter > 0) {
+        const jitterOffset = (Math.random() - 0.5) * 2 * activeHeightJitter;
+        ratioY = Math.max(
+          sequencerConfig.minRatioY,
+          Math.min(
+            sequencerConfig.maxRatioY,
+            ratioY + jitterOffset
+          )
+        );
       }
 
       let overrides = effectOverrides;
