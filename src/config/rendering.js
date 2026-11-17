@@ -26,7 +26,9 @@ export const renderingConfig = {
     unlimited: false,
     lifespanMultiplier: 1.0,
     hazeConsolidation: true,
-    maxLights: 4
+    maxLights: 4,
+    gpuSimulation: true,
+    maxGpuParticles: 35000
   },
   sky: {
     cloudCoverage: 0.55,

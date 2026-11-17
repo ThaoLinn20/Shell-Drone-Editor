@@ -744,6 +744,7 @@ export default {
     bloom_threshold: "Bloom Threshold",
     particle_edge_softness: "Particle Edge Softness",
     gpu_trail_simulation: "GPU Trail Simulation",
+    gpu_smoke_simulation: "GPU Smoke Simulation",
     lake_mirror_reflection: "Lake Mirror Reflection",
     lake_reflection_resolution: "Lake Reflection Resolution",
     lake_reflection_resolution_low: "Low",
