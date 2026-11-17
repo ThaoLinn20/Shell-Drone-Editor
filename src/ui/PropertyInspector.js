@@ -2668,12 +2668,15 @@ export class PropertyInspector {
         }
 
         if (typeof item === 'string') {
+          const isSmokeTrail = item === 'smoke_trail' || item === 'smoke-trail';
+          const defaultStartRatio = isSmokeTrail ? 0.0 : 0.1;
+          const defaultEndRatio = isSmokeTrail ? 0.6 : 0.5;
           list.push({
             type: item,
-            startRatio: 0.1,
-            endRatio: 0.5,
-            start: Math.round(burstLife * 0.1 * 100) / 100,
-            end: Math.round(burstLife * 0.5 * 100) / 100
+            startRatio: defaultStartRatio,
+            endRatio: defaultEndRatio,
+            start: Math.round(burstLife * defaultStartRatio * 100) / 100,
+            end: Math.round(burstLife * defaultEndRatio * 100) / 100
           });
         } else if (typeof item === 'object' && item !== null) {
           const type = item.type || item.key;
@@ -3042,12 +3045,15 @@ export class PropertyInspector {
         }
 
         if (typeof item === 'string') {
+          const isSmokeTrail = item === 'smoke_trail' || item === 'smoke-trail';
+          const defaultStartRatio = isSmokeTrail ? 0.0 : 0.1;
+          const defaultEndRatio = isSmokeTrail ? 0.6 : 0.5;
           list.push({
             type: item,
-            startRatio: 0.1,
-            endRatio: 0.5,
-            start: Math.round(duration * 0.1 * 100) / 100,
-            end: Math.round(duration * 0.5 * 100) / 100
+            startRatio: defaultStartRatio,
+            endRatio: defaultEndRatio,
+            start: Math.round(duration * defaultStartRatio * 100) / 100,
+            end: Math.round(duration * defaultEndRatio * 100) / 100
           });
         } else if (typeof item === 'object' && item !== null) {
           const type = item.type || item.key;

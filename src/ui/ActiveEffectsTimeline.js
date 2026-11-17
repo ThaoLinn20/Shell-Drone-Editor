@@ -578,8 +578,9 @@ export class ActiveEffectsTimeline {
     const duration = Math.max(0.5, Number(this.options.getDuration?.()) || 2.3);
     const existingSameType = this.effects.filter((e) => (e.type || e.key) === type);
 
-    let startRatio = 0.10;
-    let endRatio = 0.50;
+    const isSmokeTrail = type === 'smoke_trail' || type === 'smoke-trail';
+    let startRatio = isSmokeTrail ? 0.0 : 0.10;
+    let endRatio = isSmokeTrail ? 0.60 : 0.50;
 
     if (existingSameType.length > 0) {
       const latestEnd = Math.max(...existingSameType.map((e) => e.endRatio));
