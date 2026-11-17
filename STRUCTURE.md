@@ -160,6 +160,8 @@
 - **[src/config/sequences/grandFinale.js](./src/config/sequences/grandFinale.js)**: Defines the events list array structure for the grand finale preset.
 - **[src/utils/BeatDetector.js](./src/utils/BeatDetector.js)**: Analyzes audio files offline to mark primary bass beats.
   - `detectBeats(source, threshold)`: Filters audio under 150Hz and detects volume peaks.
+- **[src/utils/recentScripts.js](./src/utils/recentScripts.js)**: Manages local script history using an LRU queue (maximum 12 items).
+  - `getRecentScripts()`, `addRecentScript(meta)`, `removeRecentScript(filePath)`, `clearRecentScripts()`, `formatRelativeTime(timestamp, t)`: Access, record, clean, and format recent show scripts.
 
 ## 2. Entry Points
 - **Browser show viewer**: [index.html](./index.html) loads [src/main.js](./src/main.js).
