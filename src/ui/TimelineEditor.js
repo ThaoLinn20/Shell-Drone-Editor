@@ -28,6 +28,7 @@ import { AudioBeatsGuideFlow } from './guides/AudioBeatsGuideFlow.js';
 import { TimelineControlsGuideFlow } from './guides/TimelineControlsGuideFlow.js';
 import { INSPECTOR_GUIDE_CONFIGS } from './guides/inspectorGuideConfigs.js';
 import { InspectorSectionGuideFlow } from './guides/InspectorSectionGuideFlow.js';
+import { KnownIssuesModal } from './KnownIssuesModal.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 import { addRecentScript } from '../utils/recentScripts.js';
 import {
@@ -448,6 +449,33 @@ export class TimelineEditor {
     langSelect.trigger.style.border = '1px solid #486581';
     this.langSelect = langSelect;
 
+    const bugBtn = document.createElement('button');
+    bugBtn.className = 'timeline-bug-guide-btn';
+    bugBtn.type = 'button';
+    bugBtn.textContent = t('editor.timelineTour.bugBtn') || 'Bug';
+    bugBtn.title = t('editor.timelineTour.bugTooltip') ||
+      'If you cannot type into input fields, press the Windows key and click back into the app';
+    bugBtn.style.background = '#d32f2f';
+    bugBtn.style.color = '#ffffff';
+    bugBtn.style.border = '1px solid #b71c1c';
+    bugBtn.style.borderRadius = '4px';
+    bugBtn.style.padding = '3px 8px';
+    bugBtn.style.cursor = 'pointer';
+    bugBtn.style.fontSize = '12px';
+    bugBtn.style.fontWeight = 'bold';
+    bugBtn.style.fontFamily = 'inherit';
+    bugBtn.style.transition = 'all 0.15s ease';
+    bugBtn.addEventListener('mouseenter', () => {
+      bugBtn.style.background = '#e53935';
+    });
+    bugBtn.addEventListener('mouseleave', () => {
+      bugBtn.style.background = '#d32f2f';
+    });
+    bugBtn.addEventListener('click', () => {
+      this.openKnownIssuesModal();
+    });
+    this.bugBtn = bugBtn;
+
     const rightActionsGroup = document.createElement('div');
     rightActionsGroup.style.display = 'flex';
     rightActionsGroup.style.alignItems = 'center';
@@ -455,6 +483,7 @@ export class TimelineEditor {
     rightActionsGroup.style.marginLeft = 'auto';
     rightActionsGroup.appendChild(helpBtn);
     rightActionsGroup.appendChild(langSelect.element);
+    rightActionsGroup.appendChild(bugBtn);
 
     const libraryBtn = document.createElement('button');
     libraryBtn.textContent =
@@ -1405,6 +1434,13 @@ export class TimelineEditor {
     if (this.guideHubModal) {
       this.guideHubModal.open();
     }
+  }
+
+  openKnownIssuesModal() {
+    if (!this.knownIssuesModal) {
+      this.knownIssuesModal = new KnownIssuesModal(this);
+    }
+    this.knownIssuesModal.open();
   }
 
   emitSelectionChanged() {

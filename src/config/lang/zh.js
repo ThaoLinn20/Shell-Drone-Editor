@@ -534,7 +534,21 @@ export default {
       tapProgress: "已标记节拍: {count} / {total}",
       completedToast: "已完成音频导入与实时打拍实操。"
     },
+    bugList: {
+      title: "已知问题与临时解决方案",
+      subtitle: "当前软件限制及推荐操作",
+      close: "关闭",
+      priorityCritical: "高优先级",
+      priorityNormal: "普通优先级",
+      statusWorkaroundAvailable: "已有解决办法",
+      workaroundHeader: "解决方法",
+      inputFocusTitle: "文件对话框后输入框无法键入",
+      inputFocusDesc: "从 Windows 原生文件对话框返回后，由于操作系统焦点偏移，输入框和下拉菜单可能暂时无法接收键盘输入。",
+      inputFocusWorkaround: "按 Windows 键 + 点击应用"
+    },
     timelineTour: {
+      bugBtn: "Bug",
+      bugTooltip: "查看已知问题与临时解决方案",
       helpBtn: "新手引导",
       helpBtnTooltip: "查看时间轴基本功能指南",
       languageTooltip: "切换显示语言",

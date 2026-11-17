@@ -534,7 +534,21 @@ export default {
       tapProgress: "記録したビート: {count} / {total}",
       completedToast: "音声読み込みとライブビート設定が完了しました。"
     },
+    bugList: {
+      title: "既知の問題と対処法",
+      subtitle: "現在のソフトウェアの制限事項と推奨される対処手順",
+      close: "閉じる",
+      priorityCritical: "最優先",
+      priorityNormal: "通常優先度",
+      statusWorkaroundAvailable: "対処法あり",
+      workaroundHeader: "対処方法",
+      inputFocusTitle: "ダイアログ後にキー入力が無効になる",
+      inputFocusDesc: "Windows のネイティブファイルダイアログから復帰した後、OSのフォーカス移動により入力欄や選択肢にキー入力が反映されない場合があります。",
+      inputFocusWorkaround: "Windows キー + アプリをクリック"
+    },
     timelineTour: {
+      bugBtn: "Bug",
+      bugTooltip: "既知の問題と対処法を表示",
       helpBtn: "ガイド",
       helpBtnTooltip: "タイムライン基本操作ガイドを表示",
       languageTooltip: "表示言語を変更",

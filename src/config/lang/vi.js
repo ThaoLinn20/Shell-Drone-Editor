@@ -543,7 +543,21 @@ export default {
       tapProgress: "Đã đánh: {count} / {total} beat",
       completedToast: "Hoàn tất thêm âm thanh và đánh beat theo nhạc thành công."
     },
+    bugList: {
+      title: "Danh sách lỗi và cách xử lý",
+      subtitle: "Các giới hạn hiện tại của phần mềm và giải pháp khắc phục tạm thời",
+      close: "Đóng",
+      priorityCritical: "Ưu tiên cao",
+      priorityNormal: "Bình thường",
+      statusWorkaroundAvailable: "Đã có cách xử lý",
+      workaroundHeader: "Cách khắc phục",
+      inputFocusTitle: "Mất tiêu điểm nhập liệu sau khi mở hộp thoại tệp",
+      inputFocusDesc: "Sau khi hoàn thành mở hoặc lưu tệp từ hộp thoại hệ điều hành Windows, các ô nhập liệu và bảng chọn có thể không nhận phím do hệ điều hành giữ tiêu điểm.",
+      inputFocusWorkaround: "Nhấn Windows + Click App"
+    },
     timelineTour: {
+      bugBtn: "Bug",
+      bugTooltip: "Xem danh sách lỗi và cách xử lý",
       helpBtn: "Hướng dẫn",
       helpBtnTooltip: "Xem hướng dẫn thao tác cơ bản trên Timeline",
       languageTooltip: "Đổi ngôn ngữ hiển thị",

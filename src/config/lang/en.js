@@ -543,7 +543,21 @@ export default {
       tapProgress: "Beats tapped: {count} of {total}",
       completedToast: "Imported audio and completed live beat mapping successfully."
     },
+    bugList: {
+      title: "Known Issues and Workarounds",
+      subtitle: "Current software limitations and recommended actions",
+      close: "Close",
+      priorityCritical: "Critical Priority",
+      priorityNormal: "Normal Priority",
+      statusWorkaroundAvailable: "Workaround Available",
+      workaroundHeader: "Workaround",
+      inputFocusTitle: "Input Typing Unresponsive After Dialog",
+      inputFocusDesc: "When returning from the Windows native file dialog, inputs and dropdowns may temporarily fail to receive keyboard focus due to operating system focus diversion.",
+      inputFocusWorkaround: "Press Windows key + Click App"
+    },
     timelineTour: {
+      bugBtn: "Bug",
+      bugTooltip: "View known issues and workarounds",
       helpBtn: "Guide",
       helpBtnTooltip: "View basic Timeline guide",
       languageTooltip: "Change display language",

@@ -188,6 +188,8 @@ describe('TimelineEditor Language Selector', () => {
     expect(rightGroup.style.marginLeft).toBe('auto');
     expect(rightGroup.children[0]).toBe(editor.helpBtn);
     expect(rightGroup.children[1]).toBe(editor.langSelect.element);
+    expect(rightGroup.children[2]).toBe(editor.bugBtn);
+    expect(editor.bugBtn.textContent).toBe('Bug');
   });
 
   it('reverts language selection without reloading when user cancels confirmation', async () => {
