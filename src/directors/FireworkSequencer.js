@@ -491,6 +491,7 @@ export class FireworkSequencer {
         || config.terminalFlareDuration !== undefined
         || config.terminalFlareIntensity !== undefined
         || config.terminalFlareSizeMultiplier !== undefined
+        || config.terminalFlareColor !== undefined
         || config.tadpoleColor !== undefined
         || config.tadpoleFlurryColor !== undefined
         || config.textWord !== undefined
@@ -585,6 +586,7 @@ export class FireworkSequencer {
         if (config.terminalFlareDuration !== undefined) overrides.terminalFlareDuration = config.terminalFlareDuration;
         if (config.terminalFlareIntensity !== undefined) overrides.terminalFlareIntensity = config.terminalFlareIntensity;
         if (config.terminalFlareSizeMultiplier !== undefined) overrides.terminalFlareSizeMultiplier = config.terminalFlareSizeMultiplier;
+        if (config.terminalFlareColor !== undefined) overrides.terminalFlareColor = config.terminalFlareColor;
         if (config.tadpoleColor !== undefined) overrides.tadpoleColor = config.tadpoleColor;
         if (config.tadpoleFlurryColor !== undefined) overrides.tadpoleFlurryColor = config.tadpoleFlurryColor;
         if (config.sound || config.launchSound || config.burstSound || config.crackleSound || config.soundVolume !== undefined) {
@@ -1076,6 +1078,7 @@ export class FireworkSequencer {
         || config.terminalFlareDuration !== undefined
         || config.terminalFlareIntensity !== undefined
         || config.terminalFlareSizeMultiplier !== undefined
+        || config.terminalFlareColor !== undefined
         || config.tadpoleColor !== undefined
         || config.tadpoleFlurryColor !== undefined
         || config.textWord !== undefined
@@ -1142,6 +1145,7 @@ export class FireworkSequencer {
         if (config.terminalFlareDuration !== undefined) overrides.terminalFlareDuration = config.terminalFlareDuration;
         if (config.terminalFlareIntensity !== undefined) overrides.terminalFlareIntensity = config.terminalFlareIntensity;
         if (config.terminalFlareSizeMultiplier !== undefined) overrides.terminalFlareSizeMultiplier = config.terminalFlareSizeMultiplier;
+        if (config.terminalFlareColor !== undefined) overrides.terminalFlareColor = config.terminalFlareColor;
         if (config.tadpoleColor !== undefined) overrides.tadpoleColor = config.tadpoleColor;
         if (config.tadpoleFlurryColor !== undefined) overrides.tadpoleFlurryColor = config.tadpoleFlurryColor;
         if (config.sound || config.launchSound || config.burstSound || config.crackleSound || config.soundVolume !== undefined) {

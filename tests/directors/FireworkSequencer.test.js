@@ -533,6 +533,37 @@ describe('FireworkSequencer', () => {
     }
   });
 
+  it('should forward terminalFlare and terminalFlareColor in playPattern and playCometSequence', () => {
+    sequencer.playPattern('sweep-left', {
+      count: 2,
+      duration: 1.0,
+      terminalFlare: true,
+      terminalFlareColor: '#00f5ff'
+    });
+
+    expect(sequencer.activeTasks.length).toBe(2);
+    for (const task of sequencer.activeTasks) {
+      expect(task.options.effectOverrides).toBeDefined();
+      expect(task.options.effectOverrides.terminalFlare).toBe(true);
+      expect(task.options.effectOverrides.terminalFlareColor).toBe('#00f5ff');
+    }
+
+    sequencer.activeTasks.length = 0;
+    sequencer.playCometSequence('sweep-left', {
+      count: 2,
+      duration: 1.0,
+      terminalFlare: true,
+      terminalFlareColor: 'random'
+    });
+
+    expect(sequencer.activeTasks.length).toBe(2);
+    for (const task of sequencer.activeTasks) {
+      expect(task.options.effectOverrides).toBeDefined();
+      expect(task.options.effectOverrides.terminalFlare).toBe(true);
+      expect(task.options.effectOverrides.terminalFlareColor).toBe('random');
+    }
+  });
+
   it('should automatically apply default height jitter from sequencerConfig across launches', () => {
     sequencer.playPattern('sweep', {
       count: 10,

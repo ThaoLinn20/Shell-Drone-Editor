@@ -878,6 +878,8 @@ export default {
         terminalFlareDuration: "発光持続時間",
         terminalFlareIntensity: "発光強度",
         terminalFlareSizeMultiplier: "サイズ膨張",
+        terminalFlareColor: "終端フレア色",
+        terminalFlareRandom: "ランダム",
         tadpoleColor: "タドポール粒子色",
         tadpoleFlurryColor: "タドポール爆発粒子色",
         inheritColor: "元の色を継承",

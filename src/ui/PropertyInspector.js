@@ -1888,6 +1888,7 @@ export class PropertyInspector {
               delete evt.terminalFlareDuration;
               delete evt.terminalFlareIntensity;
               delete evt.terminalFlareSizeMultiplier;
+              delete evt.terminalFlareColor;
             }
           }
 
@@ -2349,6 +2350,136 @@ export class PropertyInspector {
     sizeRow.appendChild(sizeSlider);
     sizeRow.appendChild(sizeVal);
     row.appendChild(sizeRow);
+
+    // 4. Flare Color Row (Random Button + Preset Swatches + Custom Color Input)
+    const colorRow = document.createElement('div');
+    colorRow.style.display = 'flex';
+    colorRow.style.alignItems = 'center';
+    colorRow.style.justifyContent = 'space-between';
+    colorRow.style.gap = '8px';
+    colorRow.style.marginTop = '2px';
+
+    const colorLabel = document.createElement('label');
+    colorLabel.style.fontSize = '11px';
+    colorLabel.style.color = '#94a3b8';
+    colorLabel.style.whiteSpace = 'nowrap';
+    colorLabel.textContent = t('editor.inspector.fields.terminalFlareColor')
+      || en?.editor?.inspector?.fields?.terminalFlareColor
+      || 'Flare Color';
+
+    const controlsContainer = document.createElement('div');
+    controlsContainer.style.display = 'flex';
+    controlsContainer.style.alignItems = 'center';
+    controlsContainer.style.gap = '6px';
+    controlsContainer.style.flexWrap = 'wrap';
+
+    const currentColor = target.terminalFlareColor || 'random';
+    const isRandomActive = currentColor === 'random';
+
+    // A. Random Button
+    const randomBtn = document.createElement('button');
+    randomBtn.type = 'button';
+    randomBtn.className = 'inspector-mini-btn';
+    randomBtn.style.fontSize = '10px';
+    randomBtn.style.padding = '1px 7px';
+    randomBtn.style.borderRadius = '3px';
+    randomBtn.style.cursor = 'pointer';
+    randomBtn.style.fontWeight = isRandomActive ? '600' : '400';
+    randomBtn.style.background = isRandomActive ? 'rgba(245, 158, 11, 0.25)' : 'transparent';
+    randomBtn.style.border = isRandomActive ? '1px solid #fbbf24' : '1px solid rgba(148, 163, 184, 0.3)';
+    randomBtn.style.color = isRandomActive ? '#fbbf24' : '#94a3b8';
+    randomBtn.textContent = t('editor.inspector.fields.terminalFlareRandom')
+      || en?.editor?.inspector?.fields?.terminalFlareRandom
+      || 'Random';
+    randomBtn.title = t('editor.inspector.tooltips.terminalFlareRandom')
+      || 'Per-particle rainbow flare on burnout';
+
+    randomBtn.addEventListener('click', () => {
+      this.triggerUpdate('beforeChange');
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('terminalFlareColor', 'random');
+      } else {
+        target.terminalFlareColor = 'random';
+      }
+      this.triggerUpdate();
+      this.render();
+    });
+
+    controlsContainer.appendChild(randomBtn);
+
+    // B. Preset Swatches
+    const presetColors = [
+      { key: 'white', hex: '#ffffff' },
+      { key: 'gold', hex: '#ffd700' },
+      { key: 'cyan', hex: '#00f5ff' },
+      { key: 'magenta', hex: '#ff007f' },
+      { key: 'lime', hex: '#39ff14' },
+      { key: 'orange', hex: '#ff5f00' }
+    ];
+
+    presetColors.forEach(({ key, hex }) => {
+      const isSelected = !isRandomActive && currentColor.toLowerCase() === hex.toLowerCase();
+      const badge = document.createElement('div');
+      badge.className = 'color-badge';
+      badge.style.width = '16px';
+      badge.style.height = '16px';
+      badge.style.borderRadius = '50%';
+      badge.style.backgroundColor = hex;
+      badge.style.cursor = 'pointer';
+      badge.style.border = isSelected ? '2px solid #ffffff' : '1px solid rgba(255,255,255,0.25)';
+      if (isSelected) {
+        badge.style.boxShadow = `0 0 6px ${hex}`;
+      }
+      badge.title = t(`editor.inspector.colors.${key}`) || key;
+
+      badge.addEventListener('click', () => {
+        this.triggerUpdate('beforeChange');
+        if (typeof onBatchUpdate === 'function') {
+          onBatchUpdate('terminalFlareColor', hex);
+        } else {
+          target.terminalFlareColor = hex;
+        }
+        this.triggerUpdate();
+        this.render();
+      });
+
+      controlsContainer.appendChild(badge);
+    });
+
+    // C. Custom Color Input
+    const isCustom = !isRandomActive && !presetColors.some((p) => p.hex.toLowerCase() === currentColor.toLowerCase());
+    const customInput = document.createElement('input');
+    customInput.type = 'color';
+    customInput.className = 'color-custom-input';
+    customInput.style.width = '20px';
+    customInput.style.height = '18px';
+    customInput.style.padding = '0';
+    customInput.style.border = isCustom ? '2px solid #ffffff' : 'none';
+    customInput.style.borderRadius = '3px';
+    customInput.style.cursor = 'pointer';
+    customInput.style.background = 'transparent';
+    customInput.value = (!isRandomActive && currentColor.startsWith('#')) ? currentColor : '#ffd700';
+    customInput.title = t('editor.inspector.fields.customColor') || 'Custom Color';
+
+    customInput.addEventListener('input', (e) => {
+      const hex = e.target.value.toLowerCase();
+      if (typeof onBatchUpdate === 'function') {
+        onBatchUpdate('terminalFlareColor', hex);
+      } else {
+        target.terminalFlareColor = hex;
+      }
+      this.triggerUpdate();
+    });
+
+    customInput.addEventListener('change', () => {
+      this.render();
+    });
+
+    controlsContainer.appendChild(customInput);
+
+    colorRow.appendChild(colorLabel);
+    colorRow.appendChild(controlsContainer);
+    row.appendChild(colorRow);
 
     container.appendChild(row);
   }
@@ -2823,6 +2954,7 @@ export class PropertyInspector {
                 delete targetObj.terminalFlareDuration;
                 delete targetObj.terminalFlareIntensity;
                 delete targetObj.terminalFlareSizeMultiplier;
+                delete targetObj.terminalFlareColor;
               }
             }
 

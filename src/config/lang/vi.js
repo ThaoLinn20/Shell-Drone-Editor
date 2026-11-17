@@ -910,6 +910,8 @@ export default {
         terminalFlareDuration: "Thời Lượng Bừng Sáng",
         terminalFlareIntensity: "Cường Độ Bừng Sáng",
         terminalFlareSizeMultiplier: "Độ Nở Kích Thước",
+        terminalFlareColor: "Màu Bừng Sáng",
+        terminalFlareRandom: "Ngẫu Nhiên",
         tadpoleColor: "Màu Hạt Nòng Nọc",
         tadpoleFlurryColor: "Màu Chùm Nổ Nòng Nọc",
         inheritColor: "Kế Thừa Màu Gốc",

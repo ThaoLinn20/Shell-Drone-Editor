@@ -898,6 +898,8 @@ export default {
         terminalFlareDuration: "亮闪时长",
         terminalFlareIntensity: "亮闪强度",
         terminalFlareSizeMultiplier: "尺寸膨胀",
+        terminalFlareColor: "末端闪光颜色",
+        terminalFlareRandom: "随机",
         tadpoleColor: "蝌蚪粒子颜色",
         tadpoleFlurryColor: "蝌蚪爆裂粒子颜色",
         inheritColor: "继承原色",

@@ -910,6 +910,8 @@ export default {
         terminalFlareDuration: "Flare Duration",
         terminalFlareIntensity: "Flare Intensity",
         terminalFlareSizeMultiplier: "Flare Growth",
+        terminalFlareColor: "Flare Color",
+        terminalFlareRandom: "Random",
         tadpoleColor: "Tadpole Particle Color",
         tadpoleFlurryColor: "Tadpole Flurry Color",
         inheritColor: "Inherit Color",
