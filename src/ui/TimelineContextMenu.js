@@ -232,6 +232,68 @@ export class TimelineContextMenu {
     });
 
     this.registerAction({
+      id: 'distribute-spacing',
+      label: () => {
+        return t('editor.timelinePanel.distributeSpacing') ||
+          'Distribute Spacing';
+      },
+      shortcut: 'Alt+Shift+H',
+      isVisible: (context) => {
+        return Boolean(
+          this.isBlockContext(context) &&
+          context.selectedEvents &&
+          context.selectedEvents.length >= 3
+        );
+      },
+      isEnabled: (context) => {
+        return Boolean(
+          this.isBlockContext(context) &&
+          context.selectedEvents &&
+          context.selectedEvents.length >= 3
+        );
+      },
+      execute: (context) => {
+        if (
+          context.timelineEditor &&
+          typeof context.timelineEditor.distributeSelectedSpacing === 'function'
+        ) {
+          context.timelineEditor.distributeSelectedSpacing();
+        }
+      }
+    });
+
+    this.registerAction({
+      id: 'distribute-starts',
+      label: () => {
+        return t('editor.timelinePanel.distributeStarts') ||
+          'Distribute Start Times';
+      },
+      shortcut: 'Alt+Shift+T',
+      isVisible: (context) => {
+        return Boolean(
+          this.isBlockContext(context) &&
+          context.selectedEvents &&
+          context.selectedEvents.length >= 3
+        );
+      },
+      isEnabled: (context) => {
+        return Boolean(
+          this.isBlockContext(context) &&
+          context.selectedEvents &&
+          context.selectedEvents.length >= 3
+        );
+      },
+      execute: (context) => {
+        if (
+          context.timelineEditor &&
+          typeof context.timelineEditor.distributeSelectedStarts === 'function'
+        ) {
+          context.timelineEditor.distributeSelectedStarts();
+        }
+      }
+    });
+
+    this.registerAction({
       isSeparator: true,
       isVisible: (context) => {
         return Boolean(

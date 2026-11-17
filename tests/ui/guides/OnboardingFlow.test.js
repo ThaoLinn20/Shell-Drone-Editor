@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { OnboardingFlow } from '../../../src/ui/guides/OnboardingFlow.js';
 import {
   OnboardingStateMachine,
   ONBOARDING_STEPS,
@@ -119,6 +120,14 @@ describe('OnboardingStateMachine', () => {
 
     const nextMachine = new OnboardingStateMachine(eventBus, storage);
     expect(nextMachine.startIfNeeded()).toBe(false);
+  });
+
+  it('should advance directly to play_show if show is loaded during download_scripts', () => {
+    machine.startIfNeeded();
+    expect(machine.currentStep).toBe(ONBOARDING_STEPS.DOWNLOAD_SCRIPTS);
+
+    eventBus.emit('timeline:show-loaded', { filename: 'direct.json' });
+    expect(machine.currentStep).toBe(ONBOARDING_STEPS.PLAY_SHOW);
   });
 });
 
@@ -305,5 +314,113 @@ describe('ShowLibraryModal and TimelineEditor show loading', () => {
 
     globalEventBus.emit('timeline:show-loaded', { filename: 'single.json' });
     expect(editor.showLibraryModal.isVisible).toBe(false);
+  });
+});
+
+describe('OnboardingFlow modal and action handling', () => {
+  let eventBus;
+  let mockTimelineEditor;
+  let mockModal;
+  let flow;
+
+  beforeEach(() => {
+    eventBus = createEventBus();
+    mockModal = {
+      isVisible: false,
+      activeTab: 'recent',
+      open: vi.fn((tab) => {
+        mockModal.isVisible = true;
+        mockModal.activeTab = tab || 'recent';
+      }),
+      close: vi.fn(() => {
+        mockModal.isVisible = false;
+      }),
+      switchTab: vi.fn((tab) => {
+        mockModal.activeTab = tab;
+      }),
+      driveBtn: { id: 'driveBtn' },
+      selectFolderBtn: { id: 'selectFolderBtn' },
+      listContainer: {
+        querySelector: vi.fn((selector) => {
+          if (selector === '.show-library-import-btn') {
+            return { id: 'importBtn' };
+          }
+          if (selector === '.recent-script-open-btn') {
+            return { id: 'openBtn' };
+          }
+          return null;
+        })
+      }
+    };
+
+    mockTimelineEditor = {
+      showLibraryModal: mockModal,
+      libraryBtn: { id: 'libraryBtn' },
+      playBtn: { id: 'playBtn' },
+      openScriptsDrive: vi.fn()
+    };
+
+    flow = new OnboardingFlow(mockTimelineEditor, eventBus);
+  });
+
+  it('syncs modal to folder tab when step requires scripts modal', () => {
+    flow.syncModalVisibility(ONBOARDING_STEPS.DOWNLOAD_SCRIPTS);
+    expect(mockModal.open).toHaveBeenCalledWith('folder');
+    expect(mockModal.isVisible).toBe(true);
+
+    // If modal already open on recent tab, it should switch to folder tab
+    mockModal.activeTab = 'recent';
+    flow.syncModalVisibility(ONBOARDING_STEPS.SELECT_FOLDER);
+    expect(mockModal.switchTab).toHaveBeenCalledWith('folder');
+
+    // On play_show, modal should close
+    flow.syncModalVisibility(ONBOARDING_STEPS.PLAY_SHOW);
+    expect(mockModal.close).toHaveBeenCalled();
+  });
+
+  it('provides alreadyHaveFolderBtn action when not waiting for download', () => {
+    flow.stateMachine.isActive = true;
+    flow.stateMachine.currentStep = ONBOARDING_STEPS.DOWNLOAD_SCRIPTS;
+    flow.stateMachine.waitingForDownload = false;
+
+    const actions = flow.getStepActions(ONBOARDING_STEPS.DOWNLOAD_SCRIPTS);
+    const haveFolderAction = actions.find(
+      (a) => a.label && a.label.includes('folder')
+    );
+    expect(haveFolderAction).toBeDefined();
+
+    haveFolderAction.onClick();
+    expect(flow.stateMachine.currentStep).toBe(ONBOARDING_STEPS.SELECT_FOLDER);
+  });
+
+  it('provides downloadedContinueBtn action when waiting for download', () => {
+    flow.stateMachine.isActive = true;
+    flow.stateMachine.currentStep = ONBOARDING_STEPS.DOWNLOAD_SCRIPTS;
+    flow.stateMachine.waitingForDownload = true;
+
+    const actions = flow.getStepActions(ONBOARDING_STEPS.DOWNLOAD_SCRIPTS);
+    const continueAction = actions.find(
+      (a) => a.primary === true && a.label && a.label.includes('choose folder')
+    );
+    expect(continueAction).toBeDefined();
+
+    continueAction.onClick();
+    expect(flow.stateMachine.currentStep).toBe(ONBOARDING_STEPS.SELECT_FOLDER);
+  });
+
+  it('resolves import script target from either folder import or recent open button', () => {
+    const config = flow.getStepConfig(ONBOARDING_STEPS.IMPORT_SCRIPT);
+    const target = config.getTarget();
+    expect(target).toEqual({ id: 'importBtn' });
+
+    mockModal.listContainer.querySelector = vi.fn((sel) => {
+      if (sel === '.recent-script-open-btn') {
+        return { id: 'openBtn' };
+      }
+      return null;
+    });
+
+    const recentTarget = config.getTarget();
+    expect(recentTarget).toEqual({ id: 'openBtn' });
   });
 });

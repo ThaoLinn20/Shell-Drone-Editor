@@ -28,7 +28,10 @@ export const EFFECT_COLORS = {
   'darkPhase': { bg: 'rgba(30, 41, 59, 0.65)', border: '#6366f1', text: '#cbd5e1' },
   'cascade-wave': { bg: 'rgba(20, 184, 166, 0.45)', border: '#14b8a6', text: '#99f6e4' },
   'cascade_wave': { bg: 'rgba(20, 184, 166, 0.45)', border: '#14b8a6', text: '#99f6e4' },
-  'cascadeWave': { bg: 'rgba(20, 184, 166, 0.45)', border: '#14b8a6', text: '#99f6e4' }
+  'cascadeWave': { bg: 'rgba(20, 184, 166, 0.45)', border: '#14b8a6', text: '#99f6e4' },
+  'smoke-trail': { bg: 'rgba(148, 163, 184, 0.45)', border: '#cbd5e1', text: '#f1f5f9' },
+  'smoke_trail': { bg: 'rgba(148, 163, 184, 0.45)', border: '#cbd5e1', text: '#f1f5f9' },
+  'smokeTrail': { bg: 'rgba(148, 163, 184, 0.45)', border: '#cbd5e1', text: '#f1f5f9' }
 };
 
 export function createSvgIcon(type, size = 14) {
@@ -575,8 +578,9 @@ export class ActiveEffectsTimeline {
     const duration = Math.max(0.5, Number(this.options.getDuration?.()) || 2.3);
     const existingSameType = this.effects.filter((e) => (e.type || e.key) === type);
 
-    let startRatio = 0.10;
-    let endRatio = 0.50;
+    const isSmokeTrail = type === 'smoke_trail' || type === 'smoke-trail';
+    let startRatio = isSmokeTrail ? 0.0 : 0.10;
+    let endRatio = isSmokeTrail ? 0.60 : 0.50;
 
     if (existingSameType.length > 0) {
       const latestEnd = Math.max(...existingSameType.map((e) => e.endRatio));

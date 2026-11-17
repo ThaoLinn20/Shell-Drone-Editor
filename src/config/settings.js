@@ -178,6 +178,34 @@ export const SETTINGS_DEFINITION = [
     }
   },
   {
+    key: 'gpu_smoke_simulation',
+    label: 'GPU Smoke Simulation',
+    type: 'checkbox',
+    category: 'system',
+    subgroup: 'camera_post',
+    default: true,
+    apply(
+      value,
+      context
+    ) {
+      renderingConfig.smoke.gpuSimulation = value;
+      if (
+        context &&
+        context.fireworkSystem &&
+        context.fireworkSystem.smokeSystem &&
+        typeof context.fireworkSystem.smokeSystem.setGpuSimulation === 'function'
+      ) {
+        context.fireworkSystem.smokeSystem.setGpuSimulation(value);
+      } else if (
+        context &&
+        context.smokeSystem &&
+        typeof context.smokeSystem.setGpuSimulation === 'function'
+      ) {
+        context.smokeSystem.setGpuSimulation(value);
+      }
+    }
+  },
+  {
     key: 'auto_save_enabled',
     label: 'Auto-Save Direct',
     type: 'checkbox',

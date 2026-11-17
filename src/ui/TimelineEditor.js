@@ -28,7 +28,14 @@ import { AudioBeatsGuideFlow } from './guides/AudioBeatsGuideFlow.js';
 import { TimelineControlsGuideFlow } from './guides/TimelineControlsGuideFlow.js';
 import { INSPECTOR_GUIDE_CONFIGS } from './guides/inspectorGuideConfigs.js';
 import { InspectorSectionGuideFlow } from './guides/InspectorSectionGuideFlow.js';
+import { KnownIssuesModal } from './KnownIssuesModal.js';
 import { DOCS_CONFIG } from '../config/docs.js';
+import { addRecentScript } from '../utils/recentScripts.js';
+import {
+  distributeSpacing,
+  distributeStarts,
+  stretchEvents
+} from '../utils/timelineTransform.js';
 
 
 export class TimelineEditor {
@@ -43,6 +50,9 @@ export class TimelineEditor {
     this.dragOffsetX = 0;
     this.isResizing = false;
     this.resizedEvent = null;
+    this.isStretchingSelection = false;
+    this.stretchAnchorTime = 0;
+    this.stretchInitialSpan = 0;
     this.resizeOffsetX = 0;
     this.initialDuration = 0;
     this.filename = 'demoShow.json';
@@ -439,6 +449,33 @@ export class TimelineEditor {
     langSelect.trigger.style.border = '1px solid #486581';
     this.langSelect = langSelect;
 
+    const bugBtn = document.createElement('button');
+    bugBtn.className = 'timeline-bug-guide-btn';
+    bugBtn.type = 'button';
+    bugBtn.textContent = t('editor.timelineTour.bugBtn') || 'Bug';
+    bugBtn.title = t('editor.timelineTour.bugTooltip') ||
+      'If you cannot type into input fields, press the Windows key and click back into the app';
+    bugBtn.style.background = '#d32f2f';
+    bugBtn.style.color = '#ffffff';
+    bugBtn.style.border = '1px solid #b71c1c';
+    bugBtn.style.borderRadius = '4px';
+    bugBtn.style.padding = '3px 8px';
+    bugBtn.style.cursor = 'pointer';
+    bugBtn.style.fontSize = '12px';
+    bugBtn.style.fontWeight = 'bold';
+    bugBtn.style.fontFamily = 'inherit';
+    bugBtn.style.transition = 'all 0.15s ease';
+    bugBtn.addEventListener('mouseenter', () => {
+      bugBtn.style.background = '#e53935';
+    });
+    bugBtn.addEventListener('mouseleave', () => {
+      bugBtn.style.background = '#d32f2f';
+    });
+    bugBtn.addEventListener('click', () => {
+      this.openKnownIssuesModal();
+    });
+    this.bugBtn = bugBtn;
+
     const rightActionsGroup = document.createElement('div');
     rightActionsGroup.style.display = 'flex';
     rightActionsGroup.style.alignItems = 'center';
@@ -446,6 +483,7 @@ export class TimelineEditor {
     rightActionsGroup.style.marginLeft = 'auto';
     rightActionsGroup.appendChild(helpBtn);
     rightActionsGroup.appendChild(langSelect.element);
+    rightActionsGroup.appendChild(bugBtn);
 
     const libraryBtn = document.createElement('button');
     libraryBtn.textContent =
@@ -912,6 +950,22 @@ export class TimelineEditor {
           this.openGuideHub();
         }
       );
+
+      this.hotkeyManager.register(
+        'timeline',
+        'alt+shift+h',
+        () => {
+          this.distributeSelectedSpacing();
+        }
+      );
+
+      this.hotkeyManager.register(
+        'timeline',
+        'alt+shift+t',
+        () => {
+          this.distributeSelectedStarts();
+        }
+      );
     }
 
     // Auto-hide when entering Move Mode (pointer lock), show only if it was visible
@@ -1063,6 +1117,68 @@ export class TimelineEditor {
     if (this.playhead) {
       this.playhead.style.left = (currentTime * this.pixelsPerSecond) + 'px';
     }
+  }
+
+  distributeSelectedSpacing() {
+    if (!this.selectedEvents || this.selectedEvents.length < 3) {
+      return;
+    }
+    this.saveHistoryState();
+    const res = distributeSpacing(this.selectedEvents);
+    if (res.modified) {
+      this.setSaveStatus('unsaved');
+      this.renderTracks();
+      showToast(
+        t('editor.timelinePanel.distributedSpacingToast') ||
+          'Evenly distributed block spacing',
+        'success'
+      );
+    }
+  }
+
+  distributeSelectedStarts() {
+    if (!this.selectedEvents || this.selectedEvents.length < 3) {
+      return;
+    }
+    this.saveHistoryState();
+    const res = distributeStarts(this.selectedEvents);
+    if (res.modified) {
+      this.setSaveStatus('unsaved');
+      this.renderTracks();
+      showToast(
+        t('editor.timelinePanel.distributedStartsToast') ||
+          'Evenly distributed block start times',
+        'success'
+      );
+    }
+  }
+
+  initSelectionStretch(seq) {
+    if (!this.selectedEvents || this.selectedEvents.length < 2) {
+      return;
+    }
+    const times = this.selectedEvents.map((s) => s.time || 0);
+    this.stretchAnchorTime = Math.min(...times);
+    const maxTime = Math.max(...times);
+    this.stretchInitialSpan = maxTime - this.stretchAnchorTime;
+    this.selectedEvents.forEach((s) => {
+      s._stretchInitialTime = s.time;
+    });
+  }
+
+  updateSelectionStretch(dTime) {
+    if (!this.selectedEvents || this.selectedEvents.length < 2) {
+      return;
+    }
+    if (this.stretchInitialSpan <= 0.001) {
+      return;
+    }
+    stretchEvents(
+      this.selectedEvents,
+      dTime,
+      this.stretchAnchorTime
+    );
+    this.renderTracks();
   }
 
   changeZoom() {
@@ -1318,6 +1434,13 @@ export class TimelineEditor {
     if (this.guideHubModal) {
       this.guideHubModal.open();
     }
+  }
+
+  openKnownIssuesModal() {
+    if (!this.knownIssuesModal) {
+      this.knownIssuesModal = new KnownIssuesModal(this);
+    }
+    this.knownIssuesModal.open();
   }
 
   emitSelectionChanged() {
@@ -2053,6 +2176,9 @@ export class TimelineEditor {
       resizeHandle.style.cursor = 'ew-resize';
       resizeHandle.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
       resizeHandle.style.zIndex = '10';
+      resizeHandle.title =
+        t('editor.timelinePanel.resizeHandleTooltip') ||
+        'Drag to resize duration. Hold Alt to stretch spacing between selected blocks.';
 
       resizeHandle.addEventListener('mousedown', (e) => {
         e.stopPropagation();
@@ -2062,7 +2188,20 @@ export class TimelineEditor {
         this.isResizing = true;
         this.resizedEvent = seq;
         this.resizeOffsetX = e.clientX;
-        this.initialDuration = seq.uiDuration !== undefined ? seq.uiDuration : (seq.duration || 0);
+        this.initialDuration = seq.uiDuration !== undefined
+          ? seq.uiDuration
+          : (seq.duration || 0);
+
+        if (
+          e.altKey &&
+          this.selectedEvents &&
+          this.selectedEvents.length >= 2
+        ) {
+          this.isStretchingSelection = true;
+          this.initSelectionStretch(seq);
+        } else {
+          this.isStretchingSelection = false;
+        }
       });
 
       resizeHandle.addEventListener('mouseenter', () => {
@@ -2190,6 +2329,16 @@ export class TimelineEditor {
     if (this.isResizing && this.resizedEvent) {
       const dx = e.clientX - this.resizeOffsetX;
       const dTime = dx / this.pixelsPerSecond;
+
+      if (
+        this.isStretchingSelection &&
+        this.selectedEvents &&
+        this.selectedEvents.length >= 2
+      ) {
+        this.updateSelectionStretch(dTime);
+        return;
+      }
+
       let newDuration = Math.max(0.1, this.initialDuration + dTime);
       newDuration = Math.round(newDuration * 10) / 10; // Snap to 0.1s
 
@@ -2331,6 +2480,7 @@ export class TimelineEditor {
     );
 
     const wasResizing = this.isResizing && this.resizedEvent;
+    const wasStretching = this.isStretchingSelection;
     const resizedEvent = this.resizedEvent;
     const resizedDuration = resizedEvent
       ? (
@@ -2349,10 +2499,18 @@ export class TimelineEditor {
     this.draggedEvent = null;
     this.isResizing = false;
     this.resizedEvent = null;
+    this.isStretchingSelection = false;
     if (this.selectedEvents) {
-      this.selectedEvents.forEach(s => {
+      this.selectedEvents.forEach((s) => {
         delete s.initialTime;
+        delete s._stretchInitialTime;
       });
+    }
+
+    if (wasStretching) {
+      this.setSaveStatus('unsaved');
+      this.emitSelectionChanged();
+      this.renderTracks();
     }
 
     if (hasMovedBlock) {
@@ -2496,6 +2654,16 @@ export class TimelineEditor {
     this.filename = filename;
     if (filePath !== undefined) {
       this.currentFilePath = filePath;
+    }
+    if (this.currentFilePath) {
+      addRecentScript({
+        filePath: this.currentFilePath,
+        filename: this.filename || filename,
+        lastOpenedAt: Date.now(),
+        lastAction: 'open',
+        duration: this.totalDuration || 0,
+        eventCount: Array.isArray(data) ? data.length : 0
+      });
     }
     this.selectedEvents = [];
     if (this.inspector) {
@@ -2713,6 +2881,16 @@ export class TimelineEditor {
             content
           );
           this.setSaveStatus('saved');
+          if (this.currentFilePath) {
+            addRecentScript({
+              filePath: this.currentFilePath,
+              filename: this.filename,
+              lastOpenedAt: Date.now(),
+              lastAction: 'save',
+              duration: this.totalDuration || 0,
+              eventCount: Array.isArray(this.sequences) ? this.sequences.length : 0
+            });
+          }
           if (!silent) {
             alert(t('editor.timelinePanel.saveSuccess', { filename: this.filename }));
           }
@@ -2757,6 +2935,16 @@ export class TimelineEditor {
               this.filename = res.filename;
               this.updateFileIndicator();
               this.setSaveStatus('saved');
+              if (this.currentFilePath) {
+                addRecentScript({
+                  filePath: this.currentFilePath,
+                  filename: this.filename,
+                  lastOpenedAt: Date.now(),
+                  lastAction: 'save',
+                  duration: this.totalDuration || 0,
+                  eventCount: Array.isArray(this.sequences) ? this.sequences.length : 0
+                });
+              }
               if (!silent) {
                 alert(`Đã lưu kịch bản mới thành công vào: ${res.filename}`);
               }

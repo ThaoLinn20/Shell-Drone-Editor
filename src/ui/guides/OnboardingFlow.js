@@ -2,7 +2,10 @@ import { t } from '../../config/lang/i18n.js';
 import { globalEventBus } from '../../core/EventBus.js';
 import { showToast } from '../../utils/Toast.js';
 import { InteractiveSpotlight } from './InteractiveSpotlight.js';
-import { buildStepNavigationActions } from './guideFlowHelpers.js';
+import {
+  buildStepNavigationActions,
+  prepareGuideFlowStart
+} from './guideFlowHelpers.js';
 import {
   OnboardingStateMachine,
   ONBOARDING_STEPS
@@ -51,26 +54,25 @@ export class OnboardingFlow {
       step === ONBOARDING_STEPS.DOWNLOAD_SCRIPTS ||
       step === ONBOARDING_STEPS.SELECT_FOLDER ||
       step === ONBOARDING_STEPS.IMPORT_SCRIPT;
-    if (needsModalOpen && !modal.isVisible) {
-      modal.open();
+    if (needsModalOpen) {
+      if (!modal.isVisible) {
+        modal.open('folder');
+      } else if (
+        modal.activeTab !== 'folder' &&
+        typeof modal.switchTab === 'function'
+      ) {
+        modal.switchTab('folder');
+      }
     } else if (step === ONBOARDING_STEPS.PLAY_SHOW && modal.isVisible) {
       modal.close();
     }
   }
 
   restart() {
-    if (
-      this.timelineEditor?.welcomeGuide &&
-      this.timelineEditor.welcomeGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.welcomeGuide.stateMachine.dismiss();
-    }
-    if (
-      this.timelineEditor?.audioBeatsGuide &&
-      this.timelineEditor.audioBeatsGuide.stateMachine?.isActive
-    ) {
-      this.timelineEditor.audioBeatsGuide.stateMachine.dismiss();
-    }
+    prepareGuideFlowStart(
+      this.timelineEditor,
+      this
+    );
     this.spotlight.initDOM();
     this.bindWindowListeners();
     this.stateMachine.restart();
@@ -180,7 +182,12 @@ export class OnboardingFlow {
           if (libraryModal && libraryModal.listContainer) {
             const firstImport =
               typeof libraryModal.listContainer.querySelector === 'function'
-                ? libraryModal.listContainer.querySelector('.show-library-import-btn')
+                ? (libraryModal.listContainer.querySelector(
+                    '.show-library-import-btn'
+                  ) ||
+                  libraryModal.listContainer.querySelector(
+                    '.recent-script-open-btn'
+                  ))
                 : null;
             return firstImport || libraryModal.listContainer;
           }
@@ -203,18 +210,36 @@ export class OnboardingFlow {
 
   getStepActions(step) {
     const extraActions = [];
-    if (
-      step === ONBOARDING_STEPS.DOWNLOAD_SCRIPTS &&
-      this.stateMachine.waitingForDownload
-    ) {
-      extraActions.push({
-        label:
-          t('editor.onboarding.openDriveAgainBtn') || 'Open Drive again',
-        primary: false,
-        onClick: () => {
-          this.timelineEditor?.openScriptsDrive();
-        }
-      });
+    if (step === ONBOARDING_STEPS.DOWNLOAD_SCRIPTS) {
+      if (this.stateMachine.waitingForDownload) {
+        extraActions.push({
+          label:
+            t('editor.onboarding.downloadedContinueBtn') ||
+            'I have downloaded, choose folder',
+          primary: true,
+          onClick: () => {
+            this.stateMachine.advanceToSelectFolder();
+          }
+        });
+        extraActions.push({
+          label:
+            t('editor.onboarding.openDriveAgainBtn') || 'Open Drive again',
+          primary: false,
+          onClick: () => {
+            this.timelineEditor?.openScriptsDrive();
+          }
+        });
+      } else {
+        extraActions.push({
+          label:
+            t('editor.onboarding.alreadyHaveFolderBtn') ||
+            'I already have a scripts folder',
+          primary: false,
+          onClick: () => {
+            this.stateMachine.advanceToSelectFolder();
+          }
+        });
+      }
     }
 
     return buildStepNavigationActions({
