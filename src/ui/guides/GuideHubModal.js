@@ -167,7 +167,7 @@ export class GuideHubModal {
           'Timeline Editing and Mouse Controls',
         desc: () =>
           t('editor.guideHub.timelineControlsDesc') ||
-          'Practice dragging and resizing blocks, picking Anchor Head on the Ruler, Copy and Paste, and using left-click versus right-click menus.',
+          'Practice dragging and resizing blocks, Alt-drag to stretch spacing, picking Anchor Head on the Ruler, Copy and Paste, and using left-click versus right-click menus.',
         badge: () =>
           t('editor.guideHub.timelineControlsBadge') || '7 steps',
         tags: ['important', 'basic'],

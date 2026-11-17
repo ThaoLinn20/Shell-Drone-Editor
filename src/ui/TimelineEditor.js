@@ -30,6 +30,11 @@ import { INSPECTOR_GUIDE_CONFIGS } from './guides/inspectorGuideConfigs.js';
 import { InspectorSectionGuideFlow } from './guides/InspectorSectionGuideFlow.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 import { addRecentScript } from '../utils/recentScripts.js';
+import {
+  distributeSpacing,
+  distributeStarts,
+  stretchEvents
+} from '../utils/timelineTransform.js';
 
 
 export class TimelineEditor {
@@ -44,6 +49,9 @@ export class TimelineEditor {
     this.dragOffsetX = 0;
     this.isResizing = false;
     this.resizedEvent = null;
+    this.isStretchingSelection = false;
+    this.stretchAnchorTime = 0;
+    this.stretchInitialSpan = 0;
     this.resizeOffsetX = 0;
     this.initialDuration = 0;
     this.filename = 'demoShow.json';
@@ -913,6 +921,22 @@ export class TimelineEditor {
           this.openGuideHub();
         }
       );
+
+      this.hotkeyManager.register(
+        'timeline',
+        'alt+shift+h',
+        () => {
+          this.distributeSelectedSpacing();
+        }
+      );
+
+      this.hotkeyManager.register(
+        'timeline',
+        'alt+shift+t',
+        () => {
+          this.distributeSelectedStarts();
+        }
+      );
     }
 
     // Auto-hide when entering Move Mode (pointer lock), show only if it was visible
@@ -1064,6 +1088,68 @@ export class TimelineEditor {
     if (this.playhead) {
       this.playhead.style.left = (currentTime * this.pixelsPerSecond) + 'px';
     }
+  }
+
+  distributeSelectedSpacing() {
+    if (!this.selectedEvents || this.selectedEvents.length < 3) {
+      return;
+    }
+    this.saveHistoryState();
+    const res = distributeSpacing(this.selectedEvents);
+    if (res.modified) {
+      this.setSaveStatus('unsaved');
+      this.renderTracks();
+      showToast(
+        t('editor.timelinePanel.distributedSpacingToast') ||
+          'Evenly distributed block spacing',
+        'success'
+      );
+    }
+  }
+
+  distributeSelectedStarts() {
+    if (!this.selectedEvents || this.selectedEvents.length < 3) {
+      return;
+    }
+    this.saveHistoryState();
+    const res = distributeStarts(this.selectedEvents);
+    if (res.modified) {
+      this.setSaveStatus('unsaved');
+      this.renderTracks();
+      showToast(
+        t('editor.timelinePanel.distributedStartsToast') ||
+          'Evenly distributed block start times',
+        'success'
+      );
+    }
+  }
+
+  initSelectionStretch(seq) {
+    if (!this.selectedEvents || this.selectedEvents.length < 2) {
+      return;
+    }
+    const times = this.selectedEvents.map((s) => s.time || 0);
+    this.stretchAnchorTime = Math.min(...times);
+    const maxTime = Math.max(...times);
+    this.stretchInitialSpan = maxTime - this.stretchAnchorTime;
+    this.selectedEvents.forEach((s) => {
+      s._stretchInitialTime = s.time;
+    });
+  }
+
+  updateSelectionStretch(dTime) {
+    if (!this.selectedEvents || this.selectedEvents.length < 2) {
+      return;
+    }
+    if (this.stretchInitialSpan <= 0.001) {
+      return;
+    }
+    stretchEvents(
+      this.selectedEvents,
+      dTime,
+      this.stretchAnchorTime
+    );
+    this.renderTracks();
   }
 
   changeZoom() {
@@ -2054,6 +2140,9 @@ export class TimelineEditor {
       resizeHandle.style.cursor = 'ew-resize';
       resizeHandle.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
       resizeHandle.style.zIndex = '10';
+      resizeHandle.title =
+        t('editor.timelinePanel.resizeHandleTooltip') ||
+        'Drag to resize duration. Hold Alt to stretch spacing between selected blocks.';
 
       resizeHandle.addEventListener('mousedown', (e) => {
         e.stopPropagation();
@@ -2063,7 +2152,20 @@ export class TimelineEditor {
         this.isResizing = true;
         this.resizedEvent = seq;
         this.resizeOffsetX = e.clientX;
-        this.initialDuration = seq.uiDuration !== undefined ? seq.uiDuration : (seq.duration || 0);
+        this.initialDuration = seq.uiDuration !== undefined
+          ? seq.uiDuration
+          : (seq.duration || 0);
+
+        if (
+          e.altKey &&
+          this.selectedEvents &&
+          this.selectedEvents.length >= 2
+        ) {
+          this.isStretchingSelection = true;
+          this.initSelectionStretch(seq);
+        } else {
+          this.isStretchingSelection = false;
+        }
       });
 
       resizeHandle.addEventListener('mouseenter', () => {
@@ -2191,6 +2293,16 @@ export class TimelineEditor {
     if (this.isResizing && this.resizedEvent) {
       const dx = e.clientX - this.resizeOffsetX;
       const dTime = dx / this.pixelsPerSecond;
+
+      if (
+        this.isStretchingSelection &&
+        this.selectedEvents &&
+        this.selectedEvents.length >= 2
+      ) {
+        this.updateSelectionStretch(dTime);
+        return;
+      }
+
       let newDuration = Math.max(0.1, this.initialDuration + dTime);
       newDuration = Math.round(newDuration * 10) / 10; // Snap to 0.1s
 
@@ -2332,6 +2444,7 @@ export class TimelineEditor {
     );
 
     const wasResizing = this.isResizing && this.resizedEvent;
+    const wasStretching = this.isStretchingSelection;
     const resizedEvent = this.resizedEvent;
     const resizedDuration = resizedEvent
       ? (
@@ -2350,10 +2463,18 @@ export class TimelineEditor {
     this.draggedEvent = null;
     this.isResizing = false;
     this.resizedEvent = null;
+    this.isStretchingSelection = false;
     if (this.selectedEvents) {
-      this.selectedEvents.forEach(s => {
+      this.selectedEvents.forEach((s) => {
         delete s.initialTime;
+        delete s._stretchInitialTime;
       });
+    }
+
+    if (wasStretching) {
+      this.setSaveStatus('unsaved');
+      this.emitSelectionChanged();
+      this.renderTracks();
     }
 
     if (hasMovedBlock) {

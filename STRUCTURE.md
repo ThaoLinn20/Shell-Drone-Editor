@@ -162,6 +162,8 @@
   - `detectBeats(source, threshold)`: Filters audio under 150Hz and detects volume peaks.
 - **[src/utils/recentScripts.js](./src/utils/recentScripts.js)**: Manages local script history using an LRU queue (maximum 12 items).
   - `getRecentScripts()`, `addRecentScript(meta)`, `removeRecentScript(filePath)`, `clearRecentScripts()`, `formatRelativeTime(timestamp, t)`: Access, record, clean, and format recent show scripts.
+- **[src/utils/timelineTransform.js](./src/utils/timelineTransform.js)**: Multi-selection timeline transformation math.
+  - `distributeSpacing(events)`, `distributeStarts(events)`, `stretchEvents(events, deltaSpan, anchorTime)`: Distribute idle gaps, distribute start times, and stretch relative time distances between event blocks.
 
 ## 2. Entry Points
 - **Browser show viewer**: [index.html](./index.html) loads [src/main.js](./src/main.js).

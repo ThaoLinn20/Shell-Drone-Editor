@@ -31,8 +31,23 @@ Tài liệu này quy định các thuật ngữ lập trình và thuật ngữ n
 
 ### Block Context Menu (Menu chuột phải trên Block)
 - Định nghĩa: Menu ngữ cảnh hiển thị khi người dùng nhấn chuột phải lên một block sự kiện đang được chọn trên `Tracks Area`.
-- Hành vi: Giữ nguyên vị trí `Anchor Head` và `Playhead`, chỉ hiển thị các thao tác tác động lên block đang chọn (`Group`, `Ungroup`, `Export selected blocks`).
+- Hành vi: Giữ nguyên vị trí `Anchor Head` và `Playhead`, chỉ hiển thị các thao tác tác động lên block đang chọn (`Group`, `Ungroup`, `Distribute Spacing`, `Distribute Start Times`, `Export selected blocks`).
 - Trong code: Ngữ cảnh `targetType: 'block'` (kiểm tra bằng `isBlockContext`) trong [src/ui/TimelineContextMenu.js](./src/ui/TimelineContextMenu.js) và sự kiện `contextmenu` trên từng phần tử `block` trong [src/ui/TimelineEditor.js](./src/ui/TimelineEditor.js).
+
+### Time Stretch Multi-Selection (Kéo dãn khoảng cách cụm block)
+- Định nghĩa: Thao tác kéo dãn hoặc thu hẹp tỷ lệ khoảng cách thời gian giữa các block đang được chọn trên Timeline, giữ nguyên điểm neo thời gian tại block đầu tiên.
+- Thao tác chuột: Khi bôi đen từ 2 block trở lên, giữ phím `Alt` và kéo chuột tại mép phải (resize handle) của block ngoài cùng bên phải.
+- Trong code: `this.isStretchingSelection`, `initSelectionStretch()`, `updateSelectionStretch()` trong [src/ui/TimelineEditor.js](./src/ui/TimelineEditor.js) và `stretchEvents()` trong [src/utils/timelineTransform.js](./src/utils/timelineTransform.js).
+
+### Distribute Spacing (Chia đều khoảng hở)
+- Định nghĩa: Giữ nguyên vị trí block đầu và block cuối, chia đều khoảng nghỉ (idle gap) giữa các block liền kề trong cụm được chọn (áp dụng khi chọn từ 3 block trở lên).
+- Phím tắt / Menu: Nhấp chuột phải chọn `Distribute Spacing` hoặc nhấn tổ hợp `Alt + Shift + H`.
+- Trong code: `distributeSpacing()` trong [src/utils/timelineTransform.js](./src/utils/timelineTransform.js) và `distributeSelectedSpacing()` trong [src/ui/TimelineEditor.js](./src/ui/TimelineEditor.js).
+
+### Distribute Start Times (Chia đều mốc bắt đầu)
+- Định nghĩa: Phân bố đều các mốc thời gian bắt đầu của các block được chọn với bước nhảy thời gian bằng nhau (áp dụng khi chọn từ 3 block trở lên).
+- Phím tắt / Menu: Nhấp chuột phải chọn `Distribute Start Times` hoặc nhấn tổ hợp `Alt + Shift + T`.
+- Trong code: `distributeStarts()` trong [src/utils/timelineTransform.js](./src/utils/timelineTransform.js) và `distributeSelectedStarts()` trong [src/ui/TimelineEditor.js](./src/ui/TimelineEditor.js).
 
 ---
 
