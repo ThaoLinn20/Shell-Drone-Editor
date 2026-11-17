@@ -47,10 +47,15 @@ export function showToast(
   container.appendChild(toast);
 
   // Trigger smooth enter animation
-  requestAnimationFrame(() => {
+  if (typeof requestAnimationFrame !== 'undefined') {
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+    });
+  } else {
     toast.style.opacity = '1';
     toast.style.transform = 'translateY(0)';
-  });
+  }
 
   setTimeout(() => {
     toast.style.opacity = '0';

@@ -215,7 +215,20 @@ export default {
       noAudioTrack: "音声トラックなし",
       loadedToast: "読み込み完了: {filename}",
       loadError: "読み込みエラー: {error}",
-      closeBtn: "閉じる"
+      closeBtn: "閉じる",
+      recentScriptsTab: "最近のスクリプト",
+      folderLibraryTab: "フォルダーライブラリ",
+      recentScriptsEmptyTitle: "最近のスクリプトはありません",
+      recentScriptsEmptyDesc: "開いた、または保存したスクリプトはここに表示され、素早くアクセスできます。",
+      recentScriptsClear: "履歴を消去",
+      recentScriptsClearConfirm: "最近のスクリプト履歴をすべて消去してもよろしいですか？",
+      recentScriptsOpen: "開く",
+      recentScriptsRemove: "リストから削除",
+      recentFileNotFoundPrompt: "{filename} を開けません。ファイルが移動または削除された可能性があります。最近のリストから削除しますか？",
+      justNow: "たった今",
+      minutesAgo: "{count}分前",
+      hoursAgo: "{count}時間前",
+      yesterday: "昨日"
     },
     onboarding: {
       stepIndicator: "クイックスタート {current} / {total}",

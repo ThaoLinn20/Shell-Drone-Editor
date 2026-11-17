@@ -224,7 +224,20 @@ export default {
       noAudioTrack: "Không có nhạc",
       loadedToast: "Đã nạp kịch bản: {filename}",
       loadError: "Lỗi khi nạp kịch bản: {error}",
-      closeBtn: "Đóng"
+      closeBtn: "Đóng",
+      recentScriptsTab: "Kịch bản gần đây",
+      folderLibraryTab: "Kho kịch bản thư mục",
+      recentScriptsEmptyTitle: "Chưa có kịch bản gần đây",
+      recentScriptsEmptyDesc: "Các kịch bản bạn mở hoặc lưu sẽ tự động xuất hiện tại đây để tiếp tục nhanh chóng.",
+      recentScriptsClear: "Xóa lịch sử",
+      recentScriptsClearConfirm: "Bạn có chắc chắn muốn xóa toàn bộ lịch sử kịch bản gần đây không?",
+      recentScriptsOpen: "Mở",
+      recentScriptsRemove: "Xóa khỏi danh sách",
+      recentFileNotFoundPrompt: "Không thể mở {filename}. Tệp có thể đã bị di chuyển hoặc xóa. Bạn có muốn xóa khỏi danh sách gần đây không?",
+      justNow: "Vừa xong",
+      minutesAgo: "{count} phút trước",
+      hoursAgo: "{count} giờ trước",
+      yesterday: "Hôm qua"
     },
     onboarding: {
       stepIndicator: "Hướng dẫn nhanh {current} / {total}",

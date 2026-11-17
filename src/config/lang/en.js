@@ -224,7 +224,20 @@ export default {
       noAudioTrack: "No audio track",
       loadedToast: "Loaded script: {filename}",
       loadError: "Failed to load script: {error}",
-      closeBtn: "Close"
+      closeBtn: "Close",
+      recentScriptsTab: "Recent Scripts",
+      folderLibraryTab: "Folder Library",
+      recentScriptsEmptyTitle: "No Recent Scripts",
+      recentScriptsEmptyDesc: "Scripts you open or save will appear here for quick access.",
+      recentScriptsClear: "Clear History",
+      recentScriptsClearConfirm: "Are you sure you want to clear your recent scripts history?",
+      recentScriptsOpen: "Open",
+      recentScriptsRemove: "Remove from recent",
+      recentFileNotFoundPrompt: "Cannot open {filename}. The file may have been moved or deleted. Do you want to remove it from recent scripts?",
+      justNow: "Just now",
+      minutesAgo: "{count}m ago",
+      hoursAgo: "{count}h ago",
+      yesterday: "Yesterday"
     },
     onboarding: {
       stepIndicator: "Quick Start {current} of {total}",

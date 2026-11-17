@@ -215,7 +215,20 @@ export default {
       noAudioTrack: "无音轨",
       loadedToast: "已加载剧本: {filename}",
       loadError: "加载剧本失败: {error}",
-      closeBtn: "关闭"
+      closeBtn: "关闭",
+      recentScriptsTab: "最近剧本",
+      folderLibraryTab: "文件夹库",
+      recentScriptsEmptyTitle: "暂无最近剧本",
+      recentScriptsEmptyDesc: "您打开或保存的剧本将显示在此处以便快速访问。",
+      recentScriptsClear: "清除历史",
+      recentScriptsClearConfirm: "您确定要清除所有最近剧本历史记录吗？",
+      recentScriptsOpen: "打开",
+      recentScriptsRemove: "从列表中移除",
+      recentFileNotFoundPrompt: "无法打开 {filename}。该文件可能已被移动或删除。是否从最近列表中移除？",
+      justNow: "刚刚",
+      minutesAgo: "{count}分钟前",
+      hoursAgo: "{count}小时前",
+      yesterday: "昨天"
     },
     onboarding: {
       stepIndicator: "快速引导 {current} / {total}",

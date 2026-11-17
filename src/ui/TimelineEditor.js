@@ -29,6 +29,7 @@ import { TimelineControlsGuideFlow } from './guides/TimelineControlsGuideFlow.js
 import { INSPECTOR_GUIDE_CONFIGS } from './guides/inspectorGuideConfigs.js';
 import { InspectorSectionGuideFlow } from './guides/InspectorSectionGuideFlow.js';
 import { DOCS_CONFIG } from '../config/docs.js';
+import { addRecentScript } from '../utils/recentScripts.js';
 
 
 export class TimelineEditor {
@@ -2497,6 +2498,16 @@ export class TimelineEditor {
     if (filePath !== undefined) {
       this.currentFilePath = filePath;
     }
+    if (this.currentFilePath) {
+      addRecentScript({
+        filePath: this.currentFilePath,
+        filename: this.filename || filename,
+        lastOpenedAt: Date.now(),
+        lastAction: 'open',
+        duration: this.totalDuration || 0,
+        eventCount: Array.isArray(data) ? data.length : 0
+      });
+    }
     this.selectedEvents = [];
     if (this.inspector) {
       this.inspector.hide();
@@ -2713,6 +2724,16 @@ export class TimelineEditor {
             content
           );
           this.setSaveStatus('saved');
+          if (this.currentFilePath) {
+            addRecentScript({
+              filePath: this.currentFilePath,
+              filename: this.filename,
+              lastOpenedAt: Date.now(),
+              lastAction: 'save',
+              duration: this.totalDuration || 0,
+              eventCount: Array.isArray(this.sequences) ? this.sequences.length : 0
+            });
+          }
           if (!silent) {
             alert(t('editor.timelinePanel.saveSuccess', { filename: this.filename }));
           }
@@ -2757,6 +2778,16 @@ export class TimelineEditor {
               this.filename = res.filename;
               this.updateFileIndicator();
               this.setSaveStatus('saved');
+              if (this.currentFilePath) {
+                addRecentScript({
+                  filePath: this.currentFilePath,
+                  filename: this.filename,
+                  lastOpenedAt: Date.now(),
+                  lastAction: 'save',
+                  duration: this.totalDuration || 0,
+                  eventCount: Array.isArray(this.sequences) ? this.sequences.length : 0
+                });
+              }
               if (!silent) {
                 alert(`Đã lưu kịch bản mới thành công vào: ${res.filename}`);
               }
