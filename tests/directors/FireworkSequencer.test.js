@@ -149,7 +149,8 @@ describe('FireworkSequencer', () => {
     sequencer.playPattern('cascade-slope', {
       count: 6,
       duration: 2.0,
-      ratioY: 0.8
+      ratioY: 0.8,
+      heightJitter: 0
     });
 
     expect(sequencer.activeTasks.length).toBe(6);
@@ -227,7 +228,8 @@ describe('FireworkSequencer', () => {
   it('should generate stepped altitudes in stepping-stones pattern', () => {
     sequencer.playPattern('stepping-stones', {
       count: 8,
-      duration: 2.0
+      duration: 2.0,
+      heightJitter: 0
     });
 
     expect(sequencer.activeTasks.length).toBe(8);
@@ -241,7 +243,8 @@ describe('FireworkSequencer', () => {
     sequencer.playPattern('sinusoidal-wave', {
       count: 4,
       duration: 1.0,
-      ratioY: 0.35
+      ratioY: 0.35,
+      heightJitter: 0
     });
 
     const lowTasks = [...sequencer.activeTasks];
@@ -250,7 +253,8 @@ describe('FireworkSequencer', () => {
     sequencer.playPattern('sinusoidal-wave', {
       count: 4,
       duration: 1.0,
-      ratioY: 0.90
+      ratioY: 0.90,
+      heightJitter: 0
     });
 
     const highTasks = [...sequencer.activeTasks];
