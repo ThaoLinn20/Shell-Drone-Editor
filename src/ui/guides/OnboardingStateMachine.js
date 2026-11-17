@@ -248,7 +248,8 @@ export class OnboardingStateMachine {
     }
     if (
       this.currentStep === ONBOARDING_STEPS.IMPORT_SCRIPT ||
-      this.currentStep === ONBOARDING_STEPS.SELECT_FOLDER
+      this.currentStep === ONBOARDING_STEPS.SELECT_FOLDER ||
+      this.currentStep === ONBOARDING_STEPS.DOWNLOAD_SCRIPTS
     ) {
       this.currentStep = ONBOARDING_STEPS.PLAY_SHOW;
       this.zipDetected = false;
