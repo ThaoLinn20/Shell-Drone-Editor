@@ -494,6 +494,11 @@ export class FireworkSequencer {
         || config.terminalFlareColor !== undefined
         || config.tadpoleColor !== undefined
         || config.tadpoleFlurryColor !== undefined
+        || config.smokeTrail !== undefined
+        || config['smoke-trail'] !== undefined
+        || config.smoke_trail !== undefined
+        || config.smokeTrailStartTime !== undefined
+        || config.smokeTrailDuration !== undefined
         || config.textWord !== undefined
         || config.textScale !== undefined
         || config.letterSpacing !== undefined
@@ -589,6 +594,11 @@ export class FireworkSequencer {
         if (config.terminalFlareColor !== undefined) overrides.terminalFlareColor = config.terminalFlareColor;
         if (config.tadpoleColor !== undefined) overrides.tadpoleColor = config.tadpoleColor;
         if (config.tadpoleFlurryColor !== undefined) overrides.tadpoleFlurryColor = config.tadpoleFlurryColor;
+        if (config.smokeTrail !== undefined) overrides.smokeTrail = config.smokeTrail;
+        if (config['smoke-trail'] !== undefined) overrides.smokeTrail = config['smoke-trail'];
+        if (config.smoke_trail !== undefined) overrides.smokeTrail = config.smoke_trail;
+        if (config.smokeTrailStartTime !== undefined) overrides.smokeTrailStartTime = config.smokeTrailStartTime;
+        if (config.smokeTrailDuration !== undefined) overrides.smokeTrailDuration = config.smokeTrailDuration;
         if (config.sound || config.launchSound || config.burstSound || config.crackleSound || config.soundVolume !== undefined) {
           overrides.sound = {
             launch: config.sound?.launch || config.launchSound || undefined,
@@ -1081,6 +1091,11 @@ export class FireworkSequencer {
         || config.terminalFlareColor !== undefined
         || config.tadpoleColor !== undefined
         || config.tadpoleFlurryColor !== undefined
+        || config.smokeTrail !== undefined
+        || config['smoke-trail'] !== undefined
+        || config.smoke_trail !== undefined
+        || config.smokeTrailStartTime !== undefined
+        || config.smokeTrailDuration !== undefined
         || config.textWord !== undefined
         || config.textScale !== undefined
         || config.letterSpacing !== undefined
@@ -1148,6 +1163,11 @@ export class FireworkSequencer {
         if (config.terminalFlareColor !== undefined) overrides.terminalFlareColor = config.terminalFlareColor;
         if (config.tadpoleColor !== undefined) overrides.tadpoleColor = config.tadpoleColor;
         if (config.tadpoleFlurryColor !== undefined) overrides.tadpoleFlurryColor = config.tadpoleFlurryColor;
+        if (config.smokeTrail !== undefined) overrides.smokeTrail = config.smokeTrail;
+        if (config['smoke-trail'] !== undefined) overrides.smokeTrail = config['smoke-trail'];
+        if (config.smoke_trail !== undefined) overrides.smokeTrail = config.smoke_trail;
+        if (config.smokeTrailStartTime !== undefined) overrides.smokeTrailStartTime = config.smokeTrailStartTime;
+        if (config.smokeTrailDuration !== undefined) overrides.smokeTrailDuration = config.smokeTrailDuration;
         if (config.sound || config.launchSound || config.burstSound || config.crackleSound || config.soundVolume !== undefined) {
           overrides.sound = {
             launch: config.sound?.launch || config.launchSound || undefined,

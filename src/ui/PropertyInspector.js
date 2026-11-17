@@ -100,6 +100,10 @@ export const TIMED_EFFECT_TAGS = [
   {
     key: 'dark_phase',
     labelKey: 'darkPhase'
+  },
+  {
+    key: 'smoke_trail',
+    labelKey: 'smokeTrail'
   }
 ];
 
