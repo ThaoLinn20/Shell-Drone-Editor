@@ -36,6 +36,10 @@ import {
   distributeStarts,
   stretchEvents
 } from '../utils/timelineTransform.js';
+import {
+  getFireworkLifespan,
+  isFireworkLifecycleEvent
+} from '../utils/fireworkLifespan.js';
 
 
 export class TimelineEditor {
@@ -1821,8 +1825,13 @@ export class TimelineEditor {
     let otherRows = [];
     otherSequences.forEach(seq => {
       const start = seq.time;
-      const visualDurationVal = seq.uiDuration !== undefined ? seq.uiDuration : (seq.duration || 0);
-      const visualDuration = Math.max(visualDurationVal, this.minBlockWidth / this.pixelsPerSecond);
+      let durationVal = seq.duration || 0;
+      if (isFireworkLifecycleEvent(seq)) {
+        durationVal = getFireworkLifespan(seq).totalVisualDuration;
+      } else if (seq.uiDuration !== undefined) {
+        durationVal = seq.uiDuration;
+      }
+      const visualDuration = Math.max(durationVal, this.minBlockWidth / this.pixelsPerSecond);
       const end = start + visualDuration + 0.1;
 
       let placed = false;
@@ -1871,7 +1880,11 @@ export class TimelineEditor {
         ? 'true'
         : 'false';
       const startX = seq.time * this.pixelsPerSecond;
-      const visualDurationVal = seq.uiDuration !== undefined ? seq.uiDuration : (seq.duration || 0);
+      const isFirework = isFireworkLifecycleEvent(seq);
+      const lifespan = isFirework ? getFireworkLifespan(seq) : null;
+      const visualDurationVal = isFirework
+        ? lifespan.totalVisualDuration
+        : (seq.uiDuration !== undefined ? seq.uiDuration : (seq.duration || 0));
       const width = Math.max(visualDurationVal * this.pixelsPerSecond, this.minBlockWidth);
       const row = seq._trackRow || 0;
 
@@ -1883,84 +1896,183 @@ export class TimelineEditor {
       block.style.borderRadius = '4px';
       block.style.cursor = 'grab';
       block.style.boxSizing = 'border-box';
-      block.style.border = this.inspector.selectedEvent === seq ? '2px solid white' : (this.selectedEvents.includes(seq) ? '2px solid #00ffcc' : '1px solid rgba(0,0,0,0.5)');
+      block.style.border = this.inspector.selectedEvent === seq
+        ? '2px solid white'
+        : (this.selectedEvents.includes(seq)
+            ? '2px solid #00ffcc'
+            : '1px solid rgba(0,0,0,0.5)');
       block.style.display = 'flex';
-      block.style.alignItems = 'center';
-      block.style.padding = '0 5px';
+      block.style.alignItems = isFirework ? 'stretch' : 'center';
+      block.style.padding = isFirework ? '0' : '0 5px';
       block.style.fontSize = '11px';
       block.style.overflow = 'hidden';
       block.style.whiteSpace = 'nowrap';
       block.style.userSelect = 'none';
 
-      if (seq.type === 'group') {
-        const getBlockColor = (type) => {
-          if (type === 'cometsequence') {
-            return '#d84315';
-          }
-          if (type === 'finale') {
-            return '#c2185b';
-          }
-          if (type === 'audio') {
-            return '#673ab7';
-          }
-          if (type === 'droneshow') {
-            return '#00b4db';
-          }
-          return '#1565c0';
-        };
-        const childColors = (seq.children || []).map((child) => {
-          return getBlockColor(child.type);
-        });
-        const uniqueColors = [...new Set(childColors)];
-        if (uniqueColors.length > 1) {
-          block.style.background = `linear-gradient(90deg, ${uniqueColors.join(', ')})`;
-        } else if (uniqueColors.length === 1) {
-          block.style.background = `linear-gradient(90deg, ${uniqueColors[0]}, ${uniqueColors[0]})`;
-        } else {
-          block.style.background = 'linear-gradient(90deg, #555, #777)';
+      let burstWidth = width;
+      let textSpan = null;
+      if (isFirework) {
+        block.dataset.hasLifespanPhases = 'true';
+        let themeGradient = 'linear-gradient(90deg, #1565c0, #03a9f4)';
+        let themeFadeColor = 'rgba(3, 169, 244, ';
+        if (seq.type === 'cometsequence') {
+          themeGradient = 'linear-gradient(90deg, #d84315, #ff9800)';
+          themeFadeColor = 'rgba(255, 152, 0, ';
+        } else if (seq.type === 'finale') {
+          themeGradient = 'linear-gradient(90deg, #c2185b, #e91e63)';
+          themeFadeColor = 'rgba(233, 30, 99, ';
         }
-      } else if (seq.type === 'cometsequence') {
-        block.style.background = 'linear-gradient(90deg, #d84315, #ff9800)';
-      } else if (seq.type === 'finale') {
-        block.style.background = 'linear-gradient(90deg, #c2185b, #e91e63)';
-      } else if (seq.type === 'audio') {
-        block.style.background = 'linear-gradient(90deg, #673ab7, #9c27b0)';
-      } else if (seq.type === 'droneshow') {
-        block.style.background = 'linear-gradient(90deg, #00b4db, #0083b0)';
-      } else {
-        block.style.background = 'linear-gradient(90deg, #1565c0, #03a9f4)';
-      }
 
-      const textSpan = document.createElement('span');
-      textSpan.style.pointerEvents = 'none';
-
-      if (seq.type === 'group') {
-        textSpan.textContent = seq.name || t('editor.timelinePanel.groupBlockName') || 'Event Group';
-      } else if (seq.type === 'audio') {
-        textSpan.textContent = t(
-          'editor.timelinePanel.audioBlock',
-          {
-            name: seq.name || seq.url || 'Audio'
-          }
-        );
-      } else if (seq.type === 'droneshow') {
-        textSpan.textContent = t(
-          'editor.timelinePanel.droneBlock',
-          {
-            name: seq.name || 'Drone Show',
-            count: seq.droneCount
-          }
-        );
-      } else {
-        textSpan.textContent = t(
+        const label = t(
           'editor.timelinePanel.eventBlock',
           {
             preset: seq.preset || seq.pattern,
             count: seq.count || 1
           }
         );
+        block.title = `${label} | Launch: ${seq.time.toFixed(1)}s | Burst Window: ${lifespan.burstStartTime.toFixed(1)}s - ${lifespan.burstEndTime.toFixed(1)}s (${lifespan.burstDuration.toFixed(1)}s) | Burnout: ${lifespan.totalEndTime.toFixed(1)}s`;
+
+        // Phase 1: Ascent / Bay lên
+        if (lifespan.liftTime > 0) {
+          const liftWidth = lifespan.liftTime * this.pixelsPerSecond;
+          const liftPhase = document.createElement('div');
+          liftPhase.className = 'timeline-block-phase timeline-phase-lift';
+          liftPhase.style.width = liftWidth + 'px';
+          liftPhase.style.height = '100%';
+          liftPhase.style.flexShrink = '0';
+          liftPhase.style.boxSizing = 'border-box';
+          liftPhase.style.position = 'relative';
+          liftPhase.style.display = 'flex';
+          liftPhase.style.alignItems = 'center';
+          liftPhase.style.padding = '0 4px';
+          liftPhase.style.borderRight = '1px dashed rgba(255, 255, 255, 0.45)';
+          liftPhase.style.backgroundColor = 'rgba(2, 136, 209, 0.15)';
+          liftPhase.style.backgroundImage = 'repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04) 4px, rgba(255, 255, 255, 0.08) 4px, rgba(255, 255, 255, 0.08) 8px)';
+          liftPhase.style.pointerEvents = 'none';
+
+          if (liftWidth >= 34) {
+            const liftText = document.createElement('span');
+            liftText.style.fontSize = '9px';
+            liftText.style.color = 'rgba(255, 255, 255, 0.65)';
+            liftText.style.pointerEvents = 'none';
+            liftText.textContent = `${lifespan.liftTime}s`;
+            liftPhase.appendChild(liftText);
+          }
+          block.appendChild(liftPhase);
+        }
+
+        // Phase 2: Burst Window / Khoảng bùng nổ
+        burstWidth = Math.max(16, lifespan.burstDuration * this.pixelsPerSecond);
+        const burstPhase = document.createElement('div');
+        burstPhase.className = 'timeline-block-phase timeline-phase-burst';
+        burstPhase.style.width = burstWidth + 'px';
+        burstPhase.style.height = '100%';
+        burstPhase.style.flexShrink = '0';
+        burstPhase.style.boxSizing = 'border-box';
+        burstPhase.style.position = 'relative';
+        burstPhase.style.display = 'flex';
+        burstPhase.style.alignItems = 'center';
+        burstPhase.style.padding = '0 6px';
+        burstPhase.style.background = themeGradient;
+        burstPhase.style.boxShadow = 'inset 0 0 6px rgba(255, 255, 255, 0.25)';
+        burstPhase.style.pointerEvents = 'none';
+
+        const burstText = document.createElement('span');
+        burstText.style.pointerEvents = 'none';
+        burstText.style.fontWeight = '500';
+        burstText.style.color = '#ffffff';
+        burstText.style.whiteSpace = 'nowrap';
+        burstText.style.overflow = 'hidden';
+        burstText.style.textOverflow = 'ellipsis';
+        burstText.textContent = label;
+        burstPhase.appendChild(burstText);
+        block.appendChild(burstPhase);
+
+        // Phase 3: Fadeout / Tàn dần
+        if (lifespan.fadeoutDuration > 0) {
+          const fadeWidth = lifespan.fadeoutDuration * this.pixelsPerSecond;
+          const fadePhase = document.createElement('div');
+          fadePhase.className = 'timeline-block-phase timeline-phase-fadeout';
+          fadePhase.style.width = fadeWidth + 'px';
+          fadePhase.style.height = '100%';
+          fadePhase.style.flexShrink = '0';
+          fadePhase.style.boxSizing = 'border-box';
+          fadePhase.style.position = 'relative';
+          fadePhase.style.display = 'flex';
+          fadePhase.style.alignItems = 'center';
+          fadePhase.style.padding = '0 4px';
+          fadePhase.style.background = `linear-gradient(90deg, ${themeFadeColor}0.5) 0%, ${themeFadeColor}0.15) 60%, ${themeFadeColor}0.0) 100%)`;
+          fadePhase.style.pointerEvents = 'none';
+
+          if (fadeWidth >= 30) {
+            const fadeText = document.createElement('span');
+            fadeText.style.fontSize = '9px';
+            fadeText.style.color = 'rgba(255, 255, 255, 0.5)';
+            fadeText.style.pointerEvents = 'none';
+            fadeText.textContent = `${lifespan.fadeoutDuration}s`;
+            fadePhase.appendChild(fadeText);
+          }
+          block.appendChild(fadePhase);
+        }
+      } else {
+        if (seq.type === 'group') {
+          const getBlockColor = (type) => {
+            if (type === 'cometsequence') {
+              return '#d84315';
+            }
+            if (type === 'finale') {
+              return '#c2185b';
+            }
+            if (type === 'audio') {
+              return '#673ab7';
+            }
+            if (type === 'droneshow') {
+              return '#00b4db';
+            }
+            return '#1565c0';
+          };
+          const childColors = (seq.children || []).map((child) => {
+            return getBlockColor(child.type);
+          });
+          const uniqueColors = [...new Set(childColors)];
+          if (uniqueColors.length > 1) {
+            block.style.background = `linear-gradient(90deg, ${uniqueColors.join(', ')})`;
+          } else if (uniqueColors.length === 1) {
+            block.style.background = `linear-gradient(90deg, ${uniqueColors[0]}, ${uniqueColors[0]})`;
+          } else {
+            block.style.background = 'linear-gradient(90deg, #555, #777)';
+          }
+        } else if (seq.type === 'audio') {
+          block.style.background = 'linear-gradient(90deg, #673ab7, #9c27b0)';
+        } else if (seq.type === 'droneshow') {
+          block.style.background = 'linear-gradient(90deg, #00b4db, #0083b0)';
+        } else {
+          block.style.background = 'linear-gradient(90deg, #1565c0, #03a9f4)';
+        }
+
+        textSpan = document.createElement('span');
+        textSpan.style.pointerEvents = 'none';
+
+        if (seq.type === 'group') {
+          textSpan.textContent = seq.name || t('editor.timelinePanel.groupBlockName') || 'Event Group';
+        } else if (seq.type === 'audio') {
+          textSpan.textContent = t(
+            'editor.timelinePanel.audioBlock',
+            {
+              name: seq.name || seq.url || 'Audio'
+            }
+          );
+        } else if (seq.type === 'droneshow') {
+          textSpan.textContent = t(
+            'editor.timelinePanel.droneBlock',
+            {
+              name: seq.name || 'Drone Show',
+              count: seq.droneCount
+            }
+          );
+        }
+        block.appendChild(textSpan);
       }
-      block.appendChild(textSpan);
 
       // Render audio waveform behind the text label
       if (seq.type === 'audio') {
@@ -2169,16 +2281,24 @@ export class TimelineEditor {
       }
       resizeHandle.dataset.role = 'resize-handle';
       resizeHandle.style.position = 'absolute';
-      resizeHandle.style.right = '0';
+      if (isFirework) {
+        const handleLeft = (lifespan.liftTime * this.pixelsPerSecond) + burstWidth - 4;
+        resizeHandle.style.left = handleLeft + 'px';
+        resizeHandle.style.right = 'auto';
+        resizeHandle.title = `Drag to resize burst duration (${lifespan.burstDuration}s). Hold Alt to stretch spacing.`;
+      } else {
+        resizeHandle.style.right = '0';
+        resizeHandle.style.left = 'auto';
+        resizeHandle.title =
+          t('editor.timelinePanel.resizeHandleTooltip') ||
+          'Drag to resize duration. Hold Alt to stretch spacing between selected blocks.';
+      }
       resizeHandle.style.top = '0';
       resizeHandle.style.bottom = '0';
       resizeHandle.style.width = '8px';
       resizeHandle.style.cursor = 'ew-resize';
       resizeHandle.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
       resizeHandle.style.zIndex = '10';
-      resizeHandle.title =
-        t('editor.timelinePanel.resizeHandleTooltip') ||
-        'Drag to resize duration. Hold Alt to stretch spacing between selected blocks.';
 
       resizeHandle.addEventListener('mousedown', (e) => {
         e.stopPropagation();
@@ -2284,9 +2404,11 @@ export class TimelineEditor {
       const newlySelected = [];
       this.sequences.filter(s => !s._deleted).forEach((seq) => {
         const startX = seq.time * this.pixelsPerSecond;
-        const visualDur = seq.uiDuration !== undefined
-          ? seq.uiDuration
-          : (seq.duration || 0);
+        const visualDur = isFireworkLifecycleEvent(seq)
+          ? getFireworkLifespan(seq).totalVisualDuration
+          : (seq.uiDuration !== undefined
+              ? seq.uiDuration
+              : (seq.duration || 0));
         const blockWidth = Math.max(
           visualDur * this.pixelsPerSecond,
           this.minBlockWidth
@@ -2342,9 +2464,21 @@ export class TimelineEditor {
       let newDuration = Math.max(0.1, this.initialDuration + dTime);
       newDuration = Math.round(newDuration * 10) / 10; // Snap to 0.1s
 
-      if (this.resizedEvent.uiDuration !== newDuration) {
+      const currentDur = this.resizedEvent.uiDuration !== undefined
+        ? this.resizedEvent.uiDuration
+        : (this.resizedEvent.duration || 0);
+
+      if (currentDur !== newDuration) {
+        this.resizedEvent.duration = newDuration;
         this.resizedEvent.uiDuration = newDuration;
         this.renderTracks();
+        if (
+          this.inspector &&
+          this.inspector.selectedEvent &&
+          this.selectedEvents.includes(this.resizedEvent)
+        ) {
+          this.inspector.updateValues();
+        }
       }
       return;
     }
@@ -2377,22 +2511,34 @@ export class TimelineEditor {
     });
 
     const snapThresholdSec = 0.15;
-    let closestBeat = null;
+    let closestTargetTime = null;
     let minDiff = Infinity;
 
+    const isFirework = isFireworkLifecycleEvent(this.draggedEvent);
+    const liftTime = isFirework
+      ? getFireworkLifespan(this.draggedEvent).liftTime
+      : 0;
+
     absoluteBeatTimes.forEach((beatTime) => {
-      const diff = Math.abs(newTime - beatTime);
-      if (
-        diff < minDiff &&
-        diff <= snapThresholdSec
-      ) {
-        minDiff = diff;
-        closestBeat = beatTime;
+      // 1. Snap launch to beat: seq.time = beatTime
+      const diffLaunch = Math.abs(newTime - beatTime);
+      if (diffLaunch < minDiff && diffLaunch <= snapThresholdSec) {
+        minDiff = diffLaunch;
+        closestTargetTime = beatTime;
+      }
+      // 2. Snap burst start to beat: seq.time + liftTime = beatTime => seq.time = beatTime - liftTime
+      if (liftTime > 0) {
+        const targetLaunchForBurst = Math.max(0, beatTime - liftTime);
+        const diffBurst = Math.abs(newTime - targetLaunchForBurst);
+        if (diffBurst < minDiff && diffBurst <= snapThresholdSec) {
+          minDiff = diffBurst;
+          closestTargetTime = targetLaunchForBurst;
+        }
       }
     });
 
-    if (closestBeat !== null) {
-      newTime = closestBeat;
+    if (closestTargetTime !== null) {
+      newTime = Math.round(closestTargetTime * 100) / 100;
     } else {
       newTime = Math.round(newTime * 10) / 10;
     }
@@ -2852,6 +2998,7 @@ export class TimelineEditor {
       _waveformLoading,
       _waveformPromise,
       initialTime,
+      uiDuration,
       ...cleanObj
     } = s;
     if (cleanObj.type === 'group' && cleanObj.children) {

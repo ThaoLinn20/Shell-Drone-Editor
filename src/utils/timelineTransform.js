@@ -4,6 +4,11 @@
  * and proportionally time-stretching clusters of timeline event blocks.
  */
 
+import {
+  getFireworkLifespan,
+  isFireworkLifecycleEvent
+} from './fireworkLifespan.js';
+
 /**
  * Helper to get the effective visual duration of an event.
  * @param {Object} event
@@ -11,6 +16,9 @@
  */
 export function getEventDuration(event) {
   if (!event) return 0;
+  if (isFireworkLifecycleEvent(event)) {
+    return getFireworkLifespan(event).totalVisualDuration;
+  }
   if (typeof event.uiDuration === 'number') {
     return event.uiDuration;
   }

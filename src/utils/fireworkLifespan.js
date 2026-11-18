@@ -1,0 +1,126 @@
+/**
+ * Firework Lifespan & Timeline Phasing Utility
+ *
+ * Calculates the 3-phase physical lifecycle of firework timeline blocks:
+ * 1. Phase 1: Ascent / Flight time (t_lift) from launch trigger to apex burst
+ * 2. Phase 2: Burst Window (burstDuration = event.duration) representing active flower bloom in the sky
+ * 3. Phase 3: Decay / Fadeout time (t_fadeout) representing lingering burning stars before extinction
+ *
+ * All parameters are analytical and derived at runtime without altering stored show schemas.
+ */
+
+/**
+ * Calculates the 3-phase lifespan for any firework event.
+ *
+ * @param {Object} event - Timeline sequence or single firework event object
+ * @returns {{
+ *   liftTime: number,
+ *   burstDuration: number,
+ *   fadeoutDuration: number,
+ *   totalVisualDuration: number,
+ *   burstStartTime: number,
+ *   burstEndTime: number,
+ *   totalEndTime: number
+ * }}
+ */
+export function getFireworkLifespan(event = {}) {
+  const launchTime = Number(event.time) || 0;
+  const rawDuration = (event.duration !== undefined && !isNaN(Number(event.duration)))
+    ? Number(event.duration)
+    : 2.0;
+  const burstDuration = Math.max(0.1, rawDuration);
+
+  // 1. Instant Burst (mines, ground shells, bouquets)
+  const isInstant = Boolean(
+    event.instantBurst ||
+    (event.effectOverrides && event.effectOverrides.instantBurst) ||
+    (Array.isArray(event.effects) && event.effects.includes('instantBurst')) ||
+    (event.preset && typeof event.preset === 'object' && event.preset.instantBurst)
+  );
+
+  // 2. Comet / no-burst
+  const isComet = Boolean(
+    event.isComet ||
+    event.type === 'comet' ||
+    event.type === 'cometsequence' ||
+    (typeof event.preset === 'string' && (event.preset === 'comet' || event.preset.startsWith('comet_'))) ||
+    (event.preset && typeof event.preset === 'object' && (event.preset.isComet || event.preset.type === 'comet' || event.preset.noBurst)) ||
+    event.noBurst ||
+    (Array.isArray(event.effects) && event.effects.includes('no-burst')) ||
+    (event.effectOverrides && event.effectOverrides.noBurst)
+  );
+
+  let liftTime = 0;
+  if (!isInstant && !isComet) {
+    const gravity = 30; // abs(FIREWORK_CONFIG.GRAVITY) = 30 m/s^2
+    const minBurstY = 75;
+    const maxBurstY = 300;
+    const groundY = 0.5;
+
+    let burstHeight;
+    if (typeof event.burstHeight === 'number') {
+      burstHeight = event.burstHeight;
+    } else if (typeof event.ratioY === 'number') {
+      burstHeight = minBurstY + event.ratioY * (maxBurstY - minBurstY);
+    } else {
+      const presetSize = Math.max(
+        1,
+        Math.min(
+          6,
+          event.shellSize || (event.preset && typeof event.preset === 'object' && event.preset.shellSize) || 1
+        )
+      );
+      const sizeT = (presetSize - 1) / 5;
+      burstHeight = minBurstY + (0.42 + sizeT * 0.32) * (maxBurstY - minBurstY);
+    }
+
+    const h = Math.max(burstHeight - groundY, 5);
+    // Analytical ascent time to burstHeight: t = 0.8190025 * sqrt(2 * h / g)
+    liftTime = Math.round(0.8190025 * Math.sqrt((2 * h) / gravity) * 100) / 100;
+  }
+
+  // 3. Fadeout / Decay duration (star life)
+  let fadeoutDuration = 0;
+  if (isComet) {
+    fadeoutDuration = 0.2;
+  } else if (isInstant) {
+    fadeoutDuration = 1.2;
+  } else {
+    const starLife = event.starLife ||
+      (event.preset && typeof event.preset === 'object' && event.preset.starLife) ||
+      2200;
+    const starLifeMultiplier = event.starLifeMultiplier ||
+      (event.preset && typeof event.preset === 'object' && event.preset.starLifeMultiplier) ||
+      1.0;
+    fadeoutDuration = Math.round(((starLife * starLifeMultiplier) / 1000) * 100) / 100;
+  }
+
+  const totalVisualDuration = Math.round((liftTime + burstDuration + fadeoutDuration) * 100) / 100;
+  const burstStartTime = Math.round((launchTime + liftTime) * 100) / 100;
+  const burstEndTime = Math.round((burstStartTime + burstDuration) * 100) / 100;
+  const totalEndTime = Math.round((launchTime + totalVisualDuration) * 100) / 100;
+
+  return {
+    liftTime,
+    burstDuration,
+    fadeoutDuration,
+    totalVisualDuration,
+    burstStartTime,
+    burstEndTime,
+    totalEndTime
+  };
+}
+
+/**
+ * Checks if an event is a firework event that should be rendered with 3-phase lifecycle.
+ *
+ * @param {Object} event
+ * @returns {boolean}
+ */
+export function isFireworkLifecycleEvent(event) {
+  if (!event || event._deleted) {
+    return false;
+  }
+  const type = event.type;
+  return type === 'sequence' || type === 'single' || type === 'cometsequence' || type === 'finale';
+}
