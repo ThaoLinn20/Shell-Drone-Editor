@@ -15,7 +15,7 @@ import { CustomSelect } from './CustomSelect.js';
 import { PREVIEW_CATEGORIES } from '../config/effectPreviews.js';
 import { globalEventBus } from '../core/EventBus.js';
 import { WaveCurveEditor } from './WaveCurveEditor.js';
-import { DEFAULT_WAVE_POINTS } from '../utils/SplineMath.js';
+import { DEFAULT_WAVE_POINTS, resampleWavePoints } from '../utils/SplineMath.js';
 import { ActiveEffectsTimeline } from './ActiveEffectsTimeline.js';
 import { FIREWORK_CONFIG } from '../config/fireworks.js';
 
@@ -4757,8 +4757,9 @@ export class PropertyInspector {
     const event = this.selectedEvent;
     if (!event) return;
 
-    if (!Array.isArray(event.wavePoints) || event.wavePoints.length === 0) {
-      event.wavePoints = DEFAULT_WAVE_POINTS.map(p => ({ ...p }));
+    const count = Math.max(2, Number(event.count) || 12);
+    if (!Array.isArray(event.wavePoints) || event.wavePoints.length !== count) {
+      event.wavePoints = resampleWavePoints(event.wavePoints || DEFAULT_WAVE_POINTS, count);
     }
 
     const container = document.createElement('div');
@@ -4769,10 +4770,15 @@ export class PropertyInspector {
 
     const editor = new WaveCurveEditor({
       points: event.wavePoints,
-      shellCount: Number(event.count) || 12,
-      onChange: (newPoints) => {
+      shellCount: count,
+      onChange: (newPoints, newCount) => {
         this.triggerUpdate('beforeChange');
         event.wavePoints = newPoints;
+        if (newCount && event.count !== newCount) {
+          event.count = newCount;
+          const countInput = this.container?.querySelector?.('input[data-field-name="count"]');
+          if (countInput) countInput.value = newCount;
+        }
         this.triggerUpdate();
       }
     });

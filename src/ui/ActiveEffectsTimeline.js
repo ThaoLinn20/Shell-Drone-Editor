@@ -2,6 +2,9 @@ import { t } from '../config/lang/i18n.js';
 import en from '../config/lang/en.js';
 import { EffectPreviewTooltip } from './EffectPreviewTooltip.js';
 import { PREVIEW_CATEGORIES } from '../config/effectPreviews.js';
+import { createSvgIcon, createIconButton } from './IconHelper.js';
+
+export { createSvgIcon, createIconButton };
 
 export const EFFECT_COLORS = {
   'strobe': { bg: 'rgba(255, 215, 0, 0.35)', border: '#ffd700', text: '#ffea70' },
@@ -33,47 +36,6 @@ export const EFFECT_COLORS = {
   'smoke_trail': { bg: 'rgba(148, 163, 184, 0.45)', border: '#cbd5e1', text: '#f1f5f9' },
   'smokeTrail': { bg: 'rgba(148, 163, 184, 0.45)', border: '#cbd5e1', text: '#f1f5f9' }
 };
-
-export function createSvgIcon(type, size = 14) {
-  let svg;
-  if (typeof document.createElementNS === 'function') {
-    svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  } else {
-    svg = document.createElement('div');
-  }
-  if (svg.setAttribute) {
-    svg.setAttribute('width', String(size));
-    svg.setAttribute('height', String(size));
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('stroke-width', '2');
-    svg.setAttribute('stroke-linecap', 'round');
-    svg.setAttribute('stroke-linejoin', 'round');
-  }
-  svg.style = svg.style || {};
-  svg.style.display = 'block';
-  svg.style.pointerEvents = 'none';
-
-  if (type === 'expand') {
-    svg.innerHTML = '<polyline points="15 3 21 3 21 9"></polyline>' +
-      '<polyline points="9 21 3 21 3 15"></polyline>' +
-      '<line x1="21" y1="3" x2="14" y2="10"></line>' +
-      '<line x1="3" y1="21" x2="10" y2="14"></line>';
-  } else if (type === 'collapse') {
-    svg.innerHTML = '<polyline points="4 14 10 14 10 20"></polyline>' +
-      '<polyline points="20 10 14 10 14 4"></polyline>' +
-      '<line x1="14" y1="10" x2="21" y2="3"></line>' +
-      '<line x1="3" y1="21" x2="10" y2="14"></line>';
-  } else if (type === 'plus') {
-    svg.innerHTML = '<line x1="12" y1="5" x2="12" y2="19"></line>' +
-      '<line x1="5" y1="12" x2="19" y2="12"></line>';
-  } else if (type === 'close') {
-    svg.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"></line>' +
-      '<line x1="6" y1="6" x2="18" y2="18"></line>';
-  }
-  return svg;
-}
 
 export class ActiveEffectsTimeline {
   constructor(container, options = {}) {
