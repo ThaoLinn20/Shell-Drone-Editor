@@ -259,4 +259,50 @@ describe('WaveCurveModal Component', () => {
     expect(modal.shellCount).toBe(6);
     modal.close();
   });
+
+  it('renders preset select dropdown and applies preset', () => {
+    let appliedPreset = null;
+    const modal = new WaveCurveModal({
+      shellCount: 6,
+      wavePreset: 'custom',
+      onApply: (pts, count, preset) => {
+        appliedPreset = preset;
+      }
+    });
+
+    expect(modal.presetSelect).toBeDefined();
+    expect(modal.presetSelect.value).toBe('custom');
+
+    modal.applyPreset('wave');
+    expect(modal.wavePreset).toBe('wave');
+    expect(modal.presetSelect.value).toBe('wave');
+
+    modal.onApply(modal.getCleanPoints(), modal.shellCount, modal.wavePreset);
+    expect(appliedPreset).toBe('wave');
+    modal.close();
+  });
+
+  it('supports adjusting burst apex X and Y of first and last shells', () => {
+    const modal = new WaveCurveModal({ shellCount: 5 });
+    // First shell
+    modal.selectedIndex = 0;
+    modal.updateSidebar();
+
+    // Adjust first shell X to 0.12
+    modal.points[0].x = 0.12;
+    modal.points[0].y = 0.80;
+
+    // Last shell
+    modal.selectedIndex = 4;
+    modal.points[4].x = 0.88;
+    modal.points[4].y = 0.65;
+
+    const clean = modal.getCleanPoints();
+    expect(clean.length).toBe(5);
+    expect(clean[0].x).toBe(0.12);
+    expect(clean[0].y).toBe(0.80);
+    expect(clean[4].x).toBe(0.88);
+    expect(clean[4].y).toBe(0.65);
+    modal.close();
+  });
 });

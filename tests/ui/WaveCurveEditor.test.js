@@ -377,4 +377,67 @@ describe('WaveCurveEditor Component', () => {
     expect(editor.points[1].launchX).toBeGreaterThan(initL1);
     expect(editor.points[2].launchX).toBeGreaterThan(initL2);
   });
+
+  it('renders preset dropdown and changes curve preset', () => {
+    let capturedPreset = null;
+    const editor = new WaveCurveEditor({
+      shellCount: 6,
+      wavePreset: 'custom',
+      onChange: (pts, count, preset) => {
+        capturedPreset = preset;
+      }
+    });
+
+    expect(editor.presetSelect).toBeDefined();
+    expect(editor.presetSelect.value).toBe('custom');
+
+    editor.applyPreset('arch');
+    expect(editor.wavePreset).toBe('arch');
+    expect(editor.presetSelect.value).toBe('arch');
+    expect(capturedPreset).toBe('arch');
+  });
+
+  it('switches preset dropdown to custom when dragging an apex', () => {
+    const editor = new WaveCurveEditor({ shellCount: 5, wavePreset: 'arch' });
+    expect(editor.wavePreset).toBe('arch');
+
+    const pt = editor.points[1];
+    const { px, py } = editor.toPixel(pt.x, pt.y);
+    editor.dragTarget = {
+      type: 'apex',
+      index: 1,
+      startPos: { x: px, y: py },
+      initialPoints: editor.points.map((p) => ({ ...p }))
+    };
+
+    const moveListeners = listeners['mousemove'] || [];
+    for (const listener of moveListeners) {
+      listener({ clientX: px, clientY: py + 10 });
+    }
+
+    expect(editor.wavePreset).toBe('custom');
+    expect(editor.presetSelect.value).toBe('custom');
+  });
+
+  it('supports dragging apex of first and last shell', () => {
+    const editor = new WaveCurveEditor({ shellCount: 5 });
+    // Drag first apex (#0)
+    const pt0 = editor.points[0];
+    const { px, py } = editor.toPixel(pt0.x, pt0.y);
+    editor.dragTarget = {
+      type: 'apex',
+      index: 0,
+      startPos: { x: px, y: py },
+      initialPoints: editor.points.map((p) => ({ ...p }))
+    };
+
+    const moveListeners = listeners['mousemove'] || [];
+    // Drag rightwards by 20 pixels and upwards by 10 pixels
+    for (const listener of moveListeners) {
+      listener({ clientX: px + 20, clientY: py - 10 });
+    }
+
+    expect(editor.points[0].x).toBeGreaterThan(0.0);
+    expect(editor.points[0].x).toBeLessThan(editor.points[1].x);
+  });
 });

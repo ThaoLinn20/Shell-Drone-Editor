@@ -23,8 +23,8 @@ describe('SplineMath', () => {
       { x: 0.2, y: -0.5, angle: -0.2 }
     ];
     const sanitized = sanitizeWavePoints(input);
-    expect(sanitized[0].x).toBe(0.0);
-    expect(sanitized.at(-1).x).toBe(1.0);
+    expect(sanitized[0].x).toBe(0.2);
+    expect(sanitized.at(-1).x).toBe(0.8);
     for (let i = 1; i < sanitized.length; i++) {
       expect(sanitized[i].x).toBeGreaterThanOrEqual(sanitized[i - 1].x);
       expect(sanitized[i].y).toBeGreaterThanOrEqual(0.05);
@@ -114,7 +114,7 @@ describe('SplineMath', () => {
     ];
     const sanitized = sanitizeWavePoints(raw);
     expect(sanitized.length).toBe(3);
-    expect(sanitized[0].x).toBe(0.0);
-    expect(sanitized[2].x).toBe(1.0);
+    expect(sanitized[0].x).toBe(0.05);
+    expect(sanitized[2].x).toBe(0.95);
   });
 });

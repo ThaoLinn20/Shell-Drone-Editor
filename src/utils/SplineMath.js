@@ -85,15 +85,12 @@ export function sanitizeWavePoints(points) {
   // Ensure sorted by x
   cleaned.sort((a, b) => a.x - b.x);
 
-  // Pin boundary endpoints to exactly [0, 1] without adding or removing shells
+  // Handle single-point edge case
   if (cleaned.length === 1) {
     cleaned = [
       { ...cleaned[0], x: 0.0 },
       { ...cleaned[0], x: 1.0 }
     ];
-  } else if (cleaned.length > 1) {
-    cleaned[0].x = 0.0;
-    cleaned[cleaned.length - 1].x = 1.0;
   }
 
   return cleaned;
@@ -126,10 +123,14 @@ export function evaluateWaveCurve(controlPoints, t) {
   const points = sanitizeWavePoints(controlPoints);
   const clampedT = Math.max(0.0, Math.min(1.0, t));
 
-  // Find the segment [i, i+1] where points[i].x <= clampedT <= points[i+1].x
+  const startX = points[0].x;
+  const endX = points[points.length - 1].x;
+  const targetX = startX + clampedT * (endX - startX);
+
+  // Find the segment [i, i+1] where points[i].x <= targetX <= points[i+1].x
   let segIdx = 0;
   for (let i = 0; i < points.length - 1; i++) {
-    if (clampedT >= points[i].x && clampedT <= points[i + 1].x) {
+    if (targetX >= points[i].x && targetX <= points[i + 1].x) {
       segIdx = i;
       break;
     }
@@ -151,7 +152,7 @@ export function evaluateWaveCurve(controlPoints, t) {
   };
 
   const segRange = p2.x - p1.x;
-  const localT = segRange > 1e-6 ? (clampedT - p1.x) / segRange : 0.0;
+  const localT = segRange > 1e-6 ? (targetX - p1.x) / segRange : 0.0;
   const smoothT = Math.max(0.0, Math.min(1.0, localT));
 
   const yRaw = cubicHermite(p0.y, p1.y, p2.y, p3.y, smoothT);
@@ -159,7 +160,7 @@ export function evaluateWaveCurve(controlPoints, t) {
   const angleRaw = cubicHermite(p0.angle, p1.angle, p2.angle, p3.angle, smoothT);
 
   return {
-    x: clampedT,
+    x: targetX,
     y: Math.max(0.05, Math.min(1.0, yRaw)),
     launchX: Math.max(0.0, Math.min(1.0, launchXRaw)),
     angle: angleRaw

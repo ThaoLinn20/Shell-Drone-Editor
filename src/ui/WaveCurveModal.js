@@ -25,6 +25,7 @@ export class WaveCurveModal {
    */
   constructor(options = {}) {
     this.shellCount = Math.max(2, options.shellCount || 12);
+    this.wavePreset = options.wavePreset || 'custom';
     this.points = resampleWavePoints(options.points || DEFAULT_WAVE_POINTS, this.shellCount);
     this.onApply = typeof options.onApply === 'function' ? options.onApply : () => {};
 
@@ -164,53 +165,42 @@ export class WaveCurveModal {
     presetBar.style.gap = '6px';
     presetBar.style.flexWrap = 'wrap';
 
-    const presets = [
-      {
-        id: 'arch',
-        label: t('editor.inspector.waveCurve.arch') || 'Arch',
-        fn: () => this.applyArchPreset()
-      },
-      {
-        id: 'doublePeak',
-        label: t('editor.inspector.waveCurve.doublePeak') || 'Double Peak',
-        fn: () => this.applyDoublePeakPreset()
-      },
-      {
-        id: 'wave',
-        label: t('editor.inspector.waveCurve.wave') || 'Wave',
-        fn: () => this.applyWavePreset()
-      },
-      {
-        id: 'slope',
-        label: t('editor.inspector.waveCurve.slope') || 'Slope',
-        fn: () => this.applySlopePreset()
-      },
-      {
-        id: 'vShape',
-        label: t('editor.inspector.waveCurve.vShape') || 'V-Shape',
-        fn: () => this.applyVShapePreset()
-      },
-      {
-        id: 'crissCross',
-        label: t('editor.inspector.waveCurve.crissCross') || 'Criss-Cross',
-        fn: () => this.applyCrissCrossPreset()
-      }
+    // Preset dropdown select
+    const presetSelect = document.createElement('select');
+    presetSelect.className = 'wave-curve-modal-preset-select';
+    presetSelect.style.height = '26px';
+    presetSelect.style.padding = '0 8px';
+    presetSelect.style.fontSize = '11px';
+    presetSelect.style.background = '#21262d';
+    presetSelect.style.color = '#c9d1d9';
+    presetSelect.style.border = '1px solid #30363d';
+    presetSelect.style.borderRadius = '4px';
+    presetSelect.style.cursor = 'pointer';
+    presetSelect.style.outline = 'none';
+
+    const presetOptions = [
+      { key: 'custom', label: t('editor.inspector.waveCurve.custom') || 'Custom' },
+      { key: 'arch', label: t('editor.inspector.waveCurve.arch') || 'Arch' },
+      { key: 'double_peak', label: t('editor.inspector.waveCurve.doublePeak') || 'Double Peak' },
+      { key: 'wave', label: t('editor.inspector.waveCurve.wave') || 'Wave' },
+      { key: 'slope', label: t('editor.inspector.waveCurve.slope') || 'Slope' },
+      { key: 'v_shape', label: t('editor.inspector.waveCurve.vShape') || 'V-Shape' },
+      { key: 'criss_cross', label: t('editor.inspector.waveCurve.crissCross') || 'Criss-Cross' }
     ];
 
-    presets.forEach((p) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.textContent = p.label;
-      btn.style.padding = '4px 9px';
-      btn.style.fontSize = '11px';
-      btn.style.background = '#21262d';
-      btn.style.color = '#c9d1d9';
-      btn.style.border = '1px solid #30363d';
-      btn.style.borderRadius = '4px';
-      btn.style.cursor = 'pointer';
-      btn.addEventListener('click', () => p.fn());
-      presetBar.appendChild(btn);
+    presetOptions.forEach((p) => {
+      const optionEl = document.createElement('option');
+      optionEl.value = p.key;
+      optionEl.textContent = p.label;
+      presetSelect.appendChild(optionEl);
     });
+
+    presetSelect.value = this.wavePreset || 'custom';
+    presetSelect.addEventListener('change', (e) => {
+      this.applyPreset(e.target.value);
+    });
+    this.presetSelect = presetSelect;
+    presetBar.appendChild(presetSelect);
 
     const syncShotsBtn = document.createElement('button');
     syncShotsBtn.type = 'button';
@@ -331,7 +321,7 @@ export class WaveCurveModal {
     applyBtn.style.borderRadius = '4px';
     applyBtn.style.cursor = 'pointer';
     applyBtn.addEventListener('click', () => {
-      this.onApply(this.getCleanPoints(), this.shellCount);
+      this.onApply(this.getCleanPoints(), this.shellCount, this.wavePreset);
       this.close();
     });
 
@@ -682,9 +672,11 @@ export class WaveCurveModal {
       0.01,
       (val) => {
         if (selIndex === 0) {
-          pt.x = 0.0;
+          const maxX = this.points.length > 1 ? this.points[1].x - 0.01 : 1.0;
+          pt.x = Math.max(0.0, Math.min(maxX, val));
         } else if (selIndex === this.points.length - 1) {
-          pt.x = 1.0;
+          const minX = this.points.length > 1 ? this.points[selIndex - 1].x + 0.01 : 0.0;
+          pt.x = Math.max(minX, Math.min(1.0, val));
         } else {
           const minX = this.points[selIndex - 1].x + 0.01;
           const maxX = this.points[selIndex + 1].x - 0.01;
@@ -963,6 +955,10 @@ export class WaveCurveModal {
       }
 
       this.canvas.style.cursor = 'grabbing';
+      if (this.wavePreset !== 'custom') {
+        this.wavePreset = 'custom';
+        if (this.presetSelect) this.presetSelect.value = 'custom';
+      }
       if (!this.dragTarget.startPos) {
         const pt = this.points[this.dragTarget.index];
         const px = pad + pt.x * drawW;
@@ -988,9 +984,11 @@ export class WaveCurveModal {
           const normY = Math.max(0.05, Math.min(1.0, (groundY - pos.y) / drawH));
 
           if (idx === 0) {
-            pt.x = 0.0;
+            const maxX = this.points.length > 1 ? this.points[1].x - 0.01 : 1.0;
+            pt.x = Math.max(0.0, Math.min(maxX, normX));
           } else if (idx === this.points.length - 1) {
-            pt.x = 1.0;
+            const minX = this.points.length > 1 ? this.points[idx - 1].x + 0.01 : 0.0;
+            pt.x = Math.max(minX, Math.min(1.0, normX));
           } else {
             const minX = this.points[idx - 1].x + 0.01;
             const maxX = this.points[idx + 1].x - 0.01;
@@ -1011,11 +1009,15 @@ export class WaveCurveModal {
             pt.y = Math.max(0.05, Math.min(1.0, initPt.y + deltaNormY));
 
             if (idx === 0) {
-              pt.x = 0.0;
+              const maxX = this.points.length > 1 ? this.points[1].x - 0.01 : 1.0;
+              pt.x = Math.max(0.0, Math.min(maxX, initPt.x + deltaNormX));
             } else if (idx === this.points.length - 1) {
-              pt.x = 1.0;
+              const minX = this.points.length > 1 ? this.points[idx - 1].x + 0.01 : 0.0;
+              pt.x = Math.max(minX, Math.min(1.0, initPt.x + deltaNormX));
             } else {
-              pt.x = Math.max(0.01, Math.min(0.99, initPt.x + deltaNormX));
+              const minX = this.points[idx - 1].x + 0.01;
+              const maxX = this.points[idx + 1].x - 0.01;
+              pt.x = Math.max(minX, Math.min(maxX, initPt.x + deltaNormX));
             }
 
             if (!this.mortarsLocked) {
@@ -1279,46 +1281,42 @@ export class WaveCurveModal {
     this.updateSidebar();
   }
 
-  applyArchPreset() {
-    this.points = generateWavePreset('arch', this.shellCount);
+  applyPreset(presetKey) {
+    if (presetKey === 'custom') {
+      this.wavePreset = 'custom';
+      if (this.presetSelect) this.presetSelect.value = 'custom';
+      return;
+    }
+    this.points = generateWavePreset(presetKey, this.shellCount);
+    this.wavePreset = presetKey;
+    if (this.presetSelect) this.presetSelect.value = presetKey;
     this.selectedIndex = 0;
     this.render();
     this.updateSidebar();
+  }
+
+  applyArchPreset() {
+    this.applyPreset('arch');
   }
 
   applyDoublePeakPreset() {
-    this.points = generateWavePreset('double_peak', this.shellCount);
-    this.selectedIndex = 0;
-    this.render();
-    this.updateSidebar();
+    this.applyPreset('double_peak');
   }
 
   applyWavePreset() {
-    this.points = generateWavePreset('wave', this.shellCount);
-    this.selectedIndex = 0;
-    this.render();
-    this.updateSidebar();
+    this.applyPreset('wave');
   }
 
   applySlopePreset() {
-    this.points = generateWavePreset('slope', this.shellCount);
-    this.selectedIndex = 0;
-    this.render();
-    this.updateSidebar();
+    this.applyPreset('slope');
   }
 
   applyVShapePreset() {
-    this.points = generateWavePreset('v_shape', this.shellCount);
-    this.selectedIndex = 0;
-    this.render();
-    this.updateSidebar();
+    this.applyPreset('v_shape');
   }
 
   applyCrissCrossPreset() {
-    this.points = generateWavePreset('criss_cross', this.shellCount);
-    this.selectedIndex = 0;
-    this.render();
-    this.updateSidebar();
+    this.applyPreset('criss_cross');
   }
 
   resetMortars() {
@@ -1327,6 +1325,8 @@ export class WaveCurveModal {
       this.points[i].launchX = n > 1 ? Number((i / (n - 1)).toFixed(3)) : 0.5;
       this.points[i].angle = angleFromTrajectory(this.points[i].launchX, this.points[i].x, this.points[i].y);
     }
+    this.wavePreset = 'custom';
+    if (this.presetSelect) this.presetSelect.value = 'custom';
     this.render();
     this.updateSidebar();
   }
@@ -1334,7 +1334,11 @@ export class WaveCurveModal {
   addPoint() {
     if (this.points.length >= 24) return;
     this.shellCount = this.points.length + 1;
-    this.points = resampleWavePoints(this.points, this.shellCount);
+    if (this.wavePreset && this.wavePreset !== 'custom') {
+      this.points = generateWavePreset(this.wavePreset, this.shellCount);
+    } else {
+      this.points = resampleWavePoints(this.points, this.shellCount);
+    }
     this.selectedIndex = Math.min(this.selectedIndex + 1, this.points.length - 1);
     this.render();
     this.updateSidebar();
@@ -1353,12 +1357,18 @@ export class WaveCurveModal {
       this.shellCount = this.points.length;
       this.selectedApexIndices = new Set([0]);
       this.selectedBaseIndices.clear();
+      this.wavePreset = 'custom';
+      if (this.presetSelect) this.presetSelect.value = 'custom';
     } else {
       this.shellCount = this.points.length - 1;
       const idx = this.selectedIndex ?? (this.points.length - 1);
       if (idx >= 0 && idx < this.points.length) {
         this.points.splice(idx, 1);
         this.selectedIndex = Math.max(0, Math.min(idx, this.points.length - 1));
+        this.wavePreset = 'custom';
+        if (this.presetSelect) this.presetSelect.value = 'custom';
+      } else if (this.wavePreset && this.wavePreset !== 'custom') {
+        this.points = generateWavePreset(this.wavePreset, this.shellCount);
       } else {
         this.points = resampleWavePoints(this.points, this.shellCount);
       }

@@ -852,6 +852,8 @@ export default {
         lockMortars: "Lock Mortars",
         unlockMortars: "Unlock Mortars",
         resetMortars: "Reset Mortars",
+        presetLabel: "Preset",
+        custom: "Custom",
         arch: "Arch",
         doublePeak: "Double Peak",
         wave: "Wave",

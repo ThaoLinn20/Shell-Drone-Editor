@@ -824,5 +824,18 @@ describe('PropertyInspector Sliders and Star Lifetime Multiplier', () => {
       const absentControl = emptyContainer.querySelector('.inspector-tadpole-color-controls');
       expect(absentControl).toBeNull();
     });
+
+    it('places sweep-custom-curve at the top of pattern options', () => {
+      const inspector = new PropertyInspector(
+        createMockElement('div'),
+        {},
+        null,
+        {}
+      );
+      const schema = inspector.getSchema();
+      const coreGroup = schema.event.find((s) => s.groupKey === 'coreSettings');
+      const patternField = coreGroup.fields.find((f) => f.name === 'pattern');
+      expect(patternField.options[0]).toBe('sweep-custom-curve');
+    });
   });
 });
