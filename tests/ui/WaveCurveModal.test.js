@@ -305,4 +305,34 @@ describe('WaveCurveModal Component', () => {
     expect(clean[4].y).toBe(0.65);
     modal.close();
   });
+
+  it('mirrors full curve horizontally in modal', () => {
+    const modal = new WaveCurveModal({ shellCount: 5 });
+    modal.applySlopePreset();
+    const y0 = modal.points[0].y;
+    const y4 = modal.points[4].y;
+    expect(y0).not.toBe(y4);
+
+    modal.mirrorCurve();
+
+    expect(modal.wavePreset).toBe('custom');
+    expect(modal.points[0].y).toBeCloseTo(y4, 2);
+    expect(modal.points[4].y).toBeCloseTo(y0, 2);
+    modal.close();
+  });
+
+  it('mirrors selected subset of shells in modal', () => {
+    const modal = new WaveCurveModal({ shellCount: 5 });
+    modal.points[1].y = 0.25;
+    modal.points[2].y = 0.50;
+    modal.points[3].y = 0.75;
+    modal.selectedApexIndices = new Set([1, 2, 3]);
+
+    modal.mirrorCurve();
+
+    expect(modal.points[1].y).toBeCloseTo(0.75, 2);
+    expect(modal.points[2].y).toBeCloseTo(0.50, 2);
+    expect(modal.points[3].y).toBeCloseTo(0.25, 2);
+    modal.close();
+  });
 });

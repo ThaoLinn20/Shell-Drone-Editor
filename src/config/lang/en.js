@@ -852,6 +852,7 @@ export default {
         lockMortars: "Lock Mortars",
         unlockMortars: "Unlock Mortars",
         resetMortars: "Reset Mortars",
+        mirror: "Mirror Horizontal",
         presetLabel: "Preset",
         custom: "Custom",
         arch: "Arch",

@@ -6,7 +6,7 @@
 
 /**
  * Creates an SVG icon element for standard UI actions.
- * @param {'plus' | 'minus' | 'trash' | 'expand' | 'collapse' | 'lock' | 'unlock' | 'reset' | 'refresh' | 'close'} type
+ * @param {'plus' | 'minus' | 'trash' | 'expand' | 'collapse' | 'lock' | 'unlock' | 'reset' | 'refresh' | 'close' | 'mirror' | 'flip'} type
  * @param {number} [size=14]
  * @returns {SVGElement|HTMLElement}
  */
@@ -72,6 +72,12 @@ export function createSvgIcon(type, size = 14) {
       break;
     case 'close':
       svg.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>';
+      break;
+    case 'mirror':
+    case 'flip':
+      svg.innerHTML = '<line x1="12" y1="2" x2="12" y2="22" stroke-dasharray="2 2"></line>' +
+        '<path d="M8 7 L2 12 L8 17 Z"></path>' +
+        '<path d="M16 7 L22 12 L16 17 Z"></path>';
       break;
     default:
       break;

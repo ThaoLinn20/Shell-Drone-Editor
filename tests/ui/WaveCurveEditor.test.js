@@ -440,4 +440,32 @@ describe('WaveCurveEditor Component', () => {
     expect(editor.points[0].x).toBeGreaterThan(0.0);
     expect(editor.points[0].x).toBeLessThan(editor.points[1].x);
   });
+
+  it('mirrors entire curve horizontally', () => {
+    const editor = new WaveCurveEditor({ shellCount: 5 });
+    editor.applyPreset('slope');
+    const y0 = editor.points[0].y;
+    const y4 = editor.points[4].y;
+    expect(y0).not.toBe(y4);
+
+    editor.mirrorCurve();
+
+    expect(editor.wavePreset).toBe('custom');
+    expect(editor.points[0].y).toBeCloseTo(y4, 2);
+    expect(editor.points[4].y).toBeCloseTo(y0, 2);
+  });
+
+  it('mirrors selected subset of shells', () => {
+    const editor = new WaveCurveEditor({ shellCount: 5 });
+    editor.points[1].y = 0.2;
+    editor.points[2].y = 0.5;
+    editor.points[3].y = 0.8;
+    editor.selectedApexIndices = new Set([1, 2, 3]);
+
+    editor.mirrorCurve();
+
+    expect(editor.points[1].y).toBeCloseTo(0.8, 2);
+    expect(editor.points[2].y).toBeCloseTo(0.5, 2);
+    expect(editor.points[3].y).toBeCloseTo(0.2, 2);
+  });
 });

@@ -261,6 +261,17 @@ export class WaveCurveModal {
     });
     presetBar.appendChild(resetMortarsBtn);
 
+    const mirrorBtn = createIconButton({
+      icon: 'mirror',
+      iconSize: 13,
+      color: '#c9d1d9',
+      hoverColor: '#58a6ff',
+      hoverBg: '#30363d',
+      title: t('editor.inspector.waveCurve.mirror') || 'Mirror Horizontal',
+      onClick: () => this.mirrorCurve()
+    });
+    presetBar.appendChild(mirrorBtn);
+
     canvasWrap.appendChild(presetBar);
     body.appendChild(canvasWrap);
 
@@ -402,8 +413,24 @@ export class WaveCurveModal {
         this.updateSidebar();
       });
 
+      const mirrorSelBtn = document.createElement('button');
+      mirrorSelBtn.type = 'button';
+      mirrorSelBtn.textContent = t('editor.inspector.waveCurve.mirror') || 'Mirror';
+      mirrorSelBtn.title = t('editor.inspector.waveCurve.mirror') || 'Mirror Selected';
+      mirrorSelBtn.style.padding = '2px 6px';
+      mirrorSelBtn.style.fontSize = '10px';
+      mirrorSelBtn.style.background = '#21262d';
+      mirrorSelBtn.style.color = '#c9d1d9';
+      mirrorSelBtn.style.border = '1px solid #30363d';
+      mirrorSelBtn.style.borderRadius = '3px';
+      mirrorSelBtn.style.cursor = 'pointer';
+      mirrorSelBtn.addEventListener('click', () => {
+        this.mirrorCurve();
+      });
+
       selActions.appendChild(selectAllBtn);
       selActions.appendChild(clearSelBtn);
+      selActions.appendChild(mirrorSelBtn);
       cardTitle.appendChild(selActions);
       card.appendChild(cardTitle);
 
@@ -1325,6 +1352,56 @@ export class WaveCurveModal {
       this.points[i].launchX = n > 1 ? Number((i / (n - 1)).toFixed(3)) : 0.5;
       this.points[i].angle = angleFromTrajectory(this.points[i].launchX, this.points[i].x, this.points[i].y);
     }
+    this.wavePreset = 'custom';
+    if (this.presetSelect) this.presetSelect.value = 'custom';
+    this.render();
+    this.updateSidebar();
+  }
+
+  mirrorCurve() {
+    if (this.points.length < 2) return;
+
+    if (this.selectedApexIndices && this.selectedApexIndices.size > 1) {
+      const indices = Array.from(this.selectedApexIndices).sort((a, b) => a - b);
+      const k = indices.length;
+      const snapshot = indices.map((idx) => ({ ...this.points[idx] }));
+
+      let minX = Infinity;
+      let maxX = -Infinity;
+      let minLaunchX = Infinity;
+      let maxLaunchX = -Infinity;
+      for (const pt of snapshot) {
+        if (pt.x < minX) minX = pt.x;
+        if (pt.x > maxX) maxX = pt.x;
+        const lx = pt.launchX !== undefined ? pt.launchX : pt.x;
+        if (lx < minLaunchX) minLaunchX = lx;
+        if (lx > maxLaunchX) maxLaunchX = lx;
+      }
+
+      for (let i = 0; i < k; i++) {
+        const targetIdx = indices[i];
+        const sourcePt = snapshot[k - 1 - i];
+
+        this.points[targetIdx].y = sourcePt.y;
+        this.points[targetIdx].x = Number(Math.max(0.0, Math.min(1.0, minX + maxX - sourcePt.x)).toFixed(3));
+        const srcLaunch = sourcePt.launchX !== undefined ? sourcePt.launchX : sourcePt.x;
+        this.points[targetIdx].launchX = Number(Math.max(0.0, Math.min(1.0, minLaunchX + maxLaunchX - srcLaunch)).toFixed(3));
+        this.points[targetIdx].angle = Number((-sourcePt.angle).toFixed(3));
+      }
+    } else {
+      const n = this.points.length;
+      const snapshot = this.points.map((p) => ({ ...p }));
+
+      for (let i = 0; i < n; i++) {
+        const sourcePt = snapshot[n - 1 - i];
+        this.points[i].y = sourcePt.y;
+        this.points[i].x = Number(Math.max(0.0, Math.min(1.0, 1.0 - sourcePt.x)).toFixed(3));
+        const srcLaunch = sourcePt.launchX !== undefined ? sourcePt.launchX : sourcePt.x;
+        this.points[i].launchX = Number(Math.max(0.0, Math.min(1.0, 1.0 - srcLaunch)).toFixed(3));
+        this.points[i].angle = Number((-sourcePt.angle).toFixed(3));
+      }
+    }
+
     this.wavePreset = 'custom';
     if (this.presetSelect) this.presetSelect.value = 'custom';
     this.render();

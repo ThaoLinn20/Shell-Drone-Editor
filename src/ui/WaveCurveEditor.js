@@ -214,6 +214,16 @@ export class WaveCurveEditor {
       onClick: () => this.resetMortars()
     });
 
+    const mirrorBtn = createIconButton({
+      icon: 'mirror',
+      iconSize: 13,
+      color: '#c9d1d9',
+      hoverColor: '#58a6ff',
+      hoverBg: '#30363d',
+      title: t('editor.inspector.waveCurve.mirror') || 'Mirror Horizontal',
+      onClick: () => this.mirrorCurve()
+    });
+
     const expandBtn = createIconButton({
       icon: 'expand',
       iconSize: 13,
@@ -228,6 +238,7 @@ export class WaveCurveEditor {
     iconGroup.appendChild(removeBtn);
     iconGroup.appendChild(lockBtn);
     iconGroup.appendChild(resetMortarsBtn);
+    iconGroup.appendChild(mirrorBtn);
     iconGroup.appendChild(expandBtn);
     controlRow.appendChild(iconGroup);
 
@@ -263,6 +274,54 @@ export class WaveCurveEditor {
       this.points[i].launchX = n > 1 ? Number((i / (n - 1)).toFixed(3)) : 0.5;
       this.points[i].angle = angleFromTrajectory(this.points[i].launchX, this.points[i].x, this.points[i].y);
     }
+    this.wavePreset = 'custom';
+    if (this.presetSelect) this.presetSelect.value = 'custom';
+    this.render();
+    this.onChange(this.getCleanPoints(), this.shellCount, this.wavePreset);
+  }
+
+  mirrorCurve() {
+    if (!Array.isArray(this.points) || this.points.length < 2) return;
+
+    const hasSubset = this.selectedApexIndices &&
+      this.selectedApexIndices.size > 1 &&
+      this.selectedApexIndices.size < this.points.length;
+
+    if (hasSubset) {
+      const indices = Array.from(this.selectedApexIndices).sort((a, b) => a - b);
+      const k = indices.length;
+
+      const minX = Math.min(...indices.map((idx) => this.points[idx].x));
+      const maxX = Math.max(...indices.map((idx) => this.points[idx].x));
+      const minLaunchX = Math.min(...indices.map((idx) => this.points[idx].launchX ?? this.points[idx].x));
+      const maxLaunchX = Math.max(...indices.map((idx) => this.points[idx].launchX ?? this.points[idx].x));
+
+      const snapshot = indices.map((idx) => ({ ...this.points[idx] }));
+
+      for (let i = 0; i < k; i++) {
+        const targetIdx = indices[i];
+        const sourcePt = snapshot[k - 1 - i];
+
+        this.points[targetIdx].y = sourcePt.y;
+        this.points[targetIdx].x = Number(Math.max(0.0, Math.min(1.0, minX + maxX - sourcePt.x)).toFixed(3));
+        const srcLaunch = sourcePt.launchX !== undefined ? sourcePt.launchX : sourcePt.x;
+        this.points[targetIdx].launchX = Number(Math.max(0.0, Math.min(1.0, minLaunchX + maxLaunchX - srcLaunch)).toFixed(3));
+        this.points[targetIdx].angle = Number((-sourcePt.angle).toFixed(3));
+      }
+    } else {
+      const n = this.points.length;
+      const snapshot = this.points.map((p) => ({ ...p }));
+
+      for (let i = 0; i < n; i++) {
+        const sourcePt = snapshot[n - 1 - i];
+        this.points[i].y = sourcePt.y;
+        this.points[i].x = Number(Math.max(0.0, Math.min(1.0, 1.0 - sourcePt.x)).toFixed(3));
+        const srcLaunch = sourcePt.launchX !== undefined ? sourcePt.launchX : sourcePt.x;
+        this.points[i].launchX = Number(Math.max(0.0, Math.min(1.0, 1.0 - srcLaunch)).toFixed(3));
+        this.points[i].angle = Number((-sourcePt.angle).toFixed(3));
+      }
+    }
+
     this.wavePreset = 'custom';
     if (this.presetSelect) this.presetSelect.value = 'custom';
     this.render();

@@ -843,6 +843,7 @@ export default {
         lockMortars: "锁定炮位",
         unlockMortars: "解锁炮位",
         resetMortars: "均匀炮位",
+        mirror: "水平镜像",
         presetLabel: "预设模板",
         custom: "自定义",
         arch: "拱形",

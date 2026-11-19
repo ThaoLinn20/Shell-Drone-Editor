@@ -852,6 +852,7 @@ export default {
         lockMortars: "Khóa nòng pháo",
         unlockMortars: "Mở khóa nòng",
         resetMortars: "Dàn đều nòng",
+        mirror: "Đảo gương",
         presetLabel: "Mẫu có sẵn",
         custom: "Tùy biến",
         arch: "Vòm cung",

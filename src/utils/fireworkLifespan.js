@@ -28,7 +28,7 @@ export function getFireworkLifespan(event = {}) {
   const rawDuration = (event.duration !== undefined && !isNaN(Number(event.duration)))
     ? Number(event.duration)
     : 2.0;
-  const burstDuration = Math.max(0.1, rawDuration);
+  let burstDuration = Math.max(0.1, rawDuration);
 
   // 1. Instant Burst (mines, ground shells, bouquets)
   const isInstant = Boolean(
@@ -51,32 +51,81 @@ export function getFireworkLifespan(event = {}) {
   );
 
   let liftTime = 0;
+
+  // Check if event is a wave curve or has custom wavePoints
+  const hasWavePoints = (
+    event.pattern === 'sweep-custom-curve' ||
+    event.pattern === 'sweep-wave' ||
+    (Array.isArray(event.wavePoints) && event.wavePoints.length > 0)
+  ) && Array.isArray(event.wavePoints) && event.wavePoints.length > 0;
+
   if (!isInstant && !isComet) {
     const gravity = 30; // abs(FIREWORK_CONFIG.GRAVITY) = 30 m/s^2
     const minBurstY = 75;
     const maxBurstY = 300;
     const groundY = 0.5;
 
-    let burstHeight;
-    if (typeof event.burstHeight === 'number') {
-      burstHeight = event.burstHeight;
-    } else if (typeof event.ratioY === 'number') {
-      burstHeight = minBurstY + event.ratioY * (maxBurstY - minBurstY);
-    } else {
-      const presetSize = Math.max(
-        1,
-        Math.min(
-          6,
-          event.shellSize || (event.preset && typeof event.preset === 'object' && event.preset.shellSize) || 1
-        )
-      );
-      const sizeT = (presetSize - 1) / 5;
-      burstHeight = minBurstY + (0.42 + sizeT * 0.32) * (maxBurstY - minBurstY);
-    }
+    const calculateLiftTimeForHeight = (height) => {
+      const h = Math.max(height - groundY, 5);
+      return 0.8190025 * Math.sqrt((2 * h) / gravity);
+    };
 
-    const h = Math.max(burstHeight - groundY, 5);
-    // Analytical ascent time to burstHeight: t = 0.8190025 * sqrt(2 * h / g)
-    liftTime = Math.round(0.8190025 * Math.sqrt((2 * h) / gravity) * 100) / 100;
+    if (hasWavePoints) {
+      const count = Math.max(1, Number(event.count) || event.wavePoints.length);
+      const wavePoints = event.wavePoints;
+      let minBurstTime = Infinity;
+      let maxBurstTime = -Infinity;
+
+      for (let i = 0; i < count; i++) {
+        const progress = count > 1 ? i / (count - 1) : 0;
+        let delay = progress * rawDuration;
+
+        let ptY = 0.5;
+        if (wavePoints.length === count && wavePoints[i]) {
+          ptY = Number.isFinite(wavePoints[i].y) ? wavePoints[i].y : 0.5;
+          if (Number.isFinite(wavePoints[i].delay)) {
+            delay = wavePoints[i].delay;
+          }
+        } else {
+          const evalPt = wavePoints[Math.min(i, wavePoints.length - 1)];
+          ptY = Number.isFinite(evalPt?.y) ? evalPt.y : 0.5;
+        }
+
+        const burstHeight_i = minBurstY + ptY * (maxBurstY - minBurstY);
+        const liftTime_i = calculateLiftTimeForHeight(burstHeight_i);
+        const burstMoment_i = delay + liftTime_i;
+
+        if (burstMoment_i < minBurstTime) minBurstTime = burstMoment_i;
+        if (burstMoment_i > maxBurstTime) maxBurstTime = burstMoment_i;
+      }
+
+      if (!Number.isFinite(minBurstTime)) minBurstTime = 2.75;
+      if (!Number.isFinite(maxBurstTime)) maxBurstTime = minBurstTime + rawDuration;
+
+      liftTime = Math.round(minBurstTime * 100) / 100;
+      burstDuration = count > 1
+        ? Math.round(Math.max(0.1, maxBurstTime - minBurstTime) * 100) / 100
+        : Math.max(0.1, rawDuration);
+    } else {
+      let burstHeight;
+      if (typeof event.burstHeight === 'number') {
+        burstHeight = event.burstHeight;
+      } else if (typeof event.ratioY === 'number') {
+        burstHeight = minBurstY + event.ratioY * (maxBurstY - minBurstY);
+      } else {
+        const presetSize = Math.max(
+          1,
+          Math.min(
+            6,
+            event.shellSize || (event.preset && typeof event.preset === 'object' && event.preset.shellSize) || 1
+          )
+        );
+        const sizeT = (presetSize - 1) / 5;
+        burstHeight = minBurstY + (0.42 + sizeT * 0.32) * (maxBurstY - minBurstY);
+      }
+
+      liftTime = Math.round(calculateLiftTimeForHeight(burstHeight) * 100) / 100;
+    }
   }
 
   // 3. Fadeout / Decay duration (star life)

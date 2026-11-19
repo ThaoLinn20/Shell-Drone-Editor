@@ -843,6 +843,7 @@ export default {
         lockMortars: "筒位置固定",
         unlockMortars: "筒ロック解除",
         resetMortars: "筒位置を均等化",
+        mirror: "左右反転",
         presetLabel: "プリセット",
         custom: "カスタム",
         arch: "アーチ",

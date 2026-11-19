@@ -113,6 +113,74 @@ describe('Firework Lifespan & 3-Phase Lifecycle Model', () => {
       expect(longBurn.fadeoutDuration).toBe(5.0);
       expect(longBurn.totalVisualDuration).toBe(1.83 + 1.0 + 5.0);
     });
+
+    it('calculates dynamic flight time and burst window for wave curve events based on wavePoints', () => {
+      // 1. Low wave points (all at y = 0.05 => 86.25m, liftTime ~ 1.96s)
+      const lowWaveEvent = {
+        time: 2.0,
+        pattern: 'sweep-custom-curve',
+        count: 5,
+        duration: 2.0,
+        wavePoints: [
+          { x: 0.0, y: 0.05 },
+          { x: 0.25, y: 0.05 },
+          { x: 0.5, y: 0.05 },
+          { x: 0.75, y: 0.05 },
+          { x: 1.0, y: 0.05 }
+        ],
+        starLife: 2000,
+        starLifeMultiplier: 1.0
+      };
+      const lowLifespan = getFireworkLifespan(lowWaveEvent);
+      expect(lowLifespan.liftTime).toBe(1.96);
+      expect(lowLifespan.burstDuration).toBe(2.0);
+      expect(lowLifespan.fadeoutDuration).toBe(2.0);
+      expect(lowLifespan.burstStartTime).toBe(3.96);
+      expect(lowLifespan.burstEndTime).toBe(5.96);
+
+      // 2. High wave points (all at y = 1.0 => 300m, liftTime ~ 3.66s)
+      const highWaveEvent = {
+        time: 0.0,
+        pattern: 'sweep-custom-curve',
+        count: 5,
+        duration: 2.0,
+        wavePoints: [
+          { x: 0.0, y: 1.0 },
+          { x: 0.25, y: 1.0 },
+          { x: 0.5, y: 1.0 },
+          { x: 0.75, y: 1.0 },
+          { x: 1.0, y: 1.0 }
+        ]
+      };
+      const highLifespan = getFireworkLifespan(highWaveEvent);
+      expect(highLifespan.liftTime).toBe(3.66);
+      expect(highLifespan.burstDuration).toBe(2.0);
+      expect(highLifespan.burstStartTime).toBe(3.66);
+      expect(highLifespan.burstEndTime).toBe(5.66);
+
+      // 3. Arch curve with varied heights: shell 0 at y=0.05 (lift=1.96s), shell 2 at y=1.0 (lift=3.66s, delay=1.0s)
+      const archEvent = {
+        time: 1.0,
+        pattern: 'sweep-custom-curve',
+        count: 5,
+        duration: 2.0,
+        wavePoints: [
+          { x: 0.0, y: 0.05 },
+          { x: 0.25, y: 0.5 },
+          { x: 0.5, y: 1.0 },
+          { x: 0.75, y: 0.5 },
+          { x: 1.0, y: 0.05 }
+        ]
+      };
+      const archLifespan = getFireworkLifespan(archEvent);
+      // First burst: Shell 0 bursts at delay 0.0 + lift 1.96s = 1.96s
+      expect(archLifespan.liftTime).toBe(1.96);
+      // Last burst: Shell 2 bursts at delay 1.0 + lift 3.66s = 4.66s
+      // Burst window: 4.66s - 1.96s = 2.70s
+      expect(archLifespan.burstDuration).toBe(2.7);
+      expect(archLifespan.burstStartTime).toBe(2.96);
+      expect(archLifespan.burstEndTime).toBe(5.66);
+    });
   });
 
   describe('TimelineEditor 3-Phase DOM Rendering & Snapping', () => {
