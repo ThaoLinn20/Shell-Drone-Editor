@@ -50,7 +50,7 @@ export function sanitizeWavePoints(points) {
     return DEFAULT_WAVE_POINTS.map((p) => ({ ...p }));
   }
 
-  const cleaned = points.map((p, idx) => {
+  let cleaned = points.map((p, idx) => {
     const x = Math.max(0.0, Math.min(1.0, Number.isFinite(p?.x) ? p.x : idx / Math.max(1, points.length - 1)));
     const y = Math.max(0.05, Math.min(1.0, Number.isFinite(p?.y) ? p.y : 0.5));
 
