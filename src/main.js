@@ -247,3 +247,11 @@ initUpdateNotifier({
     return timelineEditor.currentSaveStatus === 'saved';
   }
 });
+
+// Author Watermark
+if (typeof document !== 'undefined') {
+  const watermark = document.createElement('div');
+  watermark.className = 'app-watermark';
+  watermark.textContent = 'ThaoLinn20';
+  document.body.appendChild(watermark);
+}

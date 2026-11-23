@@ -5,6 +5,7 @@ import {
   createModalShell
 } from '../ModalShell.js';
 import { INSPECTOR_GUIDE_CONFIGS } from './inspectorGuideConfigs.js';
+import { ShortcutGuideModal } from './ShortcutGuideModal.js';
 
 export const GUIDE_TAGS = {
   all: {
@@ -78,8 +79,16 @@ export class GuideHubModal {
     this.customGuides = [];
     this.activeTag = 'all';
     this.searchQuery = '';
+    this.shortcutGuideModal = null;
 
     this.onKeyDown = this.onKeyDown.bind(this);
+  }
+
+  openShortcutGuide() {
+    if (!this.shortcutGuideModal) {
+      this.shortcutGuideModal = new ShortcutGuideModal();
+    }
+    this.shortcutGuideModal.open();
   }
 
   getTagMeta(tagId) {
@@ -246,8 +255,7 @@ export class GuideHubModal {
       {
         id: 'inspector_tour',
         title: () =>
-          t('editor.guideHub.inspectorTourTitle') ||
-          'Property Inspector Guide',
+          t('editor.guideHub.inspectorTourDesc') ? t('editor.guideHub.inspectorTourTitle') : 'Property Inspector Guide',
         desc: () =>
           t('editor.guideHub.inspectorTourDesc') ||
           'Explore event parameters, firework Shapes, Dynamics, Active Effects, and Pattern Offsets.',
@@ -261,6 +269,24 @@ export class GuideHubModal {
           if (this.timelineEditor && this.timelineEditor.tourGuide) {
             this.timelineEditor.tourGuide.startInspectorTour();
           }
+        }
+      },
+      {
+        id: 'shortcut_reference',
+        title: () =>
+          t('editor.guideHub.shortcuts.guideTitle') ||
+          'System Controls and Keyboard Shortcuts',
+        desc: () =>
+          t('editor.guideHub.shortcuts.guideDesc') ||
+          'Quick reference guide for timeline playback, block editing, and 3D camera navigation.',
+        badge: () =>
+          t('editor.guideHub.shortcuts.guideBadge') || 'Reference',
+        tags: ['important', 'basic'],
+        actionLabel: () =>
+          t('editor.guideHub.shortcuts.openBtn') || 'Open Reference',
+        variant: 'accent',
+        execute: () => {
+          this.openShortcutGuide();
         }
       },
       ...INSPECTOR_GUIDE_CONFIGS.map((cfg) => ({
@@ -731,6 +757,10 @@ export class GuideHubModal {
 
   destroy() {
     this.close();
+    if (this.shortcutGuideModal) {
+      this.shortcutGuideModal.destroy();
+      this.shortcutGuideModal = null;
+    }
     if (this.overlay && typeof this.overlay.remove === 'function') {
       this.overlay.remove();
     }
