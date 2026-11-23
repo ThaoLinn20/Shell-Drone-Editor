@@ -1525,6 +1525,23 @@ export class TimelineEditor {
               ...comp.secondBurst
             };
           }
+          if (comp.sound && typeof comp.sound === 'object') {
+            ev.sound = {
+              ...comp.sound
+            };
+            if (comp.sound.launch !== undefined) {
+              ev.launchSound = comp.sound.launch;
+            }
+            if (comp.sound.burst !== undefined) {
+              ev.burstSound = comp.sound.burst;
+            }
+            if (comp.sound.crackle !== undefined) {
+              ev.crackleSound = comp.sound.crackle;
+            }
+            if (comp.sound.volumeMultiplier !== undefined) {
+              ev.soundVolume = comp.sound.volumeMultiplier;
+            }
+          }
         }
       }
     }

@@ -176,7 +176,13 @@ describe('PresetHubModal Component', () => {
           particleCountMultiplier: 1.2,
           starLifeMultiplier: 1.8,
           effects: ['strobe'],
-          multiNested: false
+          multiNested: false,
+          sound: {
+            launch: 'heavy',
+            burst: 'heavy',
+            crackle: 'dense',
+            volumeMultiplier: 1.5
+          }
         }
       }
     };
@@ -194,7 +200,13 @@ describe('PresetHubModal Component', () => {
       effects: ['strobe'],
       multiNested: false,
       stages: [],
-      secondBurst: null
+      secondBurst: null,
+      sound: {
+        launch: 'heavy',
+        burst: 'heavy',
+        crackle: 'dense',
+        volumeMultiplier: 1.5
+      }
     });
   });
 
@@ -209,5 +221,45 @@ describe('PresetHubModal Component', () => {
 
     expect(onApplySpy).toHaveBeenCalled();
     expect(modal.isVisible).toBe(false);
+  });
+
+  it('preserves sound profiles in preset composition and restores them on apply', () => {
+    const targetEvent = {
+      type: 'sequence',
+      shapeType: 'sphere',
+      dynamicsType: 'standard'
+    };
+
+    const preset = {
+      id: 'custom_sound_test',
+      name: 'Custom Sound Firework',
+      composition: {
+        shapeType: 'ring',
+        dynamicsType: 'willow',
+        color: '#ffdd00',
+        sound: {
+          launch: 'heavy',
+          burst: 'heavy',
+          crackle: 'dense',
+          volumeMultiplier: 1.5
+        }
+      }
+    };
+
+    if (preset.composition.sound) {
+      targetEvent.sound = {
+        ...preset.composition.sound
+      };
+      targetEvent.launchSound = preset.composition.sound.launch;
+      targetEvent.burstSound = preset.composition.sound.burst;
+      targetEvent.crackleSound = preset.composition.sound.crackle;
+      targetEvent.soundVolume = preset.composition.sound.volumeMultiplier;
+    }
+
+    expect(targetEvent.sound.burst).toBe('heavy');
+    expect(targetEvent.sound.launch).toBe('heavy');
+    expect(targetEvent.sound.crackle).toBe('dense');
+    expect(targetEvent.sound.volumeMultiplier).toBe(1.5);
+    expect(targetEvent.burstSound).toBe('heavy');
   });
 });

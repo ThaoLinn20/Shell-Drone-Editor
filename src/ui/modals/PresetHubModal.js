@@ -575,6 +575,12 @@ export class PresetHubModal {
     let defaultName = 'New Custom Firework';
     let defaultSummary = '';
     let initialTags = ['shell'];
+    let soundConfig = {
+      volumeMultiplier: 1.0,
+      launch: 'standard',
+      burst: 'standard',
+      crackle: 'standard'
+    };
 
     if (sel) {
       const shape = sel.shapeType || 'sphere';
@@ -582,6 +588,27 @@ export class PresetHubModal {
       defaultName = sel.name || sel.label || `${shape}_${dynamics}`;
       defaultSummary = `Custom firework preset based on ${shape} with ${dynamics}.`;
       initialTags = [shape, dynamics];
+
+      if (sel.sound && typeof sel.sound === 'object') {
+        soundConfig = {
+          volumeMultiplier: sel.sound.volumeMultiplier !== undefined
+            ? Number(sel.sound.volumeMultiplier)
+            : 1.0,
+          launch: sel.sound.launch || '',
+          burst: sel.sound.burst || '',
+          crackle: sel.sound.crackle || ''
+        };
+      } else {
+        soundConfig = {
+          volumeMultiplier: sel.soundVolume !== undefined
+            ? Number(sel.soundVolume)
+            : 1.0,
+          launch: sel.launchSound || '',
+          burst: sel.burstSound || '',
+          crackle: sel.crackleSound || ''
+        };
+      }
+
       composition = {
         shapeType: shape,
         dynamicsType: dynamics,
@@ -592,7 +619,22 @@ export class PresetHubModal {
         effects: Array.isArray(sel.effects) ? [...sel.effects] : [],
         multiNested: Boolean(sel.multiNested),
         stages: Array.isArray(sel.stages) ? JSON.parse(JSON.stringify(sel.stages)) : [],
-        secondBurst: sel.secondBurst ? { ...sel.secondBurst } : null
+        secondBurst: sel.secondBurst ? { ...sel.secondBurst } : null,
+        sound: soundConfig
+      };
+    } else {
+      composition = {
+        shapeType: 'sphere',
+        dynamicsType: 'standard',
+        color: '#ffaa00',
+        scale: 1.0,
+        particleCountMultiplier: 1.0,
+        starLifeMultiplier: 1.0,
+        effects: [],
+        multiNested: false,
+        stages: [],
+        secondBurst: null,
+        sound: soundConfig
       };
     }
 
