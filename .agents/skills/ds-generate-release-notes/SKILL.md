@@ -17,8 +17,10 @@ When the user asks you to generate release notes or create a new release, execut
 7. **MANDATORY SECTIONS IN RELEASE_NOTES.md**: You must use exactly the main sections defined below (Downloads, Features, Bug Fixes, Updates, Chores). If a section has no relevant commits, you may omit that section.
 8. **NON-TECHNICAL DESCRIPTIONS**: All descriptions must be extremely concise, simple, and easy to understand for non-technical users. Avoid coding jargon (such as 'instanced rendering', 'draw calls', 'vertex shader', 'buffer allocation') and instead focus on user-facing benefits (e.g., write 'Improved display performance when spawning many fireworks' instead of 'implemented instanced shell rendering to reduce draw calls').
 9. **NEVER RELEASE BROKEN BUILDS**: Every release MUST pass the full test suite (`npm test`) and production build (`npm run build` / `npm run electron:build`) BEFORE committing, tagging, or publishing.
+10. **CHECK BRANCH NAME AGAINST TARGET VERSION**: Always inspect the active git branch name (`git branch --show-current`). If the branch name embeds a version tag (such as `feat/v3.5.3` or `release/v3.5.3`), compare it against the user's requested version. If there is a mismatch (e.g. active branch is `feat/v3.5.3` but user asks for `v3.5.4` or vice versa), the AI MUST immediately stop, alert the user about the branch-vs-tag discrepancy, and ask for explicit confirmation before proceeding, because the user may have made a typo in the command.
 
 ## 1. Pre-flight Checks & Fetch Commits Since Last Tag
+- Check active git branch: `git branch --show-current`. If the branch name embeds a version (e.g. `feat/v3.5.3`), verify that the target release version matches. If there is a mismatch with the user's requested version, stop and confirm with the user before bumping versions or creating tags.
 - Check working tree status (`git status -s`) so unintended temporary files are not accidentally tagged.
 - Sync `@shell-drone/firework-engine` in `package-lock.json` by running `npm update @shell-drone/firework-engine` so GitHub Actions CI (`npm ci`) uses the exact same engine commit as local development.
 - Find the most recent git tag: `git describe --tags --abbrev=0`.
@@ -27,6 +29,7 @@ When the user asks you to generate release notes or create a new release, execut
 - Run `npm test` early to confirm the codebase is healthy before preparing the release. If tests fail, stop and report the failure instead of creating a broken release.
 
 ## 2. Determine New Version
+- Cross-reference with branch name: If the active branch name embeds a target version (e.g. `feat/v3.5.3`), ensure the tag matches that version unless the user explicitly intended a different version after confirmation.
 - Analyze the fetched commits (and any staged/ready changes) to determine the next version based on Semantic Versioning (SemVer):
   - **Major**: If there are breaking changes.
   - **Minor**: If there are new features (`feat`).
