@@ -29,6 +29,7 @@ import { TimelineControlsGuideFlow } from './guides/TimelineControlsGuideFlow.js
 import { INSPECTOR_GUIDE_CONFIGS } from './guides/inspectorGuideConfigs.js';
 import { InspectorSectionGuideFlow } from './guides/InspectorSectionGuideFlow.js';
 import { KnownIssuesModal } from './KnownIssuesModal.js';
+import { PresetHubModal } from './modals/PresetHubModal.js';
 import { DOCS_CONFIG } from '../config/docs.js';
 import { addRecentScript } from '../utils/recentScripts.js';
 import {
@@ -99,6 +100,10 @@ export class TimelineEditor {
       );
     });
     this.guideHubModal = new GuideHubModal(this);
+    this.presetHubModal = null;
+    globalEventBus.on('preset-hub:open', () => {
+      this.openPresetHub();
+    });
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
     this.renderTracks();
@@ -502,12 +507,34 @@ export class TimelineEditor {
     });
     this.libraryBtn = libraryBtn;
 
+    const presetHubBtn = document.createElement('button');
+    presetHubBtn.className = 'timeline-preset-hub-btn';
+    presetHubBtn.type = 'button';
+    presetHubBtn.textContent =
+      t('editor.timelinePanel.presetsBtn') || 'Presets';
+    presetHubBtn.title =
+      t('editor.timelinePanel.presetsBtnTooltip') ||
+      'Browse and manage firework presets library';
+    presetHubBtn.style.background = 'rgba(0, 229, 255, 0.15)';
+    presetHubBtn.style.color = '#00e5ff';
+    presetHubBtn.style.border = '1px solid rgba(0, 229, 255, 0.35)';
+    presetHubBtn.style.borderRadius = '4px';
+    presetHubBtn.style.padding = '6px 10px';
+    presetHubBtn.style.fontSize = '12px';
+    presetHubBtn.style.fontWeight = '600';
+    presetHubBtn.style.cursor = 'pointer';
+    presetHubBtn.addEventListener('click', () => {
+      this.openPresetHub();
+    });
+    this.presetHubBtn = presetHubBtn;
+
     const dataActionsGroup = document.createElement('div');
     dataActionsGroup.style.display = 'inline-flex';
     dataActionsGroup.style.alignItems = 'center';
     dataActionsGroup.style.gap = '10px';
     dataActionsGroup.appendChild(newBtn);
     dataActionsGroup.appendChild(addBtn);
+    dataActionsGroup.appendChild(presetHubBtn);
     dataActionsGroup.appendChild(libraryBtn);
     dataActionsGroup.appendChild(exportBtn);
     dataActionsGroup.appendChild(addFileDropdownContainer);
@@ -1432,6 +1459,100 @@ export class TimelineEditor {
     if (this.showLibraryModal) {
       this.showLibraryModal.open();
     }
+  }
+
+  openPresetHub() {
+    if (!this.presetHubModal) {
+      this.presetHubModal = new PresetHubModal({
+        timelineEditor: this,
+        onApply: (preset) => {
+          this.applyPresetFromHub(preset);
+        }
+      });
+    }
+    this.presetHubModal.show();
+  }
+
+  applyPresetFromHub(preset) {
+    if (!preset) return;
+    const targets = this.selectedEvents && this.selectedEvents.length > 0
+      ? this.selectedEvents
+      : (this.inspector?.selectedEvent ? [this.inspector.selectedEvent] : []);
+
+    if (targets.length === 0) {
+      showToast(
+        t('editor.presetHub.selectEventFirst') || 'Select a firework event on the timeline to apply preset',
+        'info'
+      );
+      return;
+    }
+
+    this.saveHistoryState();
+    for (const ev of targets) {
+      if (ev.type === 'sequence') {
+        ev.preset = preset.id || preset.slug;
+        if (preset.composition) {
+          const comp = preset.composition;
+          if (comp.shapeType || comp.shape) {
+            ev.shapeType = comp.shapeType || comp.shape;
+          }
+          if (comp.dynamicsType || comp.dynamics) {
+            ev.dynamicsType = comp.dynamicsType || comp.dynamics;
+          }
+          if (comp.color) {
+            ev.color = comp.color;
+          }
+          if (Array.isArray(comp.effects || comp.activeEffects)) {
+            ev.effects = [...(comp.effects || comp.activeEffects)];
+          }
+          if (typeof comp.scale === 'number') {
+            ev.scale = comp.scale;
+          }
+          if (typeof comp.particleCountMultiplier === 'number') {
+            ev.particleCountMultiplier = comp.particleCountMultiplier;
+          }
+          if (typeof comp.starLifeMultiplier === 'number') {
+            ev.starLifeMultiplier = comp.starLifeMultiplier;
+          }
+          if (typeof comp.multiNested === 'boolean') {
+            ev.multiNested = comp.multiNested;
+          }
+          if (Array.isArray(comp.stages)) {
+            ev.stages = JSON.parse(JSON.stringify(comp.stages));
+          }
+          if (comp.secondBurst) {
+            ev.secondBurst = {
+              ...comp.secondBurst
+            };
+          }
+          if (comp.sound && typeof comp.sound === 'object') {
+            ev.sound = {
+              ...comp.sound
+            };
+            if (comp.sound.launch !== undefined) {
+              ev.launchSound = comp.sound.launch;
+            }
+            if (comp.sound.burst !== undefined) {
+              ev.burstSound = comp.sound.burst;
+            }
+            if (comp.sound.crackle !== undefined) {
+              ev.crackleSound = comp.sound.crackle;
+            }
+            if (comp.sound.volumeMultiplier !== undefined) {
+              ev.soundVolume = comp.sound.volumeMultiplier;
+            }
+          }
+        }
+      }
+    }
+    this.renderTracks();
+    if (this.inspector && this.inspector.selectedEvent) {
+      this.inspector.render();
+    }
+    showToast(
+      t('editor.presetHub.applied') || `Applied preset "${preset.name}"`,
+      'success'
+    );
   }
 
   openGuideHub() {

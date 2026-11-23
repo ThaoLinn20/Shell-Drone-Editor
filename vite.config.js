@@ -19,7 +19,9 @@ export default defineConfig({
         server.middlewares.use((req, res, next) => {
           if (req.url && req.url.startsWith('/previews/')) {
             const rawPath = req.url.split('?')[0];
-            const filePath = path.resolve(__dirname, 'public', rawPath.replace(/^\//, ''));
+            const dataPath = path.resolve(__dirname, 'data', rawPath.replace(/^\//, ''));
+            const publicPath = path.resolve(__dirname, 'public', rawPath.replace(/^\//, ''));
+            const filePath = fs.existsSync(dataPath) ? dataPath : publicPath;
             if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
               const stat = fs.statSync(filePath);
               const fileSize = stat.size;

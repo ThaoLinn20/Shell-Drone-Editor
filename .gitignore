@@ -34,3 +34,7 @@ src/config/sequences/demoShow.json
 docs/details/facebook-detail-release-update.md
 .agents/skills/ds-create-script/
 
+# Runtime preset data
+data/presets/*
+!data/presets/.gitkeep
+

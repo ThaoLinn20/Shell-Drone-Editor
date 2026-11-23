@@ -8,8 +8,6 @@ import { PlanarReflector } from '../environment/PlanarReflector.js';
 import { WaterSurface } from '../environment/WaterSurface.js';
 import { LaunchBarge } from '../environment/LaunchBarge.js';
 import { RiverPropsManager } from '../environment/RiverPropsManager.js';
-import { ControlsBillboard } from '../environment/ControlsBillboard.js';
-import { WorkstationDesk } from '../environment/WorkstationDesk.js';
 
 export class SceneManager {
   constructor(eventBus = null) {
@@ -75,21 +73,6 @@ export class SceneManager {
     });
     this.instance.add(this.waterSurface.mesh);
 
-    // Initialize in-world controls billboard positioned behind spectator (Z = 438, distance 18m)
-    this.controlsBillboard = new ControlsBillboard({
-      width: 36,
-      height: 18,
-      position: new THREE.Vector3(0, 9.5, 438)
-    });
-    this.instance.add(this.controlsBillboard.group);
-
-    // Initialize interactive Workstation Desk with Laptop on the right side (X: 3.6, Y: 4.2, Z: 420.5)
-    this.workstationDesk = new WorkstationDesk({
-      position: new THREE.Vector3(3.6, 4.2, 420.5),
-      interactionRadius: 3.8
-    });
-    this.instance.add(this.workstationDesk.group);
-
     // Subtle ambient light
     this.ambientLight = new THREE.AmbientLight(
       0xffffff,
@@ -142,16 +125,6 @@ export class SceneManager {
     }
     if (this.waterSurface) {
       this.waterSurface.update(deltaTime);
-    }
-    if (this.controlsBillboard) {
-      this.controlsBillboard.update(deltaTime);
-    }
-    if (this.workstationDesk) {
-      this.workstationDesk.update(
-        deltaTime,
-        cameraPos,
-        timelineVisible
-      );
     }
   }
 
@@ -328,12 +301,6 @@ export class SceneManager {
     if (this.planarReflector) {
       this.planarReflector.dispose();
     }
-    if (this.controlsBillboard) {
-      this.controlsBillboard.dispose();
-    }
-    if (this.workstationDesk) {
-      this.workstationDesk.dispose();
-    }
     for (const unsubscribe of this.eventSubscriptions) {
       unsubscribe();
     }
@@ -487,9 +454,7 @@ export class SceneManager {
   }
 
   isNearWorkstation(cameraPos) {
-    return this.workstationDesk
-      ? this.workstationDesk.isNear(cameraPos)
-      : false;
+    return false;
   }
 
   setBoatPassengerPos(localX = 0, localZ = 0) {

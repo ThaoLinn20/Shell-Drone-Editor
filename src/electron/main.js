@@ -4,12 +4,34 @@ import {
   ipcMain,
   dialog,
   Menu,
-  shell
+  shell,
+  protocol,
+  net
 } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { setupAutoUpdater } from './updater.js';
+import {
+  scanPresetBundles,
+  savePresetBundle,
+  deletePresetBundle,
+  seedDirectoryRecursively
+} from './presetStorage.js';
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'app-asset',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true,
+      corsEnabled: true,
+      bypassCSP: true
+    }
+  }
+]);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +40,32 @@ const isDev = !app.isPackaged;
 
 let mainWindow = null;
 let updaterController = null;
+
+// Resolve data and preset directories
+export function resolveDataDir() {
+  if (isDev) {
+    return path.resolve(__dirname, '../../data');
+  }
+  if (process.env.PORTABLE_EXECUTABLE_DIR) {
+    return path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'data');
+  }
+  const exeDir = path.dirname(app.getPath('exe'));
+  try {
+    fs.accessSync(exeDir, fs.constants.W_OK);
+    return path.join(exeDir, 'data');
+  } catch {
+    return path.join(app.getPath('userData'), 'data');
+  }
+}
+
+export function getPresetsDir() {
+  const dataDir = resolveDataDir();
+  const presetsDir = path.join(dataDir, 'presets');
+  if (!fs.existsSync(presetsDir)) {
+    fs.mkdirSync(presetsDir, { recursive: true });
+  }
+  return presetsDir;
+}
 
 // Resolve the sequences directory path safely
 const sequencesDir = isDev
@@ -61,8 +109,84 @@ if (!isDev) {
         }
       }
     }
+
+    seedDataDir();
   } catch (err) {
     console.error('Failed to seed default sequences in production:', err);
+  }
+}
+
+export { seedDirectoryRecursively };
+
+export function seedDataDir() {
+  if (isDev) {
+    return;
+  }
+  try {
+    const bundledDataDir = path.join(process.resourcesPath, 'data');
+    const targetDataDir = resolveDataDir();
+    if (fs.existsSync(bundledDataDir) && path.resolve(bundledDataDir) !== path.resolve(targetDataDir)) {
+      seedDirectoryRecursively(bundledDataDir, targetDataDir);
+    }
+
+    // Safety backup sync: if targetDataDir is not userData, sync user presets between target and userData backup
+    const userDataDataDir = path.join(app.getPath('userData'), 'data');
+    if (path.resolve(targetDataDir) !== path.resolve(userDataDataDir)) {
+      const userDataPresets = path.join(userDataDataDir, 'presets');
+      const targetPresets = path.join(targetDataDir, 'presets');
+      // 1. Restore any missing presets from userData backup to target
+      if (fs.existsSync(userDataPresets)) {
+        seedDirectoryRecursively(userDataPresets, targetPresets);
+      }
+      // 2. Mirror any presets from target to userData backup
+      if (fs.existsSync(targetPresets)) {
+        seedDirectoryRecursively(targetPresets, userDataPresets);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to seed data directory in production:', err);
+  }
+}
+
+export function syncUserDataPresetBackup(targetPresetsDir, slug) {
+  if (isDev || !slug) {
+    return;
+  }
+  try {
+    const userDataPresets = path.join(app.getPath('userData'), 'data', 'presets');
+    if (path.resolve(targetPresetsDir) === path.resolve(userDataPresets)) {
+      return;
+    }
+    const safeSlug = path.basename(slug);
+    const srcBundle = path.join(targetPresetsDir, safeSlug);
+    const dstBundle = path.join(userDataPresets, safeSlug);
+    if (fs.existsSync(srcBundle)) {
+      seedDirectoryRecursively(srcBundle, dstBundle);
+    }
+  } catch (err) {
+    console.error('Error syncing user preset backup:', err);
+  }
+}
+
+export function deleteUserDataPresetBackup(targetPresetsDir, slug) {
+  if (isDev || !slug) {
+    return;
+  }
+  try {
+    const userDataPresets = path.join(app.getPath('userData'), 'data', 'presets');
+    if (path.resolve(targetPresetsDir) === path.resolve(userDataPresets)) {
+      return;
+    }
+    const safeSlug = path.basename(slug);
+    const dstBundle = path.join(userDataPresets, safeSlug);
+    if (fs.existsSync(dstBundle)) {
+      fs.rmSync(dstBundle, {
+        recursive: true,
+        force: true
+      });
+    }
+  } catch (err) {
+    console.error('Error deleting user preset backup:', err);
   }
 }
 
@@ -736,8 +860,153 @@ ipcMain.handle('open-folder-in-explorer', async (_event, folderPath) => {
   }
 });
 
+// Preset Bundle Storage IPC Handlers
+ipcMain.handle('presets:scan', async () => {
+  try {
+    const presetsDir = getPresetsDir();
+    return scanPresetBundles(presetsDir);
+  } catch (err) {
+    console.error('Error scanning presets:', err);
+    return [];
+  }
+});
+
+ipcMain.handle('presets:save', async (_event, payload) => {
+  try {
+    const presetsDir = getPresetsDir();
+    const result = savePresetBundle(presetsDir, payload);
+    syncUserDataPresetBackup(presetsDir, payload.slug || result.slug);
+    return result;
+  } catch (err) {
+    console.error('Error saving preset:', err);
+    throw err;
+  }
+});
+
+ipcMain.handle('presets:delete', async (_event, slug) => {
+  try {
+    const presetsDir = getPresetsDir();
+    const result = deletePresetBundle(presetsDir, slug);
+    deleteUserDataPresetBackup(presetsDir, slug);
+    return result;
+  } catch (err) {
+    console.error('Error deleting preset:', err);
+    throw err;
+  }
+});
+
+ipcMain.handle('presets:import-media', async (_event, { slug, mediaType }) => {
+  try {
+    const presetsDir = getPresetsDir();
+    const safeSlug = String(slug).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const bundleDir = path.join(presetsDir, safeSlug);
+    if (!fs.existsSync(bundleDir)) {
+      fs.mkdirSync(bundleDir, { recursive: true });
+    }
+
+    const isVideo = mediaType === 'video';
+    const filters = isVideo
+      ? [{ name: 'Videos', extensions: ['mp4', 'webm'] }]
+      : [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }];
+
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openFile'],
+      filters
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return { canceled: true };
+    }
+
+    const srcPath = result.filePaths[0];
+    const ext = path.extname(srcPath).toLowerCase();
+    const destName = `${safeSlug}${ext}`;
+    const destPath = path.join(bundleDir, destName);
+
+    // Clean up older banners/videos with different extensions
+    const oldExts = isVideo ? ['.mp4', '.webm'] : ['.png', '.jpg', '.jpeg', '.webp'];
+    for (const oldExt of oldExts) {
+      const candidate = path.join(bundleDir, `${safeSlug}${oldExt}`);
+      if (candidate !== destPath && fs.existsSync(candidate)) {
+        try { fs.unlinkSync(candidate); } catch {}
+      }
+    }
+
+    fs.copyFileSync(srcPath, destPath);
+    syncUserDataPresetBackup(presetsDir, safeSlug);
+    const mediaUrl = `app-asset://presets/${encodeURIComponent(safeSlug)}/${encodeURIComponent(destName)}?t=${Date.now()}`;
+    return {
+      canceled: false,
+      filename: destName,
+      url: mediaUrl
+    };
+  } catch (err) {
+    console.error('Error importing preset media:', err);
+    throw err;
+  }
+});
+
+ipcMain.handle('presets:open-folder', async (_event, slug) => {
+  try {
+    const presetsDir = getPresetsDir();
+    let targetDir = presetsDir;
+    if (slug) {
+      const safeSlug = path.basename(slug);
+      const sub = path.join(presetsDir, safeSlug);
+      if (fs.existsSync(sub)) {
+        targetDir = sub;
+      }
+    }
+    await shell.openPath(targetDir);
+    return true;
+  } catch (err) {
+    console.error('Error opening presets folder:', err);
+    return false;
+  }
+});
+
+ipcMain.handle('presets:get-path', async () => {
+  return getPresetsDir();
+});
+
 
 app.whenReady().then(() => {
+  protocol.handle('app-asset', async (request) => {
+    try {
+      const url = new URL(request.url);
+      const host = url.host;
+      let pathname = decodeURIComponent(url.pathname);
+      if (pathname.startsWith('/')) {
+        pathname = pathname.slice(1);
+      }
+      const fullRelativePath = host
+        ? (pathname ? path.join(host, pathname) : host)
+        : pathname;
+      const dataRoot = path.resolve(resolveDataDir());
+      let targetPath = path.resolve(dataRoot, fullRelativePath);
+      if (!targetPath.startsWith(dataRoot)) {
+        return new Response('Access Denied', {
+          status: 403
+        });
+      }
+      if (!fs.existsSync(targetPath)) {
+        const fallbackDevPath = path.resolve(__dirname, '../../data', fullRelativePath);
+        if (fs.existsSync(fallbackDevPath)) {
+          targetPath = fallbackDevPath;
+        } else {
+          return new Response('Not Found', {
+            status: 404
+          });
+        }
+      }
+      return net.fetch(`file:///${targetPath.replace(/\\/g, '/')}`);
+    } catch {
+      return new Response('Internal Error', {
+        status: 500
+      });
+    }
+  });
+
   updaterController = setupAutoUpdater({
     getMainWindow: () => mainWindow
   });

@@ -1307,6 +1307,18 @@ export class PropertyInspector {
             target.multiNested = true;
           }
 
+          const isCometKey = (key) => {
+            const k = String(key || '').toLowerCase();
+            return k === 'comet' || k.startsWith('comet_') || k.includes('comet');
+          };
+          if (target.type === 'sequence' || target.type === 'cometsequence') {
+            if (val && isCometKey(val)) {
+              target.type = 'cometsequence';
+            } else if (val && !isCometKey(val) && val !== 'random') {
+              target.type = 'sequence';
+            }
+          }
+
           // Clean up all optical effect flags from previous preset
           AVAILABLE_EFFECT_TAGS.forEach((eff) => {
             delete target[eff.key];
@@ -1360,46 +1372,136 @@ export class PropertyInspector {
 
     let input;
     if (field.type === 'select') {
-      const sortedOptions = [...field.options].sort((a, b) => {
-        if (a === '') return -1;
-        if (b === '') return 1;
-        if (field.name === 'pattern') {
-          if (a === 'sweep-custom-curve') return -1;
-          if (b === 'sweep-custom-curve') return 1;
-        }
-        if (a === 'random') return -1;
-        if (b === 'random') return 1;
-        if (field.name === 'preset') {
-          if (a === 'multi_nested' || a === 'multiNested') return -1;
-          if (b === 'multi_nested' || b === 'multiNested') return 1;
-        }
-        const labelA = getEnglishOptionLabel(field.name, a);
-        const labelB = getEnglishOptionLabel(field.name, b);
-        return labelA.localeCompare(labelB, 'en', { sensitivity: 'base' });
-      });
+      let optionsList;
+      let customSelectGroups = null;
 
-      if (currentEventValue && !sortedOptions.includes(currentEventValue)) {
-        sortedOptions.push(currentEventValue);
-      }
+      if (field.name === 'preset') {
+        customSelectGroups = [
+          { id: 'all', label: t('editor.inspector.filterAll') || 'All' },
+          { id: 'shell', label: t('editor.inspector.groupShell') || 'Shell' },
+          { id: 'comet', label: t('editor.inspector.groupComet') || 'Comet' }
+        ];
 
-      const optionsList = sortedOptions.map((opt) => {
-        const lookupKey = opt === '' ? 'empty' : opt;
-        const translationKey = `editor.inspector.options.${field.name}.${lookupKey}`;
-        let translated = t(translationKey);
-        if (translated === translationKey) {
-          const snakeKey = String(lookupKey).replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
-          const snakeTranslationKey = `editor.inspector.options.${field.name}.${snakeKey}`;
-          const snakeTranslated = t(snakeTranslationKey);
-          if (snakeTranslated !== snakeTranslationKey) {
-            translated = snakeTranslated;
-          }
-        }
-        const fallbackLabel = formatOptionLabelFallback(opt || 'random');
-        return {
-          value: opt,
-          label: translated === translationKey ? fallbackLabel : translated
+        const isCometKey = (key) => {
+          const k = String(key || '').toLowerCase();
+          return k === 'comet' || k.startsWith('comet_') || k.includes('comet');
         };
-      });
+
+        const allPresetKeys = [...field.options];
+        if (currentEventValue && !allPresetKeys.includes(currentEventValue)) {
+          allPresetKeys.push(currentEventValue);
+        }
+
+        const hasRandom = allPresetKeys.includes('random');
+        const nonRandom = allPresetKeys.filter((opt) => opt !== '' && opt !== 'random');
+
+        const shellKeys = nonRandom
+          .filter((k) => !isCometKey(k))
+          .sort((a, b) => {
+            if (a === 'multi_nested' || a === 'multiNested') return -1;
+            if (b === 'multi_nested' || b === 'multiNested') return 1;
+            const labelA = getEnglishOptionLabel('preset', a);
+            const labelB = getEnglishOptionLabel('preset', b);
+            return labelA.localeCompare(labelB, 'en', { sensitivity: 'base' });
+          });
+
+        const cometKeys = nonRandom
+          .filter((k) => isCometKey(k))
+          .sort((a, b) => {
+            const labelA = getEnglishOptionLabel('preset', a);
+            const labelB = getEnglishOptionLabel('preset', b);
+            return labelA.localeCompare(labelB, 'en', { sensitivity: 'base' });
+          });
+
+        const shellHeaderTitle = t('editor.inspector.groupShellTitle') || 'Shell Presets';
+        const cometHeaderTitle = t('editor.inspector.groupCometTitle') || 'Comet Presets';
+
+        optionsList = [];
+        if (hasRandom) {
+          optionsList.push({
+            value: 'random',
+            label: t('editor.inspector.options.preset.random') || 'Random',
+            group: 'all'
+          });
+        }
+
+        shellKeys.forEach((opt) => {
+          const translationKey = `editor.inspector.options.preset.${opt}`;
+          let translated = t(translationKey);
+          if (translated === translationKey) {
+            const snakeKey = String(opt).replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+            const snakeTranslationKey = `editor.inspector.options.preset.${snakeKey}`;
+            const snakeTranslated = t(snakeTranslationKey);
+            if (snakeTranslated !== snakeTranslationKey) {
+              translated = snakeTranslated;
+            }
+          }
+          const fallbackLabel = formatOptionLabelFallback(opt);
+          optionsList.push({
+            value: opt,
+            label: translated === translationKey ? fallbackLabel : translated,
+            group: 'shell',
+            groupLabel: shellHeaderTitle
+          });
+        });
+
+        cometKeys.forEach((opt) => {
+          const translationKey = `editor.inspector.options.preset.${opt}`;
+          let translated = t(translationKey);
+          if (translated === translationKey) {
+            const snakeKey = String(opt).replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+            const snakeTranslationKey = `editor.inspector.options.preset.${snakeKey}`;
+            const snakeTranslated = t(snakeTranslationKey);
+            if (snakeTranslated !== snakeTranslationKey) {
+              translated = snakeTranslated;
+            }
+          }
+          const fallbackLabel = formatOptionLabelFallback(opt);
+          optionsList.push({
+            value: opt,
+            label: translated === translationKey ? fallbackLabel : translated,
+            group: 'comet',
+            groupLabel: cometHeaderTitle
+          });
+        });
+      } else {
+        const sortedOptions = [...field.options].sort((a, b) => {
+          if (a === '') return -1;
+          if (b === '') return 1;
+          if (field.name === 'pattern') {
+            if (a === 'sweep-custom-curve') return -1;
+            if (b === 'sweep-custom-curve') return 1;
+          }
+          if (a === 'random') return -1;
+          if (b === 'random') return 1;
+          const labelA = getEnglishOptionLabel(field.name, a);
+          const labelB = getEnglishOptionLabel(field.name, b);
+          return labelA.localeCompare(labelB, 'en', { sensitivity: 'base' });
+        });
+
+        if (currentEventValue && !sortedOptions.includes(currentEventValue)) {
+          sortedOptions.push(currentEventValue);
+        }
+
+        optionsList = sortedOptions.map((opt) => {
+          const lookupKey = opt === '' ? 'empty' : opt;
+          const translationKey = `editor.inspector.options.${field.name}.${lookupKey}`;
+          let translated = t(translationKey);
+          if (translated === translationKey) {
+            const snakeKey = String(lookupKey).replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+            const snakeTranslationKey = `editor.inspector.options.${field.name}.${snakeKey}`;
+            const snakeTranslated = t(snakeTranslationKey);
+            if (snakeTranslated !== snakeTranslationKey) {
+              translated = snakeTranslated;
+            }
+          }
+          const fallbackLabel = formatOptionLabelFallback(opt || 'random');
+          return {
+            value: opt,
+            label: translated === translationKey ? fallbackLabel : translated
+          };
+        });
+      }
 
       let previewCategory = null;
       if (field.name === 'shape' || field.name === 'shapeType') {
@@ -1424,9 +1526,37 @@ export class PropertyInspector {
           : undefined,
         category: previewCategory,
         fieldName: field.name,
+        groups: customSelectGroups,
         onChange: (val) => handleValueChange(val)
       });
       input = customSelect.element;
+
+      if (field.name === 'preset') {
+        const hubBtn = document.createElement('button');
+        hubBtn.className = 'preset-hub-open-btn';
+        hubBtn.type = 'button';
+        hubBtn.title = t('editor.presetHub.browseLibrary') || 'Open Preset Library';
+        hubBtn.textContent = t('editor.presetHub.libraryButton') || 'Library';
+        hubBtn.style.padding = '2px 7px';
+        hubBtn.style.fontSize = '10px';
+        hubBtn.style.fontWeight = '600';
+        hubBtn.style.borderRadius = '3px';
+        hubBtn.style.border = '1px solid rgba(0, 229, 255, 0.4)';
+        hubBtn.style.background = 'rgba(0, 229, 255, 0.12)';
+        hubBtn.style.color = '#00e5ff';
+        hubBtn.style.cursor = 'pointer';
+        hubBtn.style.marginLeft = 'auto';
+
+        hubBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          globalEventBus.emit('preset-hub:open');
+        });
+
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.appendChild(hubBtn);
+      }
 
       if (previewCategory) {
         EffectPreviewTooltip.getInstance().bindElement(
@@ -4194,6 +4324,7 @@ export class PropertyInspector {
             delay: nextIdx * 0.45,
             scale: Math.max(0.35, 1.0 - nextIdx * 0.15),
             particleCountMultiplier: 1.0,
+            starLifeMultiplier: 1.0,
             effects: []
           });
           this.activeStageIndex = stages.length - 1;
@@ -4765,6 +4896,93 @@ export class PropertyInspector {
       particleInputRow.appendChild(particleNum);
       particleWrapper.appendChild(particleInputRow);
       card.appendChild(particleWrapper);
+
+      // Row 4c: Star Life Multiplier Slider & Number
+      const starLifeWrapper = document.createElement('div');
+      starLifeWrapper.className = 'stage-star-life-wrapper';
+      starLifeWrapper.style.display = 'flex';
+      starLifeWrapper.style.flexDirection = 'column';
+      starLifeWrapper.style.gap = '2px';
+
+      const starLifeHeader = document.createElement('div');
+      starLifeHeader.style.display = 'flex';
+      starLifeHeader.style.justifyContent = 'space-between';
+
+      const starLifeLbl = document.createElement('label');
+      starLifeLbl.className = 'inspector-label';
+      starLifeLbl.style.fontSize = '10px';
+      starLifeLbl.textContent =
+        t('editor.inspector.fields.stageStarLifeMultiplier') ||
+        'Star Lifetime';
+
+      const starLifeVal = stage.starLifeMultiplier !== undefined
+        ? Number(stage.starLifeMultiplier)
+        : 1.0;
+
+      const starLifeValText = document.createElement('span');
+      starLifeValText.className = 'stage-star-life-text';
+      starLifeValText.style.fontSize = '11px';
+      starLifeValText.style.color = '#3498db';
+      starLifeValText.textContent = `${starLifeVal.toFixed(2)}x`;
+
+      starLifeHeader.appendChild(starLifeLbl);
+      starLifeHeader.appendChild(starLifeValText);
+      starLifeWrapper.appendChild(starLifeHeader);
+
+      const starLifeInputRow = document.createElement('div');
+      starLifeInputRow.style.display = 'flex';
+      starLifeInputRow.style.alignItems = 'center';
+      starLifeInputRow.style.gap = '8px';
+
+      const starLifeSlider = document.createElement('input');
+      starLifeSlider.type = 'range';
+      starLifeSlider.className = 'stage-star-life-slider';
+      starLifeSlider.min = '0.25';
+      starLifeSlider.max = '3.0';
+      starLifeSlider.step = '0.05';
+      starLifeSlider.value = starLifeVal;
+      starLifeSlider.style.flex = '1';
+
+      const starLifeNum = document.createElement('input');
+      starLifeNum.type = 'number';
+      starLifeNum.className = 'inspector-input stage-star-life-input';
+      starLifeNum.style.width = '60px';
+      starLifeNum.style.fontSize = '11px';
+      starLifeNum.step = '0.05';
+      starLifeNum.min = '0.01';
+      starLifeNum.max = '5.0';
+      starLifeNum.value = starLifeVal;
+
+      starLifeSlider.addEventListener(
+        'input',
+        (e) => {
+          const val = parseFloat(e.target.value) || 1.0;
+          stage.starLifeMultiplier = val;
+          starLifeNum.value = val;
+          starLifeValText.textContent = `${val.toFixed(2)}x`;
+          this.triggerUpdate();
+        }
+      );
+
+      starLifeNum.addEventListener(
+        'change',
+        (e) => {
+          let val = parseFloat(e.target.value);
+          if (isNaN(val)) val = 1.0;
+          val = Math.max(0.01, val);
+          this.triggerUpdate('beforeChange');
+          stage.starLifeMultiplier = val;
+          starLifeSlider.value = Math.max(0.25, Math.min(3.0, val));
+          starLifeNum.value = val;
+          starLifeValText.textContent = `${val.toFixed(2)}x`;
+          this.triggerUpdate();
+        }
+      );
+
+      starLifeInputRow.appendChild(starLifeSlider);
+      starLifeInputRow.appendChild(starLifeNum);
+      starLifeWrapper.appendChild(starLifeInputRow);
+      card.appendChild(starLifeWrapper);
 
       // Row 5: Active Effects (Timeline and Triggered Modifiers)
       const calculateStageDuration = () => {

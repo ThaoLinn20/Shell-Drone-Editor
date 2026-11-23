@@ -96,7 +96,7 @@ describe('WorkstationDesk', () => {
   });
 });
 
-describe('SceneManager integration with WorkstationDesk', () => {
+describe('SceneManager workstation stub', () => {
   let sceneManager;
 
   beforeEach(() => {
@@ -109,14 +109,11 @@ describe('SceneManager integration with WorkstationDesk', () => {
     }
   });
 
-  it('should have workstationDesk instance and isNearWorkstation method', () => {
-    expect(sceneManager.workstationDesk).toBeDefined();
+  it('safely stubs isNearWorkstation after desk removal', () => {
+    expect(sceneManager.workstationDesk).toBeUndefined();
     expect(typeof sceneManager.isNearWorkstation).toBe('function');
 
     const nearPos = new THREE.Vector3(3.6, 4.2, 420.5);
-    expect(sceneManager.isNearWorkstation(nearPos)).toBe(true);
-
-    const farPos = new THREE.Vector3(0, 10, 0);
-    expect(sceneManager.isNearWorkstation(farPos)).toBe(false);
+    expect(sceneManager.isNearWorkstation(nearPos)).toBe(false);
   });
 });

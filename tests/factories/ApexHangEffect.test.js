@@ -59,7 +59,7 @@ describe('Apex Hang Active Effect', () => {
     );
     expect(highRes.gravityScale).toBe(0.0);
 
-    // Near-zero velocity (v = 2m/s < threshold): gravity activates towards 1.0
+    // Near-zero velocity (v = 2m/s < threshold): gravity activates smoothly towards apexHangGravityScale (~0.38)
     const stoppedVel = initialVel.clone().multiplyScalar(2 / 60);
     const stoppedRes = strategy.updateVelocity(
       stoppedVel,
@@ -69,7 +69,8 @@ describe('Apex Hang Active Effect', () => {
       2.5,
       effectState
     );
-    expect(stoppedRes.gravityScale).toBeGreaterThan(0.7);
+    expect(stoppedRes.gravityScale).toBeGreaterThan(0.25);
+    expect(stoppedRes.gravityScale).toBeLessThanOrEqual(0.38);
   });
 
   it('decelerates smoothly and locks gravity during the apex window', () => {
@@ -104,7 +105,7 @@ describe('Apex Hang Active Effect', () => {
     expect(hangRes.gravityScale).toBe(0.0);
     expect(testVel.length()).toBeLessThan(initialSpeed);
 
-    // 3. Fall phase (t > hangEnd): gravity smoothly ramps back up
+    // 3. Fall phase (t > hangEnd): gravity smoothly ramps back up to gentle falling scale
     const lateAge = maxLife * 0.85;
     const lateRes = earlyStrategy.updateVelocity(
       velocity.clone(),
@@ -113,7 +114,8 @@ describe('Apex Hang Active Effect', () => {
       lateAge,
       maxLife
     );
-    expect(lateRes.gravityScale).toBeGreaterThan(0.5);
+    expect(lateRes.gravityScale).toBeGreaterThan(0.25);
+    expect(lateRes.gravityScale).toBeLessThanOrEqual(0.38);
   });
 
   it('provides an apexSpeedMultiplier in FIREWORK_CONFIG.BURST for rhythmic expansion', () => {

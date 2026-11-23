@@ -22,7 +22,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     };
   },
   onChangeLanguage: (callback) => ipcRenderer.on('change-language', (event, lang) => callback(lang)),
-  onMenuAction: (callback) => ipcRenderer.on('menu-action', (event, action, data) => callback(action, data))
+  onMenuAction: (callback) => ipcRenderer.on('menu-action', (event, action, data) => callback(action, data)),
+  scanPresets: () => ipcRenderer.invoke('presets:scan'),
+  savePreset: (payload) => ipcRenderer.invoke('presets:save', payload),
+  deletePreset: (slug) => ipcRenderer.invoke('presets:delete', slug),
+  importPresetMedia: (slug, mediaType) => ipcRenderer.invoke('presets:import-media', { slug, mediaType }),
+  openPresetsFolder: (slug) => ipcRenderer.invoke('presets:open-folder', slug),
+  getPresetsPath: () => ipcRenderer.invoke('presets:get-path')
 });
 
 // Prevent mouse side buttons (back/forward) from triggering navigation in the browser

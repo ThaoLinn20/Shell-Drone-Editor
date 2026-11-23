@@ -145,4 +145,38 @@ describe('CustomSelect Component', () => {
 
     expect(() => select.destroy()).not.toThrow();
   });
+
+  it('should render group filter tabs and headers when options have groups', () => {
+    const options = [
+      { value: 'random', label: 'Random', group: 'all' },
+      { value: 'crysanthemum', label: 'Chrysanthemum', group: 'shell' },
+      { value: 'peony', label: 'Peony', group: 'shell' },
+      { value: 'comet_cluster', label: 'Comet Cluster', group: 'comet' }
+    ];
+
+    const select = new CustomSelect({
+      options,
+      value: 'crysanthemum',
+      groups: [
+        { id: 'all', label: 'All' },
+        { id: 'shell', label: 'Shell' },
+        { id: 'comet', label: 'Comet' }
+      ]
+    });
+
+    expect(select.hasGroups).toBe(true);
+    expect(select.tabsContainer).toBeDefined();
+    expect(select.tabButtons.length).toBe(3);
+
+    // Initial render shows group headers
+    const headers = select.optionsList.querySelectorAll('.custom-select-group-header');
+    expect(headers.length).toBeGreaterThanOrEqual(2);
+
+    // Filter by comet
+    select.setActiveGroupTab('comet');
+    expect(select.activeGroupTab).toBe('comet');
+    const items = select.optionsList.querySelectorAll('.custom-select-item');
+    expect(items.some((i) => i.dataset.value === 'comet_cluster')).toBe(true);
+    expect(items.some((i) => i.dataset.value === 'crysanthemum')).toBe(false);
+  });
 });

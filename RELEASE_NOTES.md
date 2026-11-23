@@ -1,21 +1,20 @@
-# Release Notes - v3.5.2
+# Release Notes - v3.5.4
 
 ## Downloads
-- Windows Installer (.exe): [FDShowStudio-Setup-3.5.2.exe](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/v3.5.2/FDShowStudio-Setup-3.5.2.exe)
-- Portable Archive (.zip): [FDShowStudio-3.5.2-win.zip](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/v3.5.2/FDShowStudio-3.5.2-win.zip)
-- All Release Assets: [GitHub Releases v3.5.2](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/tag/v3.5.2)
+- Windows Installer (.exe): [FDShowStudio-Setup-3.5.4.exe](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/v3.5.4/FDShowStudio-Setup-3.5.4.exe)
+- Portable Archive (.zip): [FDShowStudio-3.5.4-win.zip](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/v3.5.4/FDShowStudio-3.5.4-win.zip)
+- All Release Assets: [GitHub Releases v3.5.4](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/tag/v3.5.4)
 
 ## Features
-- Upgraded Wave Curve Editor with 1-to-1 interactive shells, real-time ballistic flight cords, and mortar ground positions.
-- Added multi-selection and batch editing to Wave Curve Editor for adjusting altitude and mortar spread across multiple shells simultaneously.
-- Consolidated sweep patterns into a unified preset selector with Arch, Double Peak, Wave, Slope, V-Shape, and Criss-Cross templates.
-- Added Horizontal Mirror tool to flip entire wave curves or selected shell groups horizontally with one click.
-- Enabled independent apex altitude and position adjustment for boundary shells (first and last shots) in wave curves.
-- Implemented 3-phase physical lifecycle model for firework timeline blocks showing ascent flight, burst bloom window, and star burnout fadeout.
-- Added dynamic flight time and burst window calculation for wave curves, automatically resizing and updating timeline blocks when apex heights change.
-
-## Bug Fixes
-- Fixed curve math variable reassignment ensuring completely reliable production builds.
+- Firework Preset Library: Dedicated gallery to browse, inspect, create, and manage custom and built-in firework shells with 16:9 banners and video previews.
+- Custom Presets per Row: Configurable grid layout in the library with 1, 5, 10, Auto, or custom column counts, including a responsive horizontal list layout for single-column viewing.
+- Sound Profiles in Presets: Automatically saves launch, burst, and crackle sound settings inside presets and restores them when applied to the timeline.
+- Bundled Offline Video Previews: All firework visual preview videos are now embedded in the installer data folder for immediate offline previewing.
+- User Data Protection on Updates: Enhanced Windows installer with automated backup and restore to prevent preset loss during app updates or reinstallations.
+- Multi-Nested Star Lifetime Controls: Added star lifetime multiplier controls for multi-nested firework stages in Property Inspector.
+- Categorized Preset Selectors: Grouped firework presets cleanly by Shell and Comet types in Property Inspector dropdowns.
+- Centralized Shortcut Guide: Moved the keyboard shortcut guide directly into the Guide Hub modal for easier access.
 
 ## Updates
-- Enhanced timeline event block tooltips with a detailed breakdown of launch timing, burst window, and final burnout duration.
+- Improved media preview loading performance with asset protocol resolution across local and bundled resources.
+- Optimized library modal layout with persistent display preferences saved across sessions.
