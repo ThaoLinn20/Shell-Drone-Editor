@@ -38,6 +38,14 @@ const __dirname = path.dirname(__filename);
 
 const isDev = !app.isPackaged;
 
+app.name = 'FDShowStudio';
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+if (isDev) {
+  try {
+    app.setPath('userData', path.join(app.getPath('appData'), 'FDShowStudio-Dev'));
+  } catch {}
+}
+
 let mainWindow = null;
 let updaterController = null;
 
