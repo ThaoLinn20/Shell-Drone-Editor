@@ -343,6 +343,10 @@ export class PresetHubModal {
       clearTimeout(this.hoverVideoTimer);
       this.hoverVideoTimer = null;
     }
+    if (this.activeVideoContainer) {
+      this.activeVideoContainer.style.opacity = '0';
+      this.activeVideoContainer = null;
+    }
     if (this.activeVideoEl) {
       try {
         this.activeVideoEl.pause();
@@ -535,25 +539,32 @@ export class PresetHubModal {
     bannerImg.style.transition = 'opacity 0.2s ease';
     bannerImg.alt = preset.name;
 
+    // Abstract gradient fallback
+    const placeholder = document.createElement('div');
+    placeholder.style.position = 'absolute';
+    placeholder.style.top = '0';
+    placeholder.style.left = '0';
+    placeholder.style.width = '100%';
+    placeholder.style.height = '100%';
+    placeholder.style.display = 'flex';
+    placeholder.style.alignItems = 'center';
+    placeholder.style.justifyContent = 'center';
+    placeholder.style.background = 'radial-gradient(circle, #1e293b 0%, #0f172a 100%)';
+    placeholder.style.color = '#475569';
+    placeholder.style.fontSize = '12px';
+    placeholder.style.fontWeight = '600';
+    placeholder.textContent = preset.name.slice(0, 16);
+
     if (preset.bannerUrl) {
       bannerImg.src = resolveAssetUrl(preset.bannerUrl);
+      bannerImg.addEventListener('error', () => {
+        bannerImg.style.display = 'none';
+        placeholder.style.display = 'flex';
+      });
       mediaWrap.appendChild(bannerImg);
+      placeholder.style.display = 'none';
+      mediaWrap.appendChild(placeholder);
     } else {
-      // Abstract gradient fallback
-      const placeholder = document.createElement('div');
-      placeholder.style.position = 'absolute';
-      placeholder.style.top = '0';
-      placeholder.style.left = '0';
-      placeholder.style.width = '100%';
-      placeholder.style.height = '100%';
-      placeholder.style.display = 'flex';
-      placeholder.style.alignItems = 'center';
-      placeholder.style.justifyContent = 'center';
-      placeholder.style.background = 'radial-gradient(circle, #1e293b 0%, #0f172a 100%)';
-      placeholder.style.color = '#475569';
-      placeholder.style.fontSize = '12px';
-      placeholder.style.fontWeight = '600';
-      placeholder.textContent = preset.name.slice(0, 16);
       mediaWrap.appendChild(placeholder);
     }
 
@@ -569,7 +580,7 @@ export class PresetHubModal {
     videoContainer.style.transition = 'opacity 0.2s ease';
     mediaWrap.appendChild(videoContainer);
 
-    // Hover-to-Play Video Preview (with 200ms debounce)
+    // Hover-to-Play Video Preview (with 150ms debounce)
     if (preset.hasVideo && preset.videoUrl) {
       card.addEventListener('mouseenter', () => {
         this.hoverVideoTimer = setTimeout(() => {
@@ -584,13 +595,20 @@ export class PresetHubModal {
           video.style.height = '100%';
           video.style.objectFit = 'cover';
 
-          video.addEventListener('canplay', () => {
+          const showVideo = () => {
             videoContainer.style.opacity = '1';
-          });
+          };
+          if (video.readyState >= 2) {
+            showVideo();
+          } else {
+            video.addEventListener('canplay', showVideo, { once: true });
+            video.addEventListener('loadeddata', showVideo, { once: true });
+          }
 
           videoContainer.appendChild(video);
           this.activeVideoEl = video;
-        }, 200);
+          this.activeVideoContainer = videoContainer;
+        }, 150);
       });
     }
 

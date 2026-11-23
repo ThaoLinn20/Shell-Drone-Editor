@@ -31,6 +31,9 @@ export default defineConfig({
               const contentType = ext === '.mp4' ? 'video/mp4' :
                 ext === '.webm' ? 'video/webm' :
                 ext === '.gif' ? 'image/gif' :
+                ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' :
+                ext === '.png' ? 'image/png' :
+                ext === '.webp' ? 'image/webp' :
                 'application/octet-stream';
 
               if (range) {

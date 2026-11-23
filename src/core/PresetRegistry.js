@@ -68,7 +68,15 @@ export class PresetRegistry {
     if (EFFECT_PREVIEW_METADATA) {
       for (const [key, meta] of Object.entries(EFFECT_PREVIEW_METADATA)) {
         if (meta.category === PREVIEW_CATEGORIES.PRESET) {
+          // Skip legacy hyphenated alias if canonical snake_case preset exists
+          if (key.includes('-') && EFFECT_PREVIEW_METADATA[key.replace(/-/g, '_')]) {
+            continue;
+          }
           const override = customMap.get(key);
+          const bannerUrl = override?.bannerUrl ||
+            meta.bannerUrl ||
+            (meta.videoUrl ? meta.videoUrl.replace(/\.mp4$/i, '.jpg') : null);
+          const videoUrl = override?.videoUrl || meta.videoUrl || null;
           list.push({
             id: key,
             slug: key,
@@ -76,10 +84,10 @@ export class PresetRegistry {
             category: override?.category || 'preset',
             tags: override?.tags || meta.tags || [],
             summary: override?.summary || meta.summary || '',
-            bannerUrl: override?.bannerUrl || meta.bannerUrl || null,
-            videoUrl: override?.videoUrl || meta.videoUrl || null,
-            hasBanner: Boolean(override?.hasBanner || meta.bannerUrl),
-            hasVideo: Boolean(override?.hasVideo || meta.videoUrl),
+            bannerUrl,
+            videoUrl,
+            hasBanner: Boolean(override?.hasBanner || bannerUrl),
+            hasVideo: Boolean(override?.hasVideo || videoUrl),
             isBuiltin: true,
             isCustom: false,
             isOverridden: Boolean(override),
