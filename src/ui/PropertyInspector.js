@@ -1531,6 +1531,33 @@ export class PropertyInspector {
       });
       input = customSelect.element;
 
+      if (field.name === 'preset') {
+        const hubBtn = document.createElement('button');
+        hubBtn.className = 'preset-hub-open-btn';
+        hubBtn.type = 'button';
+        hubBtn.title = t('editor.presetHub.browseLibrary') || 'Open Preset Library';
+        hubBtn.textContent = t('editor.presetHub.libraryButton') || 'Library';
+        hubBtn.style.padding = '2px 7px';
+        hubBtn.style.fontSize = '10px';
+        hubBtn.style.fontWeight = '600';
+        hubBtn.style.borderRadius = '3px';
+        hubBtn.style.border = '1px solid rgba(0, 229, 255, 0.4)';
+        hubBtn.style.background = 'rgba(0, 229, 255, 0.12)';
+        hubBtn.style.color = '#00e5ff';
+        hubBtn.style.cursor = 'pointer';
+        hubBtn.style.marginLeft = 'auto';
+
+        hubBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          globalEventBus.emit('preset-hub:open');
+        });
+
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.appendChild(hubBtn);
+      }
+
       if (previewCategory) {
         EffectPreviewTooltip.getInstance().bindElement(
           label,
