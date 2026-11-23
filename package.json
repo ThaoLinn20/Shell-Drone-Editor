@@ -29,6 +29,12 @@
         "releaseType": "release"
       }
     ],
+    "extraResources": [
+      {
+        "from": "data",
+        "to": "data"
+      }
+    ],
     "directories": {
       "output": "dist-electron"
     },

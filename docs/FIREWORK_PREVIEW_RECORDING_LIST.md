@@ -18,7 +18,7 @@ Tai lieu nay liet ke toan bo danh sach cac video clip can quay de su dung cho he
 
 ## 2. Danh Sach Video Chuyen Dong (Dynamics)
 
-**Thu muc luu tru**: `./public/previews/dynamics/`
+**Thu muc luu tru**: `./data/previews/dynamics/`
 
 | STT | Ten File Video | Ten Hieu Ung | Goi Y Mau Sac / Goc Quay | Trang Thai |
 | :--- | :--- | :--- | :--- | :--- |
@@ -52,7 +52,7 @@ Tai lieu nay liet ke toan bo danh sach cac video clip can quay de su dung cho he
 
 ## 3. Danh Sach Video Hinh Dang Khong Gian (Shapes)
 
-**Thu muc luu tru**: `./public/previews/shapes/`
+**Thu muc luu tru**: `./data/previews/shapes/`
 
 | STT | Ten File Video | Ten Hinh Khoi | Goi Y Goc Quay | Trang Thai |
 | :--- | :--- | :--- | :--- | :--- |
@@ -78,7 +78,7 @@ Tai lieu nay liet ke toan bo danh sach cac video clip can quay de su dung cho he
 
 ## 4. Danh Sach Video Hieu Ung Quang Hoc & Modifiers (Effects)
 
-**Thu muc luu tru**: `./public/previews/effects/`
+**Thu muc luu tru**: `./data/previews/effects/`
 
 | STT | Ten File Video | Ten Hieu Ung | Dac Trung Chinh | Trang Thai |
 | :--- | :--- | :--- | :--- | :--- |
@@ -96,7 +96,7 @@ Tai lieu nay liet ke toan bo danh sach cac video clip can quay de su dung cho he
 
 ## 5. Danh Sach Video Mau Hoan Chinh (Presets)
 
-**Thu muc luu tru**: `./public/previews/presets/`
+**Thu muc luu tru**: `./data/previews/presets/`
 
 | STT | Ten File Video | Ten Mau Preset | Dac Trung Tong The | Trang Thai |
 | :--- | :--- | :--- | :--- | :--- |
@@ -122,5 +122,5 @@ Tai lieu nay liet ke toan bo danh sach cac video clip can quay de su dung cho he
 
 1. **Ghi hinh**: Su dung cong cu quay man hinh (OBS, Windows Game Bar `Win + G`, hoac chuc nang Export clip) voi khung vuong 480x480.
 2. **Dat ten file**: Copy chinh xac ten file tu cot **Ten File Video** o cac bang tren (chu thuong, khong dau, noi bang dau `-` hoac `_`).
-3. **Luu file**: Copy cac file `.mp4` da quay vao dung thu muc con ben trong `./public/previews/`.
+3. **Luu file**: Copy cac file `.mp4` da quay vao dung thu muc con ben trong `./data/previews/`.
 4. **Kiem tra**: Mo phan mem, di chuot (hover) vao tung tuy chon trong Property Inspector hoac Studio, video se tu dong phat mui preview.

@@ -1492,14 +1492,38 @@ export class TimelineEditor {
       if (ev.type === 'sequence') {
         ev.preset = preset.id || preset.slug;
         if (preset.composition) {
-          if (preset.composition.shape) ev.shapeType = preset.composition.shape;
-          if (preset.composition.dynamics) ev.dynamicsType = preset.composition.dynamics;
-          if (preset.composition.color) ev.color = preset.composition.color;
-          if (Array.isArray(preset.composition.activeEffects)) {
-            ev.effects = [...preset.composition.activeEffects];
+          const comp = preset.composition;
+          if (comp.shapeType || comp.shape) {
+            ev.shapeType = comp.shapeType || comp.shape;
           }
-          if (preset.composition.particleCountMultiplier) {
-            ev.particleCountMultiplier = preset.composition.particleCountMultiplier;
+          if (comp.dynamicsType || comp.dynamics) {
+            ev.dynamicsType = comp.dynamicsType || comp.dynamics;
+          }
+          if (comp.color) {
+            ev.color = comp.color;
+          }
+          if (Array.isArray(comp.effects || comp.activeEffects)) {
+            ev.effects = [...(comp.effects || comp.activeEffects)];
+          }
+          if (typeof comp.scale === 'number') {
+            ev.scale = comp.scale;
+          }
+          if (typeof comp.particleCountMultiplier === 'number') {
+            ev.particleCountMultiplier = comp.particleCountMultiplier;
+          }
+          if (typeof comp.starLifeMultiplier === 'number') {
+            ev.starLifeMultiplier = comp.starLifeMultiplier;
+          }
+          if (typeof comp.multiNested === 'boolean') {
+            ev.multiNested = comp.multiNested;
+          }
+          if (Array.isArray(comp.stages)) {
+            ev.stages = JSON.parse(JSON.stringify(comp.stages));
+          }
+          if (comp.secondBurst) {
+            ev.secondBurst = {
+              ...comp.secondBurst
+            };
           }
         }
       }

@@ -268,3 +268,33 @@ export function deletePresetBundle(presetsDir, slug) {
     success: false
   };
 }
+
+/**
+ * Recursively seed missing files from source directory to target directory.
+ * Does not overwrite existing files in destination.
+ * @param {string} sourceDir
+ * @param {string} targetDir
+ */
+export function seedDirectoryRecursively(sourceDir, targetDir) {
+  if (!fs.existsSync(sourceDir)) {
+    return;
+  }
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir, {
+      recursive: true
+    });
+  }
+  const entries = fs.readdirSync(sourceDir, {
+    withFileTypes: true
+  });
+  for (const entry of entries) {
+    const srcChild = path.join(sourceDir, entry.name);
+    const dstChild = path.join(targetDir, entry.name);
+    if (entry.isDirectory()) {
+      seedDirectoryRecursively(srcChild, dstChild);
+    } else if (!fs.existsSync(dstChild)) {
+      fs.copyFileSync(srcChild, dstChild);
+    }
+  }
+}
+

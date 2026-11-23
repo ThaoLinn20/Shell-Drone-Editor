@@ -2,6 +2,7 @@ import {
   getEffectPreview,
   PREVIEW_CATEGORIES
 } from '../config/effectPreviews.js';
+import { resolveAssetUrl } from '../utils/assetUrl.js';
 
 export class EffectPreviewTooltip {
   constructor() {
@@ -237,11 +238,7 @@ export class EffectPreviewTooltip {
       return;
     }
 
-    const resolvedUrl = url.startsWith('http') ||
-      url.startsWith('/') ||
-      url.startsWith('./')
-      ? url
-      : `./${url}`;
+    const resolvedUrl = resolveAssetUrl(url);
 
     this._showVideo();
 

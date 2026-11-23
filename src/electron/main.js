@@ -15,7 +15,8 @@ import { setupAutoUpdater } from './updater.js';
 import {
   scanPresetBundles,
   savePresetBundle,
-  deletePresetBundle
+  deletePresetBundle,
+  seedDirectoryRecursively
 } from './presetStorage.js';
 
 protocol.registerSchemesAsPrivileged([
@@ -108,8 +109,31 @@ if (!isDev) {
         }
       }
     }
+
+    seedDataDir();
   } catch (err) {
     console.error('Failed to seed default sequences in production:', err);
+  }
+}
+
+export { seedDirectoryRecursively };
+
+export function seedDataDir() {
+  if (isDev) {
+    return;
+  }
+  try {
+    const bundledDataDir = path.join(process.resourcesPath, 'data');
+    const targetDataDir = resolveDataDir();
+    if (!fs.existsSync(bundledDataDir)) {
+      return;
+    }
+    if (path.resolve(bundledDataDir) === path.resolve(targetDataDir)) {
+      return;
+    }
+    seedDirectoryRecursively(bundledDataDir, targetDataDir);
+  } catch (err) {
+    console.error('Failed to seed data directory in production:', err);
   }
 }
 
@@ -892,21 +916,36 @@ app.whenReady().then(() => {
   protocol.handle('app-asset', async (request) => {
     try {
       const url = new URL(request.url);
+      const host = url.host;
       let pathname = decodeURIComponent(url.pathname);
       if (pathname.startsWith('/')) {
         pathname = pathname.slice(1);
       }
+      const fullRelativePath = host
+        ? (pathname ? path.join(host, pathname) : host)
+        : pathname;
       const dataRoot = path.resolve(resolveDataDir());
-      const targetPath = path.resolve(dataRoot, pathname);
+      let targetPath = path.resolve(dataRoot, fullRelativePath);
       if (!targetPath.startsWith(dataRoot)) {
-        return new Response('Access Denied', { status: 403 });
+        return new Response('Access Denied', {
+          status: 403
+        });
       }
       if (!fs.existsSync(targetPath)) {
-        return new Response('Not Found', { status: 404 });
+        const fallbackDevPath = path.resolve(__dirname, '../../data', fullRelativePath);
+        if (fs.existsSync(fallbackDevPath)) {
+          targetPath = fallbackDevPath;
+        } else {
+          return new Response('Not Found', {
+            status: 404
+          });
+        }
       }
       return net.fetch(`file:///${targetPath.replace(/\\/g, '/')}`);
     } catch {
-      return new Response('Internal Error', { status: 500 });
+      return new Response('Internal Error', {
+        status: 500
+      });
     }
   });
 

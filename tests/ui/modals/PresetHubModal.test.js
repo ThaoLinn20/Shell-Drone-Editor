@@ -164,6 +164,40 @@ describe('PresetHubModal Component', () => {
     expect(modal.drawer.style.display).toBe('none');
   });
 
+  it('pre-populates composition when creating a new preset with an active timeline event', () => {
+    modal.timelineEditor = {
+      inspector: {
+        selectedEvent: {
+          name: 'Golden Ring Willow',
+          shapeType: 'ring',
+          dynamicsType: 'willow',
+          color: '#ffd700',
+          scale: 1.5,
+          particleCountMultiplier: 1.2,
+          starLifeMultiplier: 1.8,
+          effects: ['strobe'],
+          multiNested: false
+        }
+      }
+    };
+
+    modal.openDrawerForNew();
+    expect(modal.activeEditingPreset).toBeDefined();
+    expect(modal.activeEditingPreset.name).toBe('Golden Ring Willow');
+    expect(modal.activeEditingPreset.composition).toEqual({
+      shapeType: 'ring',
+      dynamicsType: 'willow',
+      color: '#ffd700',
+      scale: 1.5,
+      particleCountMultiplier: 1.2,
+      starLifeMultiplier: 1.8,
+      effects: ['strobe'],
+      multiNested: false,
+      stages: [],
+      secondBurst: null
+    });
+  });
+
   it('invokes onApply when apply button is clicked on a preset card', () => {
     modal.renderGrid();
     const firstCard = modal.gridContainer.querySelector('.preset-card');

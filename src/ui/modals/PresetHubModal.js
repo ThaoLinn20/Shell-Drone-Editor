@@ -5,6 +5,7 @@ import {
 } from '../ModalShell.js';
 import { presetRegistry } from '../../core/PresetRegistry.js';
 import { showToast } from '../../utils/Toast.js';
+import { resolveAssetUrl } from '../../utils/assetUrl.js';
 
 export class PresetHubModal {
   constructor(options = {}) {
@@ -377,7 +378,7 @@ export class PresetHubModal {
     bannerImg.alt = preset.name;
 
     if (preset.bannerUrl) {
-      bannerImg.src = preset.bannerUrl;
+      bannerImg.src = resolveAssetUrl(preset.bannerUrl);
       mediaWrap.appendChild(bannerImg);
     } else {
       // Abstract gradient fallback
@@ -416,7 +417,7 @@ export class PresetHubModal {
         this.hoverVideoTimer = setTimeout(() => {
           this.cleanupActiveVideo();
           const video = document.createElement('video');
-          video.src = preset.videoUrl;
+          video.src = resolveAssetUrl(preset.videoUrl);
           video.autoplay = true;
           video.loop = true;
           video.muted = true;
@@ -566,12 +567,42 @@ export class PresetHubModal {
   }
 
   openDrawerForNew() {
+    const sel = this.timelineEditor?.inspector?.selectedEvent ||
+      this.timelineEditor?.selectedEvents?.[0] ||
+      null;
+
+    let composition = null;
+    let defaultName = 'New Custom Firework';
+    let defaultSummary = '';
+    let initialTags = ['shell'];
+
+    if (sel) {
+      const shape = sel.shapeType || 'sphere';
+      const dynamics = sel.dynamicsType || 'standard';
+      defaultName = sel.name || sel.label || `${shape}_${dynamics}`;
+      defaultSummary = `Custom firework preset based on ${shape} with ${dynamics}.`;
+      initialTags = [shape, dynamics];
+      composition = {
+        shapeType: shape,
+        dynamicsType: dynamics,
+        color: sel.color || '#ffaa00',
+        scale: sel.scale ?? 1.0,
+        particleCountMultiplier: sel.particleCountMultiplier ?? 1.0,
+        starLifeMultiplier: sel.starLifeMultiplier ?? 1.0,
+        effects: Array.isArray(sel.effects) ? [...sel.effects] : [],
+        multiNested: Boolean(sel.multiNested),
+        stages: Array.isArray(sel.stages) ? JSON.parse(JSON.stringify(sel.stages)) : [],
+        secondBurst: sel.secondBurst ? { ...sel.secondBurst } : null
+      };
+    }
+
     const newPreset = {
       slug: `custom_shell_${Date.now()}`,
-      name: 'New Custom Firework',
+      name: defaultName,
       category: 'shell',
-      tags: [],
-      summary: '',
+      tags: initialTags,
+      summary: defaultSummary,
+      composition,
       isCustom: true
     };
     this.activeEditingPreset = newPreset;
@@ -795,6 +826,7 @@ export class PresetHubModal {
         category: catInput.value.trim() || 'shell',
         tags,
         summary: sumTextarea.value.trim(),
+        composition: preset.composition || null,
         isCustom: true
       };
 
