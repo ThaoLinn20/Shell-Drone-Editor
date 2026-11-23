@@ -239,6 +239,40 @@ describe('FireworkSequencer', () => {
     expect(firstTask.options.ratioY).toBeLessThan(lastTask.options.ratioY);
   });
 
+  it('should map 1-to-1 individual shell coordinates in sweep-custom-curve', () => {
+    const customPoints = [
+      { x: 0.1, y: 0.45, launchX: 0.2, angle: 0.15 },
+      { x: 0.5, y: 0.85, launchX: 0.5, angle: 0.0 },
+      { x: 0.9, y: 0.65, launchX: 0.8, angle: -0.22 }
+    ];
+
+    sequencer.playPattern('sweep-custom-curve', {
+      count: 3,
+      duration: 1.0,
+      wavePoints: customPoints,
+      heightJitter: 0
+    });
+
+    expect(sequencer.activeTasks.length).toBe(3);
+    expect(sequencer.activeTasks[0].options.ratioX).toBeCloseTo(0.1, 2);
+    expect(sequencer.activeTasks[0].options.ratioY).toBeCloseTo(0.45, 2);
+    expect(sequencer.activeTasks[0].options.launchRatioX).toBeCloseTo(0.2, 2);
+    expect(sequencer.activeTasks[0].options.isTargetedTrajectory).toBe(true);
+    expect(sequencer.activeTasks[0].options.angleOffset).toBeCloseTo(0.15, 2);
+
+    expect(sequencer.activeTasks[1].options.ratioX).toBeCloseTo(0.5, 2);
+    expect(sequencer.activeTasks[1].options.ratioY).toBeCloseTo(0.85, 2);
+    expect(sequencer.activeTasks[1].options.launchRatioX).toBeCloseTo(0.5, 2);
+    expect(sequencer.activeTasks[1].options.isTargetedTrajectory).toBe(true);
+    expect(sequencer.activeTasks[1].options.angleOffset).toBeCloseTo(0.0, 2);
+
+    expect(sequencer.activeTasks[2].options.ratioX).toBeCloseTo(0.9, 2);
+    expect(sequencer.activeTasks[2].options.ratioY).toBeCloseTo(0.65, 2);
+    expect(sequencer.activeTasks[2].options.launchRatioX).toBeCloseTo(0.8, 2);
+    expect(sequencer.activeTasks[2].options.isTargetedTrajectory).toBe(true);
+    expect(sequencer.activeTasks[2].options.angleOffset).toBeCloseTo(-0.22, 2);
+  });
+
   it('should scale pattern altitudes proportionally when ratioY is specified', () => {
     sequencer.playPattern('sinusoidal-wave', {
       count: 4,

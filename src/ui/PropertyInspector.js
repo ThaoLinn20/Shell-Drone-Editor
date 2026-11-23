@@ -15,7 +15,7 @@ import { CustomSelect } from './CustomSelect.js';
 import { PREVIEW_CATEGORIES } from '../config/effectPreviews.js';
 import { globalEventBus } from '../core/EventBus.js';
 import { WaveCurveEditor } from './WaveCurveEditor.js';
-import { DEFAULT_WAVE_POINTS } from '../utils/SplineMath.js';
+import { DEFAULT_WAVE_POINTS, resampleWavePoints, generateWavePreset } from '../utils/SplineMath.js';
 import { ActiveEffectsTimeline } from './ActiveEffectsTimeline.js';
 import { FIREWORK_CONFIG } from '../config/fireworks.js';
 
@@ -275,6 +275,36 @@ export class PropertyInspector {
     this.triggerUpdate();
   }
 
+  normalizeLegacyPattern(event) {
+    if (!event || typeof event.pattern !== 'string') return;
+    const legacyMap = {
+      'sweep-arc': 'arch',
+      'sweep-arc-right': 'arch',
+      'sweep-arc-left': 'arch',
+      'sweep-arc-out': 'arch',
+      'sweep-arc-out-right': 'arch',
+      'sweep-arc-out-left': 'arch',
+      'sweep-wave': 'wave',
+      'sinusoidal-wave': 'wave',
+      'cascade-slope': 'slope',
+      'cascade-slope-left': 'slope',
+      'cascade-slope-right': 'slope',
+      'v-shape': 'v_shape',
+      'chasing-scissors': 'criss_cross',
+      'sweep': 'slope'
+    };
+    if (legacyMap[event.pattern]) {
+      const preset = legacyMap[event.pattern];
+      event.pattern = 'sweep-custom-curve';
+      if (!event.wavePreset) {
+        event.wavePreset = preset;
+      }
+      if (!Array.isArray(event.wavePoints) || event.wavePoints.length === 0) {
+        event.wavePoints = generateWavePreset(preset, event.count || 12);
+      }
+    }
+  }
+
   show(event, selectedEvents = null) {
     if (this.debounceTimeout) {
       clearTimeout(this.debounceTimeout);
@@ -288,6 +318,12 @@ export class PropertyInspector {
       document.activeElement.blur();
     }
     this.isEditing = false;
+    if (event) {
+      this.normalizeLegacyPattern(event);
+    }
+    if (Array.isArray(selectedEvents)) {
+      selectedEvents.forEach((ev) => this.normalizeLegacyPattern(ev));
+    }
     this.selectedEvent = event;
     this.selectedEvents = Array.isArray(selectedEvents) && selectedEvents.length > 0
       ? selectedEvents
@@ -429,27 +465,14 @@ export class PropertyInspector {
               labelKey: 'pattern',
               type: 'select',
               options: [
-                'random',
-                'sweep',
                 'sweep-custom-curve',
-                'sweep-arc',
-                'sweep-arc-out',
-                'cascade-slope',
-                'chasing-scissors',
-                'waterfall-curtain',
-                'sinusoidal-wave',
-                'petal-bloom',
-                'teeter-totter',
-                'vortex-tunnel',
-                'stepping-stones',
-                'intertwined-helix',
+                'random',
                 'fan',
                 'fan-sweep',
                 'fan-sweep-continuous',
                 'fan-burst',
                 'crossfire',
                 'crossfire-burst',
-                'v-shape',
                 'spiral-helix',
                 'ripple',
                 'converge',
@@ -1310,6 +1333,17 @@ export class PropertyInspector {
             target.effects = [];
           }
         }
+
+        if (field.name === 'pattern') {
+          if (val === 'sweep-custom-curve') {
+            if (!target.wavePreset) {
+              target.wavePreset = 'arch';
+            }
+            if (!Array.isArray(target.wavePoints) || target.wavePoints.length === 0) {
+              target.wavePoints = generateWavePreset(target.wavePreset, target.count || 12);
+            }
+          }
+        }
       });
 
       this.triggerUpdate();
@@ -1329,6 +1363,10 @@ export class PropertyInspector {
       const sortedOptions = [...field.options].sort((a, b) => {
         if (a === '') return -1;
         if (b === '') return 1;
+        if (field.name === 'pattern') {
+          if (a === 'sweep-custom-curve') return -1;
+          if (b === 'sweep-custom-curve') return 1;
+        }
         if (a === 'random') return -1;
         if (b === 'random') return 1;
         if (field.name === 'preset') {
@@ -1339,6 +1377,10 @@ export class PropertyInspector {
         const labelB = getEnglishOptionLabel(field.name, b);
         return labelA.localeCompare(labelB, 'en', { sensitivity: 'base' });
       });
+
+      if (currentEventValue && !sortedOptions.includes(currentEventValue)) {
+        sortedOptions.push(currentEventValue);
+      }
 
       const optionsList = sortedOptions.map((opt) => {
         const lookupKey = opt === '' ? 'empty' : opt;
@@ -4757,8 +4799,9 @@ export class PropertyInspector {
     const event = this.selectedEvent;
     if (!event) return;
 
-    if (!Array.isArray(event.wavePoints) || event.wavePoints.length === 0) {
-      event.wavePoints = DEFAULT_WAVE_POINTS.map(p => ({ ...p }));
+    const count = Math.max(2, Number(event.count) || 12);
+    if (!Array.isArray(event.wavePoints) || event.wavePoints.length !== count) {
+      event.wavePoints = resampleWavePoints(event.wavePoints || DEFAULT_WAVE_POINTS, count);
     }
 
     const container = document.createElement('div');
@@ -4769,10 +4812,19 @@ export class PropertyInspector {
 
     const editor = new WaveCurveEditor({
       points: event.wavePoints,
-      shellCount: Number(event.count) || 12,
-      onChange: (newPoints) => {
+      shellCount: count,
+      wavePreset: event.wavePreset || 'custom',
+      onChange: (newPoints, newCount, newPreset) => {
         this.triggerUpdate('beforeChange');
         event.wavePoints = newPoints;
+        if (newPreset) {
+          event.wavePreset = newPreset;
+        }
+        if (newCount && event.count !== newCount) {
+          event.count = newCount;
+          const countInput = this.container?.querySelector?.('input[data-field-name="count"]');
+          if (countInput) countInput.value = newCount;
+        }
         this.triggerUpdate();
       }
     });

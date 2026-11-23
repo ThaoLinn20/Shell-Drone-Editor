@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_WAVE_POINTS,
   evaluateWaveCurve,
-  sanitizeWavePoints
+  sanitizeWavePoints,
+  angleFromTrajectory,
+  launchXFromAngle,
+  resampleWavePoints,
+  generateWavePreset
 } from '../../src/utils/SplineMath.js';
 
 describe('SplineMath', () => {
@@ -19,8 +23,8 @@ describe('SplineMath', () => {
       { x: 0.2, y: -0.5, angle: -0.2 }
     ];
     const sanitized = sanitizeWavePoints(input);
-    expect(sanitized[0].x).toBe(0.0);
-    expect(sanitized.at(-1).x).toBe(1.0);
+    expect(sanitized[0].x).toBe(0.2);
+    expect(sanitized.at(-1).x).toBe(0.8);
     for (let i = 1; i < sanitized.length; i++) {
       expect(sanitized[i].x).toBeGreaterThanOrEqual(sanitized[i - 1].x);
       expect(sanitized[i].y).toBeGreaterThanOrEqual(0.05);
@@ -56,5 +60,61 @@ describe('SplineMath', () => {
       expect(res.y).toBeGreaterThanOrEqual(0.05);
       expect(res.y).toBeLessThanOrEqual(1.0);
     }
+  });
+
+  it('calculates reciprocal angle and launchX from dual-node trajectory', () => {
+    // Firing straight up from center: launchX = 0.5, burstX = 0.5, burstY = 0.8 -> angle = 0
+    const angleCenter = angleFromTrajectory(0.5, 0.5, 0.8);
+    expect(angleCenter).toBeCloseTo(0.0, 3);
+    expect(launchXFromAngle(0.5, 0.8, 0.0)).toBeCloseTo(0.5, 3);
+
+    // Tilted right: launchX = 0.2, burstX = 0.6 -> angle > 0
+    const angleRight = angleFromTrajectory(0.2, 0.6, 0.8);
+    expect(angleRight).toBeGreaterThan(0.0);
+
+    // Tilted left: launchX = 0.8, burstX = 0.3 -> angle < 0
+    const angleLeft = angleFromTrajectory(0.8, 0.3, 0.8);
+    expect(angleLeft).toBeLessThan(0.0);
+  });
+
+  it('resamples wave points to exact targetCount with 1-to-1 shell mapping', () => {
+    const raw = [
+      { x: 0.0, y: 0.3, angle: 0.1 },
+      { x: 1.0, y: 0.8, angle: -0.1 }
+    ];
+    const resampled8 = resampleWavePoints(raw, 8);
+    expect(resampled8.length).toBe(8);
+    expect(resampled8[0].x).toBe(0.0);
+    expect(resampled8[7].x).toBe(1.0);
+    resampled8.forEach((p) => {
+      expect(p.launchX).toBeDefined();
+      expect(p.y).toBeGreaterThanOrEqual(0.05);
+    });
+  });
+
+  it('generates wave presets matching exact shell count', () => {
+    const vShape = generateWavePreset('v_shape', 6);
+    expect(vShape.length).toBe(6);
+    // Outer ends should be higher than center
+    expect(vShape[0].y).toBeGreaterThan(vShape[2].y);
+    expect(vShape[5].y).toBeGreaterThan(vShape[3].y);
+
+    const crissCross = generateWavePreset('criss_cross', 10);
+    expect(crissCross.length).toBe(10);
+    // Left shells fire from right, right shells fire from left
+    expect(crissCross[0].launchX).toBeCloseTo(1.0, 1);
+    expect(crissCross[9].launchX).toBeCloseTo(0.0, 1);
+  });
+
+  it('never inserts or prepends extra shells when first or last point X is adjusted', () => {
+    const raw = [
+      { x: 0.05, y: 0.4, launchX: 0.1, angle: 0.2 },
+      { x: 0.50, y: 0.9, launchX: 0.5, angle: 0.0 },
+      { x: 0.95, y: 0.4, launchX: 0.9, angle: -0.2 }
+    ];
+    const sanitized = sanitizeWavePoints(raw);
+    expect(sanitized.length).toBe(3);
+    expect(sanitized[0].x).toBe(0.05);
+    expect(sanitized[2].x).toBe(0.95);
   });
 });

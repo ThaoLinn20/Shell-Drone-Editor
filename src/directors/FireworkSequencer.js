@@ -51,6 +51,8 @@ export class FireworkSequencer {
       let ratioX = 0.5;
       let ratioY = 0.5;
       let ratioZ = 0.5;
+      let launchRatioX = undefined;
+      let isTargetedTrajectory = false;
       let delay = progress * duration;
       let spiralConfig = null;
       const baseRatioY = config.ratioY !== undefined ? config.ratioY : 0.8;
@@ -72,10 +74,28 @@ export class FireworkSequencer {
           const defaultX2 = 1.0;
           const startX = x1 !== undefined ? x1 : defaultX1;
           const endX = x2 !== undefined ? x2 : defaultX2;
-          const evaluated = evaluateWaveCurve(config.wavePoints, progress);
-          ratioX = startX + evaluated.x * (endX - startX);
-          ratioY = evaluated.y;
-          angleOffset = resolvedAngle !== undefined ? resolvedAngle : evaluated.angle;
+          let ptX;
+          let ptY;
+          let ptAngle;
+          let ptLaunchX;
+          if (Array.isArray(config.wavePoints) && config.wavePoints.length === count && config.wavePoints[i]) {
+            const pt = config.wavePoints[i];
+            ptX = pt.x;
+            ptY = pt.y;
+            ptAngle = pt.angle;
+            ptLaunchX = pt.launchX !== undefined ? pt.launchX : pt.x;
+          } else {
+            const evaluated = evaluateWaveCurve(config.wavePoints, progress);
+            ptX = evaluated.x;
+            ptY = evaluated.y;
+            ptAngle = evaluated.angle;
+            ptLaunchX = evaluated.launchX !== undefined ? evaluated.launchX : evaluated.x;
+          }
+          ratioX = startX + ptX * (endX - startX);
+          ratioY = ptY;
+          launchRatioX = startX + ptLaunchX * (endX - startX);
+          isTargetedTrajectory = true;
+          angleOffset = resolvedAngle !== undefined ? resolvedAngle : ptAngle;
           break;
         }
         case 'sweep':
@@ -663,6 +683,10 @@ export class FireworkSequencer {
           ratioX,
           ratioY,
           ratioZ,
+          launchRatioX,
+          targetRatioX: ratioX,
+          targetRatioY: ratioY,
+          isTargetedTrajectory,
           angleOffset,
           sectorId,
           color,
@@ -708,6 +732,8 @@ export class FireworkSequencer {
       const heightScale = baseRatioY / 0.7;
       let ratioY = config.ratioY !== undefined ? config.ratioY : 0.5;
       let ratioZ = config.ratioZ !== undefined ? config.ratioZ : 0.5;
+      let launchRatioX = undefined;
+      let isTargetedTrajectory = false;
 
       switch (pattern) {
         case 'continuous':
@@ -789,10 +815,28 @@ export class FireworkSequencer {
           const defaultX2 = 1.0;
           const startX = x1 !== undefined ? x1 : defaultX1;
           const endX = x2 !== undefined ? x2 : defaultX2;
-          const evaluated = evaluateWaveCurve(config.wavePoints, progress);
-          ratioX = startX + evaluated.x * (endX - startX);
-          ratioY = evaluated.y;
-          angleOffset = resolvedAngle !== undefined ? resolvedAngle : evaluated.angle;
+          let ptX;
+          let ptY;
+          let ptAngle;
+          let ptLaunchX;
+          if (Array.isArray(config.wavePoints) && config.wavePoints.length === count && config.wavePoints[i]) {
+            const pt = config.wavePoints[i];
+            ptX = pt.x;
+            ptY = pt.y;
+            ptAngle = pt.angle;
+            ptLaunchX = pt.launchX !== undefined ? pt.launchX : pt.x;
+          } else {
+            const evaluated = evaluateWaveCurve(config.wavePoints, progress);
+            ptX = evaluated.x;
+            ptY = evaluated.y;
+            ptAngle = evaluated.angle;
+            ptLaunchX = evaluated.launchX !== undefined ? evaluated.launchX : evaluated.x;
+          }
+          ratioX = startX + ptX * (endX - startX);
+          ratioY = ptY;
+          launchRatioX = startX + ptLaunchX * (endX - startX);
+          isTargetedTrajectory = true;
+          angleOffset = resolvedAngle !== undefined ? resolvedAngle : ptAngle;
           break;
         }
         case 'sweep':
@@ -1225,6 +1269,10 @@ export class FireworkSequencer {
           ratioX,
           ratioY,
           ratioZ,
+          launchRatioX,
+          targetRatioX: ratioX,
+          targetRatioY: ratioY,
+          isTargetedTrajectory,
           angleOffset,
           sectorId,
           color,
