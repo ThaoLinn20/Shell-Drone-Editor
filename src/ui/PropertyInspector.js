@@ -1307,6 +1307,18 @@ export class PropertyInspector {
             target.multiNested = true;
           }
 
+          const isCometKey = (key) => {
+            const k = String(key || '').toLowerCase();
+            return k === 'comet' || k.startsWith('comet_') || k.includes('comet');
+          };
+          if (target.type === 'sequence' || target.type === 'cometsequence') {
+            if (val && isCometKey(val)) {
+              target.type = 'cometsequence';
+            } else if (val && !isCometKey(val) && val !== 'random') {
+              target.type = 'sequence';
+            }
+          }
+
           // Clean up all optical effect flags from previous preset
           AVAILABLE_EFFECT_TAGS.forEach((eff) => {
             delete target[eff.key];
@@ -1360,46 +1372,136 @@ export class PropertyInspector {
 
     let input;
     if (field.type === 'select') {
-      const sortedOptions = [...field.options].sort((a, b) => {
-        if (a === '') return -1;
-        if (b === '') return 1;
-        if (field.name === 'pattern') {
-          if (a === 'sweep-custom-curve') return -1;
-          if (b === 'sweep-custom-curve') return 1;
-        }
-        if (a === 'random') return -1;
-        if (b === 'random') return 1;
-        if (field.name === 'preset') {
-          if (a === 'multi_nested' || a === 'multiNested') return -1;
-          if (b === 'multi_nested' || b === 'multiNested') return 1;
-        }
-        const labelA = getEnglishOptionLabel(field.name, a);
-        const labelB = getEnglishOptionLabel(field.name, b);
-        return labelA.localeCompare(labelB, 'en', { sensitivity: 'base' });
-      });
+      let optionsList;
+      let customSelectGroups = null;
 
-      if (currentEventValue && !sortedOptions.includes(currentEventValue)) {
-        sortedOptions.push(currentEventValue);
-      }
+      if (field.name === 'preset') {
+        customSelectGroups = [
+          { id: 'all', label: t('editor.inspector.filterAll') || 'All' },
+          { id: 'shell', label: t('editor.inspector.groupShell') || 'Shell' },
+          { id: 'comet', label: t('editor.inspector.groupComet') || 'Comet' }
+        ];
 
-      const optionsList = sortedOptions.map((opt) => {
-        const lookupKey = opt === '' ? 'empty' : opt;
-        const translationKey = `editor.inspector.options.${field.name}.${lookupKey}`;
-        let translated = t(translationKey);
-        if (translated === translationKey) {
-          const snakeKey = String(lookupKey).replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
-          const snakeTranslationKey = `editor.inspector.options.${field.name}.${snakeKey}`;
-          const snakeTranslated = t(snakeTranslationKey);
-          if (snakeTranslated !== snakeTranslationKey) {
-            translated = snakeTranslated;
-          }
-        }
-        const fallbackLabel = formatOptionLabelFallback(opt || 'random');
-        return {
-          value: opt,
-          label: translated === translationKey ? fallbackLabel : translated
+        const isCometKey = (key) => {
+          const k = String(key || '').toLowerCase();
+          return k === 'comet' || k.startsWith('comet_') || k.includes('comet');
         };
-      });
+
+        const allPresetKeys = [...field.options];
+        if (currentEventValue && !allPresetKeys.includes(currentEventValue)) {
+          allPresetKeys.push(currentEventValue);
+        }
+
+        const hasRandom = allPresetKeys.includes('random');
+        const nonRandom = allPresetKeys.filter((opt) => opt !== '' && opt !== 'random');
+
+        const shellKeys = nonRandom
+          .filter((k) => !isCometKey(k))
+          .sort((a, b) => {
+            if (a === 'multi_nested' || a === 'multiNested') return -1;
+            if (b === 'multi_nested' || b === 'multiNested') return 1;
+            const labelA = getEnglishOptionLabel('preset', a);
+            const labelB = getEnglishOptionLabel('preset', b);
+            return labelA.localeCompare(labelB, 'en', { sensitivity: 'base' });
+          });
+
+        const cometKeys = nonRandom
+          .filter((k) => isCometKey(k))
+          .sort((a, b) => {
+            const labelA = getEnglishOptionLabel('preset', a);
+            const labelB = getEnglishOptionLabel('preset', b);
+            return labelA.localeCompare(labelB, 'en', { sensitivity: 'base' });
+          });
+
+        const shellHeaderTitle = t('editor.inspector.groupShellTitle') || 'Shell Presets';
+        const cometHeaderTitle = t('editor.inspector.groupCometTitle') || 'Comet Presets';
+
+        optionsList = [];
+        if (hasRandom) {
+          optionsList.push({
+            value: 'random',
+            label: t('editor.inspector.options.preset.random') || 'Random',
+            group: 'all'
+          });
+        }
+
+        shellKeys.forEach((opt) => {
+          const translationKey = `editor.inspector.options.preset.${opt}`;
+          let translated = t(translationKey);
+          if (translated === translationKey) {
+            const snakeKey = String(opt).replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+            const snakeTranslationKey = `editor.inspector.options.preset.${snakeKey}`;
+            const snakeTranslated = t(snakeTranslationKey);
+            if (snakeTranslated !== snakeTranslationKey) {
+              translated = snakeTranslated;
+            }
+          }
+          const fallbackLabel = formatOptionLabelFallback(opt);
+          optionsList.push({
+            value: opt,
+            label: translated === translationKey ? fallbackLabel : translated,
+            group: 'shell',
+            groupLabel: shellHeaderTitle
+          });
+        });
+
+        cometKeys.forEach((opt) => {
+          const translationKey = `editor.inspector.options.preset.${opt}`;
+          let translated = t(translationKey);
+          if (translated === translationKey) {
+            const snakeKey = String(opt).replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+            const snakeTranslationKey = `editor.inspector.options.preset.${snakeKey}`;
+            const snakeTranslated = t(snakeTranslationKey);
+            if (snakeTranslated !== snakeTranslationKey) {
+              translated = snakeTranslated;
+            }
+          }
+          const fallbackLabel = formatOptionLabelFallback(opt);
+          optionsList.push({
+            value: opt,
+            label: translated === translationKey ? fallbackLabel : translated,
+            group: 'comet',
+            groupLabel: cometHeaderTitle
+          });
+        });
+      } else {
+        const sortedOptions = [...field.options].sort((a, b) => {
+          if (a === '') return -1;
+          if (b === '') return 1;
+          if (field.name === 'pattern') {
+            if (a === 'sweep-custom-curve') return -1;
+            if (b === 'sweep-custom-curve') return 1;
+          }
+          if (a === 'random') return -1;
+          if (b === 'random') return 1;
+          const labelA = getEnglishOptionLabel(field.name, a);
+          const labelB = getEnglishOptionLabel(field.name, b);
+          return labelA.localeCompare(labelB, 'en', { sensitivity: 'base' });
+        });
+
+        if (currentEventValue && !sortedOptions.includes(currentEventValue)) {
+          sortedOptions.push(currentEventValue);
+        }
+
+        optionsList = sortedOptions.map((opt) => {
+          const lookupKey = opt === '' ? 'empty' : opt;
+          const translationKey = `editor.inspector.options.${field.name}.${lookupKey}`;
+          let translated = t(translationKey);
+          if (translated === translationKey) {
+            const snakeKey = String(lookupKey).replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+            const snakeTranslationKey = `editor.inspector.options.${field.name}.${snakeKey}`;
+            const snakeTranslated = t(snakeTranslationKey);
+            if (snakeTranslated !== snakeTranslationKey) {
+              translated = snakeTranslated;
+            }
+          }
+          const fallbackLabel = formatOptionLabelFallback(opt || 'random');
+          return {
+            value: opt,
+            label: translated === translationKey ? fallbackLabel : translated
+          };
+        });
+      }
 
       let previewCategory = null;
       if (field.name === 'shape' || field.name === 'shapeType') {
@@ -1424,6 +1526,7 @@ export class PropertyInspector {
           : undefined,
         category: previewCategory,
         fieldName: field.name,
+        groups: customSelectGroups,
         onChange: (val) => handleValueChange(val)
       });
       input = customSelect.element;

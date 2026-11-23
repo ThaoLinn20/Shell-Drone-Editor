@@ -10,7 +10,8 @@ export class CustomSelect {
     fieldName = '',
     className = 'inspector-input',
     onChange = () => {},
-    enableSearch = true
+    enableSearch = true,
+    groups = null
   }) {
     this.options = options;
     this.currentValue = value;
@@ -21,6 +22,10 @@ export class CustomSelect {
     this.onChange = onChange;
     this.enableSearch = enableSearch;
     this.isOpen = false;
+    this.activeGroupTab = 'all';
+
+    this.groups = groups || this._deriveGroups();
+    this.hasGroups = Array.isArray(this.groups) && this.groups.length > 1;
 
     this.container = document.createElement('div');
     this.container.className = 'custom-select-container';
@@ -57,9 +62,52 @@ export class CustomSelect {
     }
   }
 
+  _deriveGroups() {
+    if (!Array.isArray(this.options)) return null;
+    const groupSet = new Set();
+    this.options.forEach((opt) => {
+      if (opt && opt.group && opt.group !== 'all') {
+        groupSet.add(opt.group);
+      }
+    });
+    if (groupSet.size === 0) return null;
+    return [
+      { id: 'all', label: 'All' },
+      ...Array.from(groupSet).map((g) => ({
+        id: g,
+        label: g === 'shell' ? 'Shell' : (g === 'comet' ? 'Comet' : g)
+      }))
+    ];
+  }
+
+  setActiveGroupTab(groupId) {
+    this.activeGroupTab = groupId;
+    if (this.tabButtons) {
+      this.tabButtons.forEach((btn) => {
+        const isSelected = btn.dataset.groupId === groupId;
+        const isComet = btn.dataset.groupId === 'comet';
+        btn.style.background = isSelected
+          ? (isComet ? 'rgba(251, 191, 36, 0.22)' : 'rgba(56, 189, 248, 0.2)')
+          : 'transparent';
+        btn.style.color = isSelected
+          ? (isComet ? '#fbbf24' : '#38bdf8')
+          : '#94a3b8';
+        btn.style.borderColor = isSelected
+          ? (isComet ? 'rgba(251, 191, 36, 0.45)' : 'rgba(56, 189, 248, 0.45)')
+          : 'transparent';
+      });
+    }
+    const currentQuery = this.searchInput ? this.searchInput.value : '';
+    this._renderOptionList(currentQuery);
+  }
+
   setOptions(newOptions) {
     this.options = newOptions;
-    this._renderOptionList();
+    if (!this.groups) {
+      this.groups = this._deriveGroups();
+      this.hasGroups = Array.isArray(this.groups) && this.groups.length > 1;
+    }
+    this._renderOptionList(this.searchInput ? this.searchInput.value : '');
     this._updateTriggerLabel();
   }
 
@@ -131,6 +179,57 @@ export class CustomSelect {
       padding: 4px;
     `;
 
+    // Group filter tabs
+    if (this.hasGroups && this.groups.length > 1) {
+      this.tabsContainer = document.createElement('div');
+      this.tabsContainer.className = 'custom-select-tabs';
+      this.tabsContainer.style.cssText = `
+        display: flex;
+        gap: 3px;
+        padding: 4px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid #1e293b;
+        background: #090d16;
+        border-radius: 4px;
+      `;
+
+      this.tabButtons = [];
+      this.groups.forEach((group) => {
+        const tabBtn = document.createElement('button');
+        tabBtn.type = 'button';
+        tabBtn.className = 'custom-select-tab-btn';
+        tabBtn.dataset.groupId = group.id;
+        tabBtn.textContent = group.label || group.id;
+        const isSelected = group.id === this.activeGroupTab;
+        const isComet = group.id === 'comet';
+        tabBtn.style.cssText = `
+          flex: 1;
+          padding: 3px 6px;
+          font-size: 11px;
+          font-weight: 600;
+          font-family: inherit;
+          border-radius: 4px;
+          cursor: pointer;
+          border: 1px solid transparent;
+          text-align: center;
+          transition: all 0.15s ease;
+          background: ${isSelected ? (isComet ? 'rgba(251, 191, 36, 0.22)' : 'rgba(56, 189, 248, 0.2)') : 'transparent'};
+          color: ${isSelected ? (isComet ? '#fbbf24' : '#38bdf8') : '#94a3b8'};
+          border-color: ${isSelected ? (isComet ? 'rgba(251, 191, 36, 0.45)' : 'rgba(56, 189, 248, 0.45)') : 'transparent'};
+        `;
+
+        tabBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.setActiveGroupTab(group.id);
+        });
+
+        this.tabButtons.push(tabBtn);
+        this.tabsContainer.appendChild(tabBtn);
+      });
+
+      this.menu.appendChild(this.tabsContainer);
+    }
+
     // Search input for long lists (> 6 items)
     if (this.enableSearch && this.options.length > 6) {
       this.searchWrapper = document.createElement('div');
@@ -182,11 +281,18 @@ export class CustomSelect {
 
   _renderOptionList(filterText = '') {
     this.optionsList.innerHTML = '';
+    if (Array.isArray(this.optionsList.children)) {
+      this.optionsList.children = [];
+    }
     const query = filterText.toLowerCase().trim();
 
     const filtered = this.options.filter(opt => {
       const label = typeof opt === 'string' ? opt : (opt.label || opt.value || '');
-      return !query || label.toLowerCase().includes(query);
+      const matchesQuery = !query || label.toLowerCase().includes(query);
+      if (!matchesQuery) return false;
+      if (!this.hasGroups || !this.activeGroupTab || this.activeGroupTab === 'all') return true;
+      if (!opt.group || opt.group === 'all') return true;
+      return opt.group === this.activeGroupTab;
     });
 
     if (filtered.length === 0) {
@@ -202,13 +308,47 @@ export class CustomSelect {
       return;
     }
 
+    let currentGroup = null;
     filtered.forEach(opt => {
       const optVal = typeof opt === 'string' ? opt : opt.value;
       const optLabel = typeof opt === 'string' ? opt : (opt.label || opt.value);
+      const optGroup = typeof opt === 'object' && opt !== null ? opt.group : null;
+
+      if (
+        this.hasGroups &&
+        (!this.activeGroupTab || this.activeGroupTab === 'all') &&
+        optGroup &&
+        optGroup !== 'all' &&
+        optGroup !== currentGroup
+      ) {
+        currentGroup = optGroup;
+        const header = document.createElement('div');
+        header.className = 'custom-select-group-header';
+        header.dataset.group = optGroup;
+        header.textContent = opt.groupLabel || (optGroup === 'shell' ? 'Shell Presets' : (optGroup === 'comet' ? 'Comet Presets' : optGroup));
+        const isCometGroup = optGroup === 'comet';
+        header.style.cssText = `
+          padding: 6px 10px 4px 10px;
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: ${isCometGroup ? '#fbbf24' : '#38bdf8'};
+          border-bottom: 1px solid ${isCometGroup ? 'rgba(251, 191, 36, 0.2)' : 'rgba(56, 189, 248, 0.2)'};
+          margin-top: 6px;
+          margin-bottom: 2px;
+          pointer-events: none;
+          user-select: none;
+        `;
+        this.optionsList.appendChild(header);
+      }
 
       const item = document.createElement('div');
       item.className = 'custom-select-item';
       item.dataset.value = optVal;
+      if (optGroup) {
+        item.dataset.group = optGroup;
+      }
       item.style.cssText = `
         padding: 6px 10px;
         font-size: 12px;
