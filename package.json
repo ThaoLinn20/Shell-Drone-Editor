@@ -69,7 +69,9 @@
       "createStartMenuShortcut": true,
       "shortcutName": "FDShowStudio",
       "displayLanguageSelector": true,
-      "license": "LICENSE"
+      "license": "LICENSE",
+      "deleteAppDataOnUninstall": false,
+      "include": "build/installer.nsh"
     }
   },
   "devDependencies": {

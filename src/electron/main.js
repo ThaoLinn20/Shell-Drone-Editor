@@ -125,15 +125,68 @@ export function seedDataDir() {
   try {
     const bundledDataDir = path.join(process.resourcesPath, 'data');
     const targetDataDir = resolveDataDir();
-    if (!fs.existsSync(bundledDataDir)) {
-      return;
+    if (fs.existsSync(bundledDataDir) && path.resolve(bundledDataDir) !== path.resolve(targetDataDir)) {
+      seedDirectoryRecursively(bundledDataDir, targetDataDir);
     }
-    if (path.resolve(bundledDataDir) === path.resolve(targetDataDir)) {
-      return;
+
+    // Safety backup sync: if targetDataDir is not userData, sync user presets between target and userData backup
+    const userDataDataDir = path.join(app.getPath('userData'), 'data');
+    if (path.resolve(targetDataDir) !== path.resolve(userDataDataDir)) {
+      const userDataPresets = path.join(userDataDataDir, 'presets');
+      const targetPresets = path.join(targetDataDir, 'presets');
+      // 1. Restore any missing presets from userData backup to target
+      if (fs.existsSync(userDataPresets)) {
+        seedDirectoryRecursively(userDataPresets, targetPresets);
+      }
+      // 2. Mirror any presets from target to userData backup
+      if (fs.existsSync(targetPresets)) {
+        seedDirectoryRecursively(targetPresets, userDataPresets);
+      }
     }
-    seedDirectoryRecursively(bundledDataDir, targetDataDir);
   } catch (err) {
     console.error('Failed to seed data directory in production:', err);
+  }
+}
+
+export function syncUserDataPresetBackup(targetPresetsDir, slug) {
+  if (isDev || !slug) {
+    return;
+  }
+  try {
+    const userDataPresets = path.join(app.getPath('userData'), 'data', 'presets');
+    if (path.resolve(targetPresetsDir) === path.resolve(userDataPresets)) {
+      return;
+    }
+    const safeSlug = path.basename(slug);
+    const srcBundle = path.join(targetPresetsDir, safeSlug);
+    const dstBundle = path.join(userDataPresets, safeSlug);
+    if (fs.existsSync(srcBundle)) {
+      seedDirectoryRecursively(srcBundle, dstBundle);
+    }
+  } catch (err) {
+    console.error('Error syncing user preset backup:', err);
+  }
+}
+
+export function deleteUserDataPresetBackup(targetPresetsDir, slug) {
+  if (isDev || !slug) {
+    return;
+  }
+  try {
+    const userDataPresets = path.join(app.getPath('userData'), 'data', 'presets');
+    if (path.resolve(targetPresetsDir) === path.resolve(userDataPresets)) {
+      return;
+    }
+    const safeSlug = path.basename(slug);
+    const dstBundle = path.join(userDataPresets, safeSlug);
+    if (fs.existsSync(dstBundle)) {
+      fs.rmSync(dstBundle, {
+        recursive: true,
+        force: true
+      });
+    }
+  } catch (err) {
+    console.error('Error deleting user preset backup:', err);
   }
 }
 
@@ -821,7 +874,9 @@ ipcMain.handle('presets:scan', async () => {
 ipcMain.handle('presets:save', async (_event, payload) => {
   try {
     const presetsDir = getPresetsDir();
-    return savePresetBundle(presetsDir, payload);
+    const result = savePresetBundle(presetsDir, payload);
+    syncUserDataPresetBackup(presetsDir, payload.slug || result.slug);
+    return result;
   } catch (err) {
     console.error('Error saving preset:', err);
     throw err;
@@ -831,7 +886,9 @@ ipcMain.handle('presets:save', async (_event, payload) => {
 ipcMain.handle('presets:delete', async (_event, slug) => {
   try {
     const presetsDir = getPresetsDir();
-    return deletePresetBundle(presetsDir, slug);
+    const result = deletePresetBundle(presetsDir, slug);
+    deleteUserDataPresetBackup(presetsDir, slug);
+    return result;
   } catch (err) {
     console.error('Error deleting preset:', err);
     throw err;
@@ -876,6 +933,7 @@ ipcMain.handle('presets:import-media', async (_event, { slug, mediaType }) => {
     }
 
     fs.copyFileSync(srcPath, destPath);
+    syncUserDataPresetBackup(presetsDir, safeSlug);
     const mediaUrl = `app-asset://presets/${encodeURIComponent(safeSlug)}/${encodeURIComponent(destName)}?t=${Date.now()}`;
     return {
       canceled: false,
