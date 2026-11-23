@@ -936,6 +936,7 @@ export default {
         delay: "爆炸延迟",
         stageScale: "缩放比例",
         stageParticleMultiplier: "粒子密度",
+        stageStarLifeMultiplier: "星芒寿命",
         particleCountMultiplier: "粒子密度",
         nestingMode: "嵌套模式",
         secondBurst: "二次爆炸 Second Burst",

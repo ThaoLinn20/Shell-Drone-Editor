@@ -950,6 +950,7 @@ export default {
         delay: "Burst Delay",
         stageScale: "Scale Multiplier",
         stageParticleMultiplier: "Particle Density",
+        stageStarLifeMultiplier: "Star Lifetime",
         particleCountMultiplier: "Particle Density",
         nestingMode: "Nesting Pattern",
         secondBurst: "Second Burst",

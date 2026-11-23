@@ -1018,6 +1018,7 @@ export default {
         delay: "爆発遅延",
         stageScale: "スケール倍率",
         stageParticleMultiplier: "パーティクル密度",
+        stageStarLifeMultiplier: "星の寿命",
         particleCountMultiplier: "パーティクル密度",
         nestingMode: "ネストモード",
         secondBurst: "二次炸裂 Second Burst",

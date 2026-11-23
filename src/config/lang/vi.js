@@ -950,6 +950,7 @@ export default {
         delay: "Độ trễ kích nổ",
         stageScale: "Tỉ lệ kích thước",
         stageParticleMultiplier: "Mật độ hạt",
+        stageStarLifeMultiplier: "Thời gian sống hạt",
         particleCountMultiplier: "Mật độ hạt",
         nestingMode: "Kiểu pháo lồng",
         secondBurst: "Pháo nổ phụ Second Burst",

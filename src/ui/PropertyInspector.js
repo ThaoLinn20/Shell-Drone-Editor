@@ -4297,6 +4297,7 @@ export class PropertyInspector {
             delay: nextIdx * 0.45,
             scale: Math.max(0.35, 1.0 - nextIdx * 0.15),
             particleCountMultiplier: 1.0,
+            starLifeMultiplier: 1.0,
             effects: []
           });
           this.activeStageIndex = stages.length - 1;
@@ -4868,6 +4869,93 @@ export class PropertyInspector {
       particleInputRow.appendChild(particleNum);
       particleWrapper.appendChild(particleInputRow);
       card.appendChild(particleWrapper);
+
+      // Row 4c: Star Life Multiplier Slider & Number
+      const starLifeWrapper = document.createElement('div');
+      starLifeWrapper.className = 'stage-star-life-wrapper';
+      starLifeWrapper.style.display = 'flex';
+      starLifeWrapper.style.flexDirection = 'column';
+      starLifeWrapper.style.gap = '2px';
+
+      const starLifeHeader = document.createElement('div');
+      starLifeHeader.style.display = 'flex';
+      starLifeHeader.style.justifyContent = 'space-between';
+
+      const starLifeLbl = document.createElement('label');
+      starLifeLbl.className = 'inspector-label';
+      starLifeLbl.style.fontSize = '10px';
+      starLifeLbl.textContent =
+        t('editor.inspector.fields.stageStarLifeMultiplier') ||
+        'Star Lifetime';
+
+      const starLifeVal = stage.starLifeMultiplier !== undefined
+        ? Number(stage.starLifeMultiplier)
+        : 1.0;
+
+      const starLifeValText = document.createElement('span');
+      starLifeValText.className = 'stage-star-life-text';
+      starLifeValText.style.fontSize = '11px';
+      starLifeValText.style.color = '#3498db';
+      starLifeValText.textContent = `${starLifeVal.toFixed(2)}x`;
+
+      starLifeHeader.appendChild(starLifeLbl);
+      starLifeHeader.appendChild(starLifeValText);
+      starLifeWrapper.appendChild(starLifeHeader);
+
+      const starLifeInputRow = document.createElement('div');
+      starLifeInputRow.style.display = 'flex';
+      starLifeInputRow.style.alignItems = 'center';
+      starLifeInputRow.style.gap = '8px';
+
+      const starLifeSlider = document.createElement('input');
+      starLifeSlider.type = 'range';
+      starLifeSlider.className = 'stage-star-life-slider';
+      starLifeSlider.min = '0.25';
+      starLifeSlider.max = '3.0';
+      starLifeSlider.step = '0.05';
+      starLifeSlider.value = starLifeVal;
+      starLifeSlider.style.flex = '1';
+
+      const starLifeNum = document.createElement('input');
+      starLifeNum.type = 'number';
+      starLifeNum.className = 'inspector-input stage-star-life-input';
+      starLifeNum.style.width = '60px';
+      starLifeNum.style.fontSize = '11px';
+      starLifeNum.step = '0.05';
+      starLifeNum.min = '0.01';
+      starLifeNum.max = '5.0';
+      starLifeNum.value = starLifeVal;
+
+      starLifeSlider.addEventListener(
+        'input',
+        (e) => {
+          const val = parseFloat(e.target.value) || 1.0;
+          stage.starLifeMultiplier = val;
+          starLifeNum.value = val;
+          starLifeValText.textContent = `${val.toFixed(2)}x`;
+          this.triggerUpdate();
+        }
+      );
+
+      starLifeNum.addEventListener(
+        'change',
+        (e) => {
+          let val = parseFloat(e.target.value);
+          if (isNaN(val)) val = 1.0;
+          val = Math.max(0.01, val);
+          this.triggerUpdate('beforeChange');
+          stage.starLifeMultiplier = val;
+          starLifeSlider.value = Math.max(0.25, Math.min(3.0, val));
+          starLifeNum.value = val;
+          starLifeValText.textContent = `${val.toFixed(2)}x`;
+          this.triggerUpdate();
+        }
+      );
+
+      starLifeInputRow.appendChild(starLifeSlider);
+      starLifeInputRow.appendChild(starLifeNum);
+      starLifeWrapper.appendChild(starLifeInputRow);
+      card.appendChild(starLifeWrapper);
 
       // Row 5: Active Effects (Timeline and Triggered Modifiers)
       const calculateStageDuration = () => {

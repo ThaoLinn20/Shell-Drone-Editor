@@ -837,5 +837,68 @@ describe('PropertyInspector Sliders and Star Lifetime Multiplier', () => {
       const patternField = coreGroup.fields.find((f) => f.name === 'pattern');
       expect(patternField.options[0]).toBe('sweep-custom-curve');
     });
+
+    it('renders star lifetime multiplier slider and input for multiNested stages and updates on input', () => {
+      const inspector = new PropertyInspector(
+        createMockElement('div'),
+        vi.fn(),
+        ['random'],
+        null,
+        null
+      );
+
+      const event = {
+        type: 'sequence',
+        preset: 'multiNested',
+        stages: [
+          {
+            shapeType: 'sphere',
+            dynamicsType: 'standard',
+            color: '#ff0000',
+            delay: 0.0,
+            scale: 1.0,
+            starLifeMultiplier: 1.5,
+            particleCountMultiplier: 1.0,
+            effects: []
+          }
+        ]
+      };
+
+      inspector.selectedEvent = event;
+      inspector.activeStageIndex = 0;
+
+      const parentContainer = createMockElement('div');
+      inspector.renderNestedStages(parentContainer);
+
+      const slider = parentContainer.querySelector('.stage-star-life-slider');
+      const numInput = parentContainer.querySelector('.stage-star-life-input');
+      const valText = parentContainer.querySelector('.stage-star-life-text');
+
+      expect(slider).toBeDefined();
+      expect(numInput).toBeDefined();
+      expect(slider.value).toBe(1.5);
+      expect(numInput.value).toBe(1.5);
+      expect(valText.textContent).toBe('1.50x');
+
+      slider.dispatchEvent({
+        type: 'input',
+        target: {
+          value: '2.25'
+        }
+      });
+      expect(event.stages[0].starLifeMultiplier).toBe(2.25);
+      expect(numInput.value).toBe(2.25);
+      expect(valText.textContent).toBe('2.25x');
+
+      numInput.dispatchEvent({
+        type: 'change',
+        target: {
+          value: '0.80'
+        }
+      });
+      expect(event.stages[0].starLifeMultiplier).toBe(0.80);
+      expect(slider.value).toBe(0.80);
+      expect(valText.textContent).toBe('0.80x');
+    });
   });
 });
