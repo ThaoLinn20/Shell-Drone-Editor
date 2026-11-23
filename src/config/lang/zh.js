@@ -271,6 +271,14 @@ export default {
         builtin: "内置",
         custom: "自定义"
       },
+      itemsPerRow: "每行预设数",
+      columns: {
+        auto: "自动",
+        one: "1 个预设",
+        five: "5 个预设",
+        ten: "10 个预设",
+        custom: "自定义"
+      },
       fields: {
         name: "预设名称",
         category: "分类",

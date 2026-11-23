@@ -271,6 +271,14 @@ export default {
         builtin: "内蔵",
         custom: "カスタム"
       },
+      itemsPerRow: "1行あたりの表示数",
+      columns: {
+        auto: "自動",
+        one: "1 プリセット",
+        five: "5 プリセット",
+        ten: "10 プリセット",
+        custom: "カスタム"
+      },
       fields: {
         name: "プリセット名",
         category: "カテゴリ",

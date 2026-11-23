@@ -19,6 +19,18 @@ export class PresetHubModal {
     this.hoverVideoTimer = null;
     this.activeVideoEl = null;
 
+    try {
+      this.columnsSetting = localStorage.getItem('fdstudio_preset_hub_columns') || 'auto';
+      const storedCustom = parseInt(
+        localStorage.getItem('fdstudio_preset_hub_custom_columns'),
+        10
+      );
+      this.customColumns = (!isNaN(storedCustom) && storedCustom >= 1) ? storedCustom : 4;
+    } catch {
+      this.columnsSetting = 'auto';
+      this.customColumns = 4;
+    }
+
     this._createDOM();
     this.unsubscribe = presetRegistry.subscribe(() => {
       if (this.isVisible) {
@@ -36,7 +48,7 @@ export class PresetHubModal {
     } = createModalShell({
       overlayClass: 'preset-hub-overlay',
       dialogClass: 'preset-hub-dialog',
-      width: '1040px',
+      width: '1080px',
       title: t('editor.presetHub.title') || 'Firework Preset Library',
       subtitle: t('editor.presetHub.subtitle') || 'Browse, customize banners and preview videos, and manage custom shells',
       closeTitle: t('common.close') || 'Close',
@@ -48,6 +60,7 @@ export class PresetHubModal {
     this.titleEl = titleEl;
     this.subtitleEl = subtitleEl;
 
+    this.dialog.style.maxWidth = '95vw';
     this.dialog.style.maxHeight = '88vh';
     this.dialog.style.height = '88vh';
     this.dialog.style.display = 'flex';
@@ -127,6 +140,104 @@ export class PresetHubModal {
       sourceToggle.appendChild(btn);
     }
     leftControls.appendChild(sourceToggle);
+
+    // Presets Per Row Selector (Auto, 1, 5, 10, Custom)
+    const columnsControl = document.createElement('div');
+    columnsControl.className = 'preset-hub-columns-control';
+    columnsControl.style.display = 'flex';
+    columnsControl.style.alignItems = 'center';
+    columnsControl.style.gap = '6px';
+    columnsControl.style.background = 'rgba(0, 0, 0, 0.3)';
+    columnsControl.style.borderRadius = '5px';
+    columnsControl.style.padding = '2px 8px';
+    columnsControl.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+
+    const columnsLabel = document.createElement('span');
+    columnsLabel.textContent = t('editor.presetHub.itemsPerRow') || 'Presets per row:';
+    columnsLabel.style.fontSize = '11px';
+    columnsLabel.style.color = '#94a3b8';
+    columnsLabel.style.whiteSpace = 'nowrap';
+    columnsControl.appendChild(columnsLabel);
+
+    const columnsSelect = document.createElement('select');
+    columnsSelect.className = 'preset-hub-columns-select inspector-select';
+    columnsSelect.style.background = '#0f172a';
+    columnsSelect.style.color = '#e2e8f0';
+    columnsSelect.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+    columnsSelect.style.borderRadius = '4px';
+    columnsSelect.style.fontSize = '11px';
+    columnsSelect.style.padding = '2px 6px';
+    columnsSelect.style.cursor = 'pointer';
+
+    const colOptions = [
+      { key: 'auto', label: t('editor.presetHub.columns.auto') || 'Auto' },
+      { key: '1', label: t('editor.presetHub.columns.one') || '1 preset' },
+      { key: '5', label: t('editor.presetHub.columns.five') || '5 presets' },
+      { key: '10', label: t('editor.presetHub.columns.ten') || '10 presets' },
+      { key: 'custom', label: t('editor.presetHub.columns.custom') || 'Custom' }
+    ];
+
+    for (const opt of colOptions) {
+      const optEl = document.createElement('option');
+      optEl.value = opt.key;
+      optEl.textContent = opt.label;
+      if (opt.key === this.columnsSetting) {
+        optEl.selected = true;
+      }
+      columnsSelect.appendChild(optEl);
+    }
+    columnsSelect.value = this.columnsSetting;
+
+    const customInput = document.createElement('input');
+    customInput.type = 'number';
+    customInput.className = 'preset-hub-custom-columns-input inspector-input';
+    customInput.min = '1';
+    customInput.max = '16';
+    customInput.value = String(this.customColumns);
+    customInput.style.width = '44px';
+    customInput.style.padding = '2px 4px';
+    customInput.style.fontSize = '11px';
+    customInput.style.background = '#0f172a';
+    customInput.style.color = '#e2e8f0';
+    customInput.style.border = '1px solid rgba(0, 229, 255, 0.4)';
+    customInput.style.borderRadius = '4px';
+    customInput.style.display = this.columnsSetting === 'custom' ? 'block' : 'none';
+
+    columnsSelect.addEventListener('change', (e) => {
+      const val = e.target.value;
+      this.columnsSetting = val;
+      try {
+        localStorage.setItem('fdstudio_preset_hub_columns', val);
+      } catch {}
+
+      if (val === 'custom') {
+        customInput.style.display = 'block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+      }
+      this.applyGridColumns();
+      this.renderGrid();
+    });
+
+    customInput.addEventListener('input', (e) => {
+      let val = parseInt(e.target.value, 10);
+      if (isNaN(val) || val < 1) val = 1;
+      if (val > 16) val = 16;
+      this.customColumns = val;
+      try {
+        localStorage.setItem('fdstudio_preset_hub_custom_columns', String(val));
+      } catch {}
+      this.applyGridColumns();
+      this.renderGrid();
+    });
+
+    columnsControl.appendChild(columnsSelect);
+    columnsControl.appendChild(customInput);
+    this.columnsControl = columnsControl;
+    this.columnsSelect = columnsSelect;
+    this.customColumnsInput = customInput;
+    leftControls.appendChild(columnsControl);
     toolbar.appendChild(leftControls);
 
     // Right controls: Action Buttons
@@ -188,10 +299,9 @@ export class PresetHubModal {
     gridContainer.style.overflowY = 'auto';
     gridContainer.style.padding = '18px 20px';
     gridContainer.style.display = 'grid';
-    gridContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(260px, 1fr))';
     gridContainer.style.gridAutoRows = 'max-content';
-    gridContainer.style.gap = '16px';
     this.gridContainer = gridContainer;
+    this.applyGridColumns();
     workspace.appendChild(gridContainer);
 
     // Right Edit Drawer
@@ -214,6 +324,7 @@ export class PresetHubModal {
   show() {
     this.isVisible = true;
     this.overlay.style.display = 'flex';
+    this.applyGridColumns();
     presetRegistry.loadPresets().then(() => {
       this.renderCategories();
       this.renderGrid();
@@ -289,6 +400,39 @@ export class PresetHubModal {
     }
   }
 
+  getEffectiveColumnCount() {
+    if (this.columnsSetting === 'auto') return 0;
+    if (this.columnsSetting === '1') return 1;
+    if (this.columnsSetting === '5') return 5;
+    if (this.columnsSetting === '10') return 10;
+    if (this.columnsSetting === 'custom') {
+      return Math.max(1, Math.min(16, parseInt(this.customColumns, 10) || 4));
+    }
+    return 0;
+  }
+
+  applyGridColumns() {
+    if (!this.gridContainer) return;
+    const setting = this.columnsSetting;
+    if (setting === 'auto') {
+      this.gridContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(260px, 1fr))';
+      this.gridContainer.style.gap = '16px';
+    } else if (setting === '1') {
+      this.gridContainer.style.gridTemplateColumns = 'repeat(1, minmax(0, 1fr))';
+      this.gridContainer.style.gap = '14px';
+    } else if (setting === '5') {
+      this.gridContainer.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
+      this.gridContainer.style.gap = '10px';
+    } else if (setting === '10') {
+      this.gridContainer.style.gridTemplateColumns = 'repeat(10, minmax(0, 1fr))';
+      this.gridContainer.style.gap = '6px';
+    } else if (setting === 'custom') {
+      const cols = Math.max(1, Math.min(16, parseInt(this.customColumns, 10) || 4));
+      this.gridContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+      this.gridContainer.style.gap = cols >= 8 ? '6px' : (cols >= 5 ? '10px' : '16px');
+    }
+  }
+
   renderGrid() {
     this.gridContainer.innerHTML = '';
     const allPresets = presetRegistry.getAllPresets();
@@ -334,6 +478,10 @@ export class PresetHubModal {
   }
 
   createPresetCard(preset) {
+    const effectiveCols = this.getEffectiveColumnCount();
+    const isSingleColumn = effectiveCols === 1;
+    const isDenseGrid = effectiveCols >= 8;
+
     const card = document.createElement('div');
     card.className = 'preset-card';
     card.style.background = 'rgba(20, 28, 42, 0.75)';
@@ -341,7 +489,10 @@ export class PresetHubModal {
     card.style.borderRadius = '8px';
     card.style.overflow = 'hidden';
     card.style.display = 'flex';
-    card.style.flexDirection = 'column';
+    card.style.flexDirection = isSingleColumn ? 'row' : 'column';
+    if (isSingleColumn) {
+      card.style.alignItems = 'stretch';
+    }
     card.style.transition = 'transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease';
     card.style.cursor = 'default';
 
@@ -360,8 +511,15 @@ export class PresetHubModal {
     // 16:9 Media Preview Box
     const mediaWrap = document.createElement('div');
     mediaWrap.className = 'preset-card-media';
-    mediaWrap.style.width = '100%';
-    mediaWrap.style.paddingTop = '56.25%'; // 16:9 Aspect Ratio
+    if (isSingleColumn) {
+      mediaWrap.style.width = '240px';
+      mediaWrap.style.minWidth = '240px';
+      mediaWrap.style.height = '135px';
+      mediaWrap.style.paddingTop = '0';
+    } else {
+      mediaWrap.style.width = '100%';
+      mediaWrap.style.paddingTop = '56.25%'; // 16:9 Aspect Ratio
+    }
     mediaWrap.style.position = 'relative';
     mediaWrap.style.background = '#070b12';
     mediaWrap.style.overflow = 'hidden';
@@ -471,15 +629,15 @@ export class PresetHubModal {
 
     // Card Details
     const details = document.createElement('div');
-    details.style.padding = '12px';
+    details.style.padding = isDenseGrid ? '6px 4px' : '12px';
     details.style.display = 'flex';
     details.style.flexDirection = 'column';
-    details.style.gap = '6px';
+    details.style.gap = isDenseGrid ? '4px' : '6px';
     details.style.flex = '1';
 
     const title = document.createElement('div');
     title.textContent = preset.name;
-    title.style.fontSize = '13px';
+    title.style.fontSize = isDenseGrid ? '11px' : '13px';
     title.style.fontWeight = 'bold';
     title.style.color = '#f8fafc';
     title.style.whiteSpace = 'nowrap';
@@ -487,7 +645,7 @@ export class PresetHubModal {
     title.style.textOverflow = 'ellipsis';
     details.appendChild(title);
 
-    if (preset.summary) {
+    if (preset.summary && !isDenseGrid) {
       const desc = document.createElement('div');
       desc.textContent = preset.summary;
       desc.style.fontSize = '11px';
@@ -504,18 +662,29 @@ export class PresetHubModal {
     const actions = document.createElement('div');
     actions.style.display = 'flex';
     actions.style.alignItems = 'center';
-    actions.style.justifyContent = 'space-between';
-    actions.style.gap = '6px';
+    if (isDenseGrid) {
+      actions.style.flexDirection = 'column';
+      actions.style.gap = '4px';
+    } else if (isSingleColumn) {
+      actions.style.justifyContent = 'flex-start';
+      actions.style.gap = '10px';
+    } else {
+      actions.style.justifyContent = 'space-between';
+      actions.style.gap = '6px';
+    }
     actions.style.marginTop = 'auto';
-    actions.style.paddingTop = '8px';
+    actions.style.paddingTop = isDenseGrid ? '4px' : '8px';
 
     const applyBtn = createModalButton(
       t('editor.presetHub.apply') || 'Apply',
       'primary'
     );
-    applyBtn.style.padding = '5px 10px';
-    applyBtn.style.fontSize = '11px';
-    applyBtn.style.flex = '1';
+    applyBtn.style.padding = isDenseGrid ? '3px 4px' : '5px 10px';
+    applyBtn.style.fontSize = isDenseGrid ? '10px' : '11px';
+    applyBtn.style.flex = isSingleColumn ? '0 0 100px' : '1';
+    if (isDenseGrid) {
+      applyBtn.style.width = '100%';
+    }
     applyBtn.addEventListener('click', () => {
       if (typeof this.onApply === 'function') {
         this.onApply(preset);
@@ -528,8 +697,13 @@ export class PresetHubModal {
       t('editor.presetHub.edit') || 'Edit',
       'secondary'
     );
-    editBtn.style.padding = '5px 10px';
-    editBtn.style.fontSize = '11px';
+    editBtn.style.padding = isDenseGrid ? '3px 4px' : '5px 10px';
+    editBtn.style.fontSize = isDenseGrid ? '10px' : '11px';
+    if (isSingleColumn) {
+      editBtn.style.flex = '0 0 80px';
+    } else if (isDenseGrid) {
+      editBtn.style.width = '100%';
+    }
     editBtn.addEventListener('click', () => {
       this.openDrawerForEdit(preset);
     });
@@ -540,9 +714,14 @@ export class PresetHubModal {
         t('editor.presetHub.delete') || 'Delete',
         'secondary'
       );
-      deleteBtn.style.padding = '5px 8px';
-      deleteBtn.style.fontSize = '11px';
+      deleteBtn.style.padding = isDenseGrid ? '3px 4px' : '5px 8px';
+      deleteBtn.style.fontSize = isDenseGrid ? '10px' : '11px';
       deleteBtn.style.color = '#ef4444';
+      if (isSingleColumn) {
+        deleteBtn.style.flex = '0 0 80px';
+      } else if (isDenseGrid) {
+        deleteBtn.style.width = '100%';
+      }
       deleteBtn.addEventListener('click', async () => {
         const confirmDelete = window.confirm(
           t('editor.presetHub.confirmDelete') || `Delete preset "${preset.name}" and all associated media files?`

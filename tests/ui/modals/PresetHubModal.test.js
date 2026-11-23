@@ -113,6 +113,20 @@ describe('PresetHubModal Component', () => {
       confirm: vi.fn(() => true)
     });
 
+    const localStore = {};
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn((key) => localStore[key] || null),
+      setItem: vi.fn((key, val) => {
+        localStore[key] = String(val);
+      }),
+      removeItem: vi.fn((key) => {
+        delete localStore[key];
+      }),
+      clear: vi.fn(() => {
+        for (const k in localStore) delete localStore[k];
+      })
+    });
+
     onApplySpy = vi.fn();
     const mod = await import('../../../src/ui/modals/PresetHubModal.js');
     PresetHubModal = mod.PresetHubModal;
@@ -131,6 +145,9 @@ describe('PresetHubModal Component', () => {
     expect(modal.searchInput).toBeDefined();
     expect(modal.gridContainer).toBeDefined();
     expect(modal.drawer).toBeDefined();
+    expect(modal.columnsControl).toBeDefined();
+    expect(modal.columnsSelect).toBeDefined();
+    expect(modal.customColumnsInput).toBeDefined();
   });
 
   it('shows and hides overlay on show() and hide()', () => {
@@ -261,5 +278,72 @@ describe('PresetHubModal Component', () => {
     expect(targetEvent.sound.crackle).toBe('dense');
     expect(targetEvent.sound.volumeMultiplier).toBe(1.5);
     expect(targetEvent.burstSound).toBe('heavy');
+  });
+
+  it('changes preset grid columns per row when selector changes', () => {
+    // Default is auto
+    expect(modal.columnsSetting).toBe('auto');
+    expect(modal.gridContainer.style.gridTemplateColumns).toBe(
+      'repeat(auto-fill, minmax(260px, 1fr))'
+    );
+
+    // Switch to 1 column
+    modal.columnsSelect.value = '1';
+    modal.columnsSelect._listeners.change.forEach((fn) =>
+      fn({ target: { value: '1' } })
+    );
+    expect(modal.columnsSetting).toBe('1');
+    expect(modal.gridContainer.style.gridTemplateColumns).toBe(
+      'repeat(1, minmax(0, 1fr))'
+    );
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      'fdstudio_preset_hub_columns',
+      '1'
+    );
+
+    // Check card layout in single column mode
+    const firstCard = modal.gridContainer.querySelector('.preset-card');
+    expect(firstCard.style.flexDirection).toBe('row');
+
+    // Switch to 5 columns
+    modal.columnsSelect.value = '5';
+    modal.columnsSelect._listeners.change.forEach((fn) =>
+      fn({ target: { value: '5' } })
+    );
+    expect(modal.columnsSetting).toBe('5');
+    expect(modal.gridContainer.style.gridTemplateColumns).toBe(
+      'repeat(5, minmax(0, 1fr))'
+    );
+
+    // Switch to 10 columns
+    modal.columnsSelect.value = '10';
+    modal.columnsSelect._listeners.change.forEach((fn) =>
+      fn({ target: { value: '10' } })
+    );
+    expect(modal.columnsSetting).toBe('10');
+    expect(modal.gridContainer.style.gridTemplateColumns).toBe(
+      'repeat(10, minmax(0, 1fr))'
+    );
+
+    // Switch to custom columns
+    modal.columnsSelect.value = 'custom';
+    modal.columnsSelect._listeners.change.forEach((fn) =>
+      fn({ target: { value: 'custom' } })
+    );
+    expect(modal.columnsSetting).toBe('custom');
+    expect(modal.customColumnsInput.style.display).toBe('block');
+
+    modal.customColumnsInput.value = '3';
+    modal.customColumnsInput._listeners.input.forEach((fn) =>
+      fn({ target: { value: '3' } })
+    );
+    expect(modal.customColumns).toBe(3);
+    expect(modal.gridContainer.style.gridTemplateColumns).toBe(
+      'repeat(3, minmax(0, 1fr))'
+    );
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      'fdstudio_preset_hub_custom_columns',
+      '3'
+    );
   });
 });

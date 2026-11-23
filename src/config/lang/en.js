@@ -280,6 +280,14 @@ export default {
         builtin: "Built-in",
         custom: "Custom"
       },
+      itemsPerRow: "Presets per row",
+      columns: {
+        auto: "Auto",
+        one: "1 preset",
+        five: "5 presets",
+        ten: "10 presets",
+        custom: "Custom"
+      },
       fields: {
         name: "Preset Name",
         category: "Category",

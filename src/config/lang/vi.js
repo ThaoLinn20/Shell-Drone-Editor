@@ -280,6 +280,14 @@ export default {
         builtin: "Mặc định",
         custom: "Tùy biến"
       },
+      itemsPerRow: "Số preset trên hàng",
+      columns: {
+        auto: "Tự động",
+        one: "1 preset",
+        five: "5 presets",
+        ten: "10 presets",
+        custom: "Tùy chỉnh"
+      },
       fields: {
         name: "Tên Mẫu Pháo",
         category: "Phân loại",
