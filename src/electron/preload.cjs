@@ -28,7 +28,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deletePreset: (slug) => ipcRenderer.invoke('presets:delete', slug),
   importPresetMedia: (slug, mediaType) => ipcRenderer.invoke('presets:import-media', { slug, mediaType }),
   openPresetsFolder: (slug) => ipcRenderer.invoke('presets:open-folder', slug),
-  getPresetsPath: () => ipcRenderer.invoke('presets:get-path')
+  getPresetsPath: () => ipcRenderer.invoke('presets:get-path'),
+  scanPatterns: () => ipcRenderer.invoke('patterns:scan'),
+  savePattern: (payload) => ipcRenderer.invoke('patterns:save', payload),
+  deletePattern: (slug) => ipcRenderer.invoke('patterns:delete', slug),
+  getPatternsPath: () => ipcRenderer.invoke('patterns:get-path')
 });
 
 // Prevent mouse side buttons (back/forward) from triggering navigation in the browser

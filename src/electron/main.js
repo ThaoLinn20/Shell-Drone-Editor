@@ -18,6 +18,11 @@ import {
   deletePresetBundle,
   seedDirectoryRecursively
 } from './presetStorage.js';
+import {
+  scanPatterns,
+  savePattern,
+  deletePattern
+} from './patternStorage.js';
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -73,6 +78,15 @@ export function getPresetsDir() {
     fs.mkdirSync(presetsDir, { recursive: true });
   }
   return presetsDir;
+}
+
+export function getPatternsDir() {
+  const dataDir = resolveDataDir();
+  const patternsDir = path.join(dataDir, 'patterns');
+  if (!fs.existsSync(patternsDir)) {
+    fs.mkdirSync(patternsDir, { recursive: true });
+  }
+  return patternsDir;
 }
 
 // Resolve the sequences directory path safely
@@ -975,6 +989,41 @@ ipcMain.handle('presets:open-folder', async (_event, slug) => {
 
 ipcMain.handle('presets:get-path', async () => {
   return getPresetsDir();
+});
+
+// Sweep Pattern Library IPC Handlers
+ipcMain.handle('patterns:scan', async () => {
+  try {
+    const patternsDir = getPatternsDir();
+    return scanPatterns(patternsDir);
+  } catch (err) {
+    console.error('Error scanning patterns:', err);
+    return [];
+  }
+});
+
+ipcMain.handle('patterns:save', async (_event, payload) => {
+  try {
+    const patternsDir = getPatternsDir();
+    return savePattern(patternsDir, payload);
+  } catch (err) {
+    console.error('Error saving pattern:', err);
+    throw err;
+  }
+});
+
+ipcMain.handle('patterns:delete', async (_event, slug) => {
+  try {
+    const patternsDir = getPatternsDir();
+    return deletePattern(patternsDir, slug);
+  } catch (err) {
+    console.error('Error deleting pattern:', err);
+    throw err;
+  }
+});
+
+ipcMain.handle('patterns:get-path', async () => {
+  return getPatternsDir();
 });
 
 

@@ -1,4 +1,11 @@
 export default {
+  common: {
+    save: "Save",
+    cancel: "Cancel",
+    close: "Close",
+    apply: "Apply",
+    delete: "Delete"
+  },
   editor: {
     title: "Drone Editor",
     viewMain: "View from Main",
@@ -245,6 +252,22 @@ export default {
       minutesAgo: "{count}m ago",
       hoursAgo: "{count}h ago",
       yesterday: "Yesterday"
+    },
+    patternLibrary: {
+      title: "Sweep Pattern Library",
+      subtitle: "Browse, preview, rename, and apply saved custom sweep curves",
+      searchPlaceholder: "Search saved patterns...",
+      countLabel: "Saved patterns",
+      noMatches: "No saved patterns match your search.",
+      empty: "No saved patterns yet. Edit a custom sweep curve and click Save to add one.",
+      matchShellCount: "Match saved shell count",
+      savePattern: "Save Pattern to Library",
+      saveToLibrary: "Save to Library",
+      openLibrary: "Pattern Library",
+      namePlaceholder: "Pattern name...",
+      savedToast: "Saved pattern to library",
+      appliedToast: "Applied pattern from library",
+      deletedToast: "Deleted pattern from library"
     },
     presetHub: {
       title: "Firework Preset Library",

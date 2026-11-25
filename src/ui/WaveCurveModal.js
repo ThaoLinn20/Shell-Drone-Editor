@@ -15,6 +15,10 @@ import {
 } from '../utils/SplineMath.js';
 import { t } from '../config/lang/i18n.js';
 import { createSvgIcon, createIconButton } from './IconHelper.js';
+import {
+  createSavePatternPopover,
+  openPatternLibrary
+} from './waveCurveLibraryHelper.js';
 
 export class WaveCurveModal {
   /**
@@ -272,7 +276,62 @@ export class WaveCurveModal {
     });
     presetBar.appendChild(mirrorBtn);
 
+    const savePopover = createSavePatternPopover({
+      getPatternData: () => ({
+        points: this.getCleanPoints(),
+        shellCount: this.shellCount,
+        mortarsLocked: this.mortarsLocked
+      })
+    });
+
+    const savePatternBtn = document.createElement('button');
+    savePatternBtn.type = 'button';
+    savePatternBtn.className = 'wave-curve-modal-save-btn';
+    savePatternBtn.textContent = t('editor.patternLibrary.saveToLibrary') || 'Save to Library';
+    savePatternBtn.style.height = '26px';
+    savePatternBtn.style.padding = '0 10px';
+    savePatternBtn.style.fontSize = '11px';
+    savePatternBtn.style.fontWeight = '600';
+    savePatternBtn.style.background = 'rgba(63, 185, 80, 0.15)';
+    savePatternBtn.style.color = '#3fb950';
+    savePatternBtn.style.border = '1px solid rgba(63, 185, 80, 0.4)';
+    savePatternBtn.style.borderRadius = '4px';
+    savePatternBtn.style.cursor = 'pointer';
+    savePatternBtn.addEventListener('click', () => savePopover.toggle());
+    presetBar.appendChild(savePatternBtn);
+
+    const libraryBtn = document.createElement('button');
+    libraryBtn.type = 'button';
+    libraryBtn.className = 'wave-curve-modal-library-btn';
+    libraryBtn.textContent = t('editor.patternLibrary.openLibrary') || 'Pattern Library';
+    libraryBtn.style.height = '26px';
+    libraryBtn.style.padding = '0 10px';
+    libraryBtn.style.fontSize = '11px';
+    libraryBtn.style.fontWeight = '600';
+    libraryBtn.style.background = 'rgba(88, 166, 255, 0.15)';
+    libraryBtn.style.color = '#58a6ff';
+    libraryBtn.style.border = '1px solid rgba(88, 166, 255, 0.4)';
+    libraryBtn.style.borderRadius = '4px';
+    libraryBtn.style.cursor = 'pointer';
+    libraryBtn.addEventListener('click', () => {
+      openPatternLibrary({
+        currentShellCount: this.shellCount,
+        onApplyPattern: (resampledPoints, targetCount) => {
+          this.shellCount = targetCount;
+          this.wavePreset = 'custom';
+          if (this.presetSelect) this.presetSelect.value = 'custom';
+          this.points = resampledPoints;
+          this.selectedIndex = 0;
+          syncShotsBtn.textContent = (t('editor.inspector.waveCurve.syncShots') || 'Sync Shots') + ` (${this.shellCount})`;
+          this.render();
+          this.renderSidebar();
+        }
+      });
+    });
+    presetBar.appendChild(libraryBtn);
+
     canvasWrap.appendChild(presetBar);
+    canvasWrap.appendChild(savePopover.element);
     body.appendChild(canvasWrap);
 
     // Sidebar section for numeric controls & point list

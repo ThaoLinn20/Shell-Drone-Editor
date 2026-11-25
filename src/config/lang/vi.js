@@ -1,4 +1,11 @@
 export default {
+  common: {
+    save: "Lưu",
+    cancel: "Hủy",
+    close: "Đóng",
+    apply: "Áp dụng",
+    delete: "Xóa"
+  },
   editor: {
     title: "Trình biên tập",
     viewMain: "Nhìn từ hướng chính",
@@ -245,6 +252,22 @@ export default {
       minutesAgo: "{count} phút trước",
       hoursAgo: "{count} giờ trước",
       yesterday: "Hôm qua"
+    },
+    patternLibrary: {
+      title: "Thư viện Mẫu Quỹ đạo Sweep",
+      subtitle: "Duyệt, xem trước, đổi tên và áp dụng các đường cong tùy chỉnh đã lưu",
+      searchPlaceholder: "Tìm kiếm mẫu quỹ đạo đã lưu...",
+      countLabel: "Số mẫu đã lưu",
+      noMatches: "Không có mẫu nào khớp với từ khóa tìm kiếm.",
+      empty: "Chưa có mẫu nào được lưu. Hãy chỉnh sửa đường cong tùy chỉnh và nhấn Lưu để thêm mới.",
+      matchShellCount: "Khớp số lượng quả pháo gốc đã lưu",
+      savePattern: "Lưu Mẫu vào Thư viện",
+      saveToLibrary: "Lưu vào Thư viện",
+      openLibrary: "Thư viện Mẫu",
+      namePlaceholder: "Tên mẫu quỹ đạo...",
+      savedToast: "Đã lưu mẫu quỹ đạo vào thư viện",
+      appliedToast: "Đã áp dụng mẫu quỹ đạo từ thư viện",
+      deletedToast: "Đã xóa mẫu quỹ đạo khỏi thư viện"
     },
     presetHub: {
       title: "Thư viện Mẫu Pháo hoa",

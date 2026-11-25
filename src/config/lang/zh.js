@@ -1,4 +1,11 @@
 export default {
+  common: {
+    save: "保存",
+    cancel: "取消",
+    close: "关闭",
+    apply: "应用",
+    delete: "删除"
+  },
   editor: {
     title: "无人机编辑器",
     viewMain: "从主视角看",
@@ -236,6 +243,22 @@ export default {
       minutesAgo: "{count}分钟前",
       hoursAgo: "{count}小时前",
       yesterday: "昨天"
+    },
+    patternLibrary: {
+      title: "扫射轨迹模式库",
+      subtitle: "浏览、预览、重命名并应用已保存的自定义扫射曲线",
+      searchPlaceholder: "搜索已保存的模式...",
+      countLabel: "已保存模式",
+      noMatches: "没有匹配的已保存模式。",
+      empty: "暂无已保存的模式。编辑自定义扫射曲线并点击保存即可添加。",
+      matchShellCount: "匹配保存的礼花弹数量",
+      savePattern: "保存模式到库",
+      saveToLibrary: "保存到模式库",
+      openLibrary: "模式库",
+      namePlaceholder: "模式名称...",
+      savedToast: "已保存模式到模式库",
+      appliedToast: "已从模式库应用模式",
+      deletedToast: "已从模式库删除模式"
     },
     presetHub: {
       title: "烟花预设库",
