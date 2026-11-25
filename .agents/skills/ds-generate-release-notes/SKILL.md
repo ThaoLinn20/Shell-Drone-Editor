@@ -135,7 +135,15 @@ After tests pass, the local Electron build is verified, and release files are sa
 4. Push commit and tag to remote:
    `git push origin HEAD`
    `git push origin <new_version>`
-5. Publish release assets to GitHub Releases so `electron-updater` can detect and auto-update existing installations:
+5. Merge release branch into `dev`:
+   - If the active branch is not `dev` (let `<release_branch>` be the current branch name):
+     - Checkout `dev` and sync with remote: `git checkout dev && git pull origin dev`
+     - Merge the release branch into `dev`: `git merge <release_branch>`
+     - If a merge conflict occurs, STOP immediately, leave the repository state clear, and report the conflicting files to the user so they can resolve them manually.
+     - Push `dev` to remote: `git push origin dev`
+     - Switch back to `<release_branch>` (optional, or report clearly which branch is currently checked out).
+   - If the active branch is already `dev`, `git push origin HEAD` in step 4 has already updated `origin/dev`.
+6. Publish release assets to GitHub Releases so `electron-updater` can detect and auto-update existing installations:
    - **Primary (CI/CD via `.github/workflows/release.yml`)**: Pushing tag `v*` automatically triggers the GitHub Actions workflow `Build and Release Windows App` to run `npm ci`, `npm test`, `npm run electron:publish` (`electron-builder --publish always`), and `gh release edit` to populate the GitHub Release title and body directly from `RELEASE_NOTES.md`.
    - **Local fallback (when `GH_TOKEN` is set in environment and user prefers local publishing)**: Run `npm run electron:publish` (or verify release assets via `gh release view <new_version>` if `gh` CLI is available).
    - **Final Verification**: Confirm to the user that tests passed, `dist-electron/` artifacts (`latest.yml`, `.blockmap`, `.exe`) were verified, tag `<new_version>` was pushed, and either GitHub Actions workflow was triggered or local publish completed. Remind the user never to delete `latest.yml` or `.blockmap` from GitHub Release assets, as `electron-updater` depends on them for auto-updates.
