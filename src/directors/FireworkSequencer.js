@@ -1282,16 +1282,23 @@ export class FireworkSequencer {
             overrides.launchTrail = false;
             overrides.thickTrail = false;
             overrides.thinTrail = false;
+            overrides.detachedTrail = false;
+            overrides.flightSmoke = false;
+            overrides.ascentBursts = false;
             overrides.instantBurst = true;
+            overrides.cometTrail = 'none';
           } else if (config.cometTrail === 'thick') {
             overrides.launchTrail = true;
             overrides.thickTrail = true;
             overrides.thinTrail = false;
+            overrides.detachedTrail = false;
+            overrides.cometTrail = 'thick';
           } else if (config.cometTrail === 'thin') {
             overrides.launchTrail = true;
             overrides.thickTrail = false;
             overrides.thinTrail = true;
             overrides.detachedTrail = false;
+            overrides.cometTrail = 'thin';
           } else if (config.cometTrail === 'detached' || config.cometTrail === 'detached-trail') {
             overrides.launchTrail = true;
             overrides.thickTrail = false;
@@ -1311,8 +1318,20 @@ export class FireworkSequencer {
             overrides.thickTrail = false;
             overrides.thinTrail = false;
             overrides.detachedTrail = false;
+            overrides.cometTrail = 'normal';
+          } else if (config.cometTrail === 'ascent-bursts') {
+            overrides.launchTrail = true;
+            overrides.thickTrail = false;
+            overrides.thinTrail = false;
+            overrides.detachedTrail = false;
+            overrides.ascentBursts = true;
+            overrides.ascentSubShellType = config.ascentSubShellType || 'random';
+            overrides.ascentBurstCount = config.ascentBurstCount ? parseInt(config.ascentBurstCount, 10) : 4;
+            overrides.cometTrail = 'ascent-bursts';
           }
         }
+        if (config.ascentSubShellType !== undefined) overrides.ascentSubShellType = config.ascentSubShellType;
+        if (config.ascentBurstCount !== undefined) overrides.ascentBurstCount = parseInt(config.ascentBurstCount, 10);
       }
 
       this.activeTasks.push({
