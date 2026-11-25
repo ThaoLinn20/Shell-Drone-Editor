@@ -4,6 +4,7 @@ import { renderingConfig } from '../config/rendering.js';
 export class Renderer {
   constructor() {
     this.resizeListeners = [];
+    this.resizeLocked = false;
     this.instance = new THREE.WebGLRenderer({
       antialias: renderingConfig.renderer.antialias,
       alpha: false
@@ -28,6 +29,9 @@ export class Renderer {
   }
 
   onResize() {
+    if (this.resizeLocked) {
+      return;
+    }
     this.instance.setSize(window.innerWidth, window.innerHeight);
     this.instance.setPixelRatio(Math.min(window.devicePixelRatio, renderingConfig.renderer.maxPixelRatio));
 

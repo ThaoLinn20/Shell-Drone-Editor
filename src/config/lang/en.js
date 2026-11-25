@@ -269,6 +269,24 @@ export default {
       appliedToast: "Applied pattern from library",
       deletedToast: "Deleted pattern from library"
     },
+    fullRecord: {
+      button: "Record Show",
+      buttonTitle: "Record full show video in high quality with audio",
+      popoverTitle: "Record Full Show",
+      qualityLabel: "Output Quality",
+      includeAudio: "Include Full Show Audio",
+      hideUi: "Hide Timeline During Recording",
+      hotkeysHint: "C: Snap PNG Photo | V: Pause or Resume | Esc: Cancel",
+      startButton: "Start Recording",
+      pause: "Pause",
+      resume: "Resume",
+      photo: "Photo",
+      stopAndSave: "Stop & Save",
+      finalizing: "Encoding MP4...",
+      saved: "Show video saved",
+      canceled: "Show recording canceled",
+      unsupported: "Video recording is not supported in this environment"
+    },
     presetHub: {
       title: "Firework Preset Library",
       subtitle: "Browse, customize banners and preview videos, and manage custom shells",

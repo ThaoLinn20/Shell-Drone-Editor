@@ -269,6 +269,24 @@ export default {
       appliedToast: "Đã áp dụng mẫu quỹ đạo từ thư viện",
       deletedToast: "Đã xóa mẫu quỹ đạo khỏi thư viện"
     },
+    fullRecord: {
+      button: "Quay Full Show",
+      buttonTitle: "Quay toàn bộ kịch bản chất lượng cao kèm âm thanh đầy đủ",
+      popoverTitle: "Quay Toàn Bộ Kịch Bản",
+      qualityLabel: "Chất lượng đầu ra",
+      includeAudio: "Thu đầy đủ âm thanh show",
+      hideUi: "Ẩn giao diện Timeline khi quay",
+      hotkeysHint: "C: Chụp ảnh PNG | V: Tạm dừng hoặc Tiếp tục | Esc: Hủy",
+      startButton: "Bắt Đầu Quay",
+      pause: "Tạm dừng",
+      resume: "Tiếp tục",
+      photo: "Chụp ảnh",
+      stopAndSave: "Dừng & Lưu",
+      finalizing: "Đang xuất MP4...",
+      saved: "Đã lưu video kịch bản",
+      canceled: "Đã hủy quay kịch bản",
+      unsupported: "Môi trường hiện tại không hỗ trợ quay video"
+    },
     presetHub: {
       title: "Thư viện Mẫu Pháo hoa",
       subtitle: "Duyệt, tùy chỉnh ảnh banner, video xem trước và quản lý mẫu pháo",

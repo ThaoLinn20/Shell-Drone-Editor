@@ -27,6 +27,7 @@ import { globalEventBus } from './core/EventBus.js';
 import { loadAndApplySettings } from './config/settings.js';
 import { initUpdateNotifier } from './ui/UpdateNotifier.js';
 import { PresetCaptureService } from './core/PresetCaptureService.js';
+import { FullShowRecordingService } from './core/FullShowRecordingService.js';
 
 // Initialize Core ECS Boilerplate
 const clock = new Clock();
@@ -116,6 +117,17 @@ const presetCaptureService = new PresetCaptureService({
 });
 timelineEditor.presetCaptureService = presetCaptureService;
 
+const fullShowRecordingService = new FullShowRecordingService({
+  renderer,
+  postProcessing,
+  showDirector,
+  cameraManager,
+  audioSystem,
+  inputSystem,
+  timelineEditor
+});
+timelineEditor.fullShowRecordingService = fullShowRecordingService;
+
 // The show script loading is now handled in InputSystem
 
 // Expose to input system or global for triggering
@@ -171,7 +183,10 @@ function animate() {
   );
   
   // Systems update
-  if (!inputSystem.isPaused() || presetCaptureService.isCapturing) {
+  if (
+    (!inputSystem.isPaused() || presetCaptureService.isCapturing || fullShowRecordingService.isRecording) &&
+    !fullShowRecordingService.isPaused
+  ) {
     movementSystem.update(clock.deltaTime);
     showDirector.update(clock.deltaTime);
     fireworkSequencer.update(clock.deltaTime);
@@ -212,6 +227,7 @@ function animate() {
   }
 
   presetCaptureService.onAfterRender();
+  fullShowRecordingService.onAfterRender();
 
   // Restore camera anchor position after render
   cameraManager.restoreShake();

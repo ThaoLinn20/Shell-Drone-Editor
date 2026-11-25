@@ -103,6 +103,7 @@ export class TimelineEditor {
     this.guideHubModal = new GuideHubModal(this);
     this.presetHubModal = null;
     this.presetCaptureService = null;
+    this.fullShowRecordingService = null;
     globalEventBus.on('preset-hub:open', () => {
       this.openPresetHub();
     });
@@ -533,6 +534,25 @@ export class TimelineEditor {
     });
     this.presetHubBtn = presetHubBtn;
 
+    const recordShowBtn = document.createElement('button');
+    recordShowBtn.className = 'timeline-record-show-btn';
+    recordShowBtn.type = 'button';
+    recordShowBtn.textContent = t('editor.fullRecord.button') || 'Record Show';
+    recordShowBtn.title = t('editor.fullRecord.buttonTitle') || 'Record full show video in high quality with audio';
+    recordShowBtn.style.background = 'rgba(239, 68, 68, 0.16)';
+    recordShowBtn.style.color = '#fca5a5';
+    recordShowBtn.style.border = '1px solid rgba(239, 68, 68, 0.45)';
+    recordShowBtn.style.borderRadius = '4px';
+    recordShowBtn.style.padding = '6px 10px';
+    recordShowBtn.style.fontSize = '12px';
+    recordShowBtn.style.fontWeight = '600';
+    recordShowBtn.style.cursor = 'pointer';
+    recordShowBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleFullShowRecordPopover(recordShowBtn);
+    });
+    this.recordShowBtn = recordShowBtn;
+
     const dataActionsGroup = document.createElement('div');
     dataActionsGroup.style.display = 'inline-flex';
     dataActionsGroup.style.alignItems = 'center';
@@ -542,6 +562,7 @@ export class TimelineEditor {
     dataActionsGroup.appendChild(presetHubBtn);
     dataActionsGroup.appendChild(libraryBtn);
     dataActionsGroup.appendChild(exportBtn);
+    dataActionsGroup.appendChild(recordShowBtn);
     dataActionsGroup.appendChild(addFileDropdownContainer);
     this.dataActionsGroup = dataActionsGroup;
 
@@ -1515,6 +1536,134 @@ export class TimelineEditor {
         captureResult
       );
     }
+  }
+
+  toggleFullShowRecordPopover(anchorEl) {
+    if (this._recordPopover) {
+      this._recordPopover.remove();
+      this._recordPopover = null;
+      return;
+    }
+
+    const popover = document.createElement('div');
+    popover.className = 'full-show-record-popover';
+    popover.style.position = 'fixed';
+    popover.style.zIndex = '10000';
+    popover.style.background = '#0f172a';
+    popover.style.border = '1px solid rgba(239, 68, 68, 0.45)';
+    popover.style.borderRadius = '8px';
+    popover.style.padding = '12px';
+    popover.style.width = '250px';
+    popover.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.7)';
+    popover.style.display = 'flex';
+    popover.style.flexDirection = 'column';
+    popover.style.gap = '10px';
+    popover.style.color = '#f8fafc';
+    popover.style.fontSize = '12px';
+
+    if (anchorEl && typeof anchorEl.getBoundingClientRect === 'function') {
+      const rect = anchorEl.getBoundingClientRect();
+      popover.style.left = `${Math.max(12, rect.left)}px`;
+      popover.style.bottom = `${Math.max(12, window.innerHeight - rect.top + 8)}px`;
+    }
+
+    const title = document.createElement('div');
+    title.style.fontWeight = '700';
+    title.style.color = '#fca5a5';
+    title.textContent = t('editor.fullRecord.popoverTitle') || 'Record Full Show';
+    popover.appendChild(title);
+
+    const resLabel = document.createElement('label');
+    resLabel.textContent = t('editor.fullRecord.qualityLabel') || 'Output Quality';
+    resLabel.style.fontSize = '11px';
+    resLabel.style.color = '#94a3b8';
+
+    const resSelect = document.createElement('select');
+    resSelect.style.background = '#1e293b';
+    resSelect.style.color = '#f8fafc';
+    resSelect.style.border = '1px solid rgba(255, 255, 255, 0.15)';
+    resSelect.style.borderRadius = '4px';
+    resSelect.style.padding = '5px 8px';
+    resSelect.style.fontSize = '12px';
+    [
+      { value: '1080p', label: '1080p 60fps' },
+      { value: '2k', label: '2K 60fps' },
+      { value: '4k', label: '4K 60fps' }
+    ].forEach((opt) => {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      o.textContent = opt.label;
+      resSelect.appendChild(o);
+    });
+    popover.appendChild(resLabel);
+    popover.appendChild(resSelect);
+
+    const makeToggle = (text, defaultChecked) => {
+      const row = document.createElement('label');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '8px';
+      row.style.cursor = 'pointer';
+      row.style.fontSize = '11px';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = defaultChecked;
+      const span = document.createElement('span');
+      span.textContent = text;
+      row.appendChild(cb);
+      row.appendChild(span);
+      return {
+        row,
+        cb
+      };
+    };
+
+    const audioToggle = makeToggle(
+      t('editor.fullRecord.includeAudio') || 'Include Full Show Audio',
+      true
+    );
+    const hideUiToggle = makeToggle(
+      t('editor.fullRecord.hideUi') || 'Hide Timeline During Recording',
+      true
+    );
+    popover.appendChild(audioToggle.row);
+    popover.appendChild(hideUiToggle.row);
+
+    const hint = document.createElement('div');
+    hint.style.fontSize = '10px';
+    hint.style.color = '#94a3b8';
+    hint.textContent = t('editor.fullRecord.hotkeysHint') || 'C: Snap PNG Photo | V: Pause or Resume | Esc: Cancel';
+    popover.appendChild(hint);
+
+    const startBtn = document.createElement('button');
+    startBtn.type = 'button';
+    startBtn.textContent = t('editor.fullRecord.startButton') || 'Start Recording';
+    startBtn.style.padding = '7px 12px';
+    startBtn.style.borderRadius = '5px';
+    startBtn.style.border = 'none';
+    startBtn.style.background = '#ef4444';
+    startBtn.style.color = '#ffffff';
+    startBtn.style.fontWeight = '700';
+    startBtn.style.cursor = 'pointer';
+    startBtn.addEventListener('click', () => {
+      popover.remove();
+      this._recordPopover = null;
+      if (this.fullShowRecordingService) {
+        const showName = this.currentFileName
+          ? this.currentFileName.replace(/\.json$/i, '')
+          : 'FDShow';
+        this.fullShowRecordingService.start({
+          quality: resSelect.value,
+          includeAudio: audioToggle.cb.checked,
+          hideUi: hideUiToggle.cb.checked,
+          showName
+        });
+      }
+    });
+    popover.appendChild(startBtn);
+
+    document.body.appendChild(popover);
+    this._recordPopover = popover;
   }
 
   applyPresetFromHub(preset) {

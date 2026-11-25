@@ -260,6 +260,24 @@ export default {
       appliedToast: "ライブラリからパターンを適用しました",
       deletedToast: "ライブラリからパターンを削除しました"
     },
+    fullRecord: {
+      button: "フル録画",
+      buttonTitle: "ショー全体を音声付き高画質で録画",
+      popoverTitle: "フルショー録画",
+      qualityLabel: "出力画質",
+      includeAudio: "ショー音声を含める",
+      hideUi: "録画中はタイムラインを非表示",
+      hotkeysHint: "C: PNG撮影 | V: 一時停止・再開 | Esc: キャンセル",
+      startButton: "録画開始",
+      pause: "一時停止",
+      resume: "再開",
+      photo: "写真",
+      stopAndSave: "停止して保存",
+      finalizing: "MP4を書き出し中...",
+      saved: "ショー動画を保存しました",
+      canceled: "録画をキャンセルしました",
+      unsupported: "この環境では動画録画がサポートされていません"
+    },
     presetHub: {
       title: "花火プリセットライブラリ",
       subtitle: "プレビュー動画やバナーをカスタマイズし、花火プリセットを管理",

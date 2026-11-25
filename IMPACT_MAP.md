@@ -58,9 +58,9 @@ This document is the architectural dependency and blast-radius map for `shell-dr
 
 ### G. Electron IPC & Persistence Bridge
 - Adding any new `electronAPI.<method>` requires updating ALL THREE:
-  1. Handler in [src/electron/main.js](./src/electron/main.js)
+  1. Handler in [src/electron/main.js](./src/electron/main.js) (or dedicated handler module such as [src/electron/recordingHandlers.js](./src/electron/recordingHandlers.js))
   2. Bridge exposure in [src/electron/preload.cjs](./src/electron/preload.cjs)
-  3. Storage module (e.g. [presetStorage.js](./src/electron/presetStorage.js), [patternStorage.js](./src/electron/patternStorage.js)) and renderer registry/adapter with web fallback.
+  3. Storage module (e.g. [presetStorage.js](./src/electron/presetStorage.js), [patternStorage.js](./src/electron/patternStorage.js)) and renderer registry/adapter/service (e.g. [FullShowRecordingService.js](./src/core/FullShowRecordingService.js)) with web fallback.
 
 ### H. Localization (i18n)
 - All 4 language files MUST stay synchronized on every UI key or preset label change:

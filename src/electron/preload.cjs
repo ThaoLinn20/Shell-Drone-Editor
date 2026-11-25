@@ -32,7 +32,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   scanPatterns: () => ipcRenderer.invoke('patterns:scan'),
   savePattern: (payload) => ipcRenderer.invoke('patterns:save', payload),
   deletePattern: (slug) => ipcRenderer.invoke('patterns:delete', slug),
-  getPatternsPath: () => ipcRenderer.invoke('patterns:get-path')
+  getPatternsPath: () => ipcRenderer.invoke('patterns:get-path'),
+  recordingStart: () => ipcRenderer.invoke('recording:start'),
+  recordingWriteChunk: (sessionId, chunk) => ipcRenderer.invoke('recording:write-chunk', { sessionId, chunk }),
+  recordingCancel: (sessionId) => ipcRenderer.invoke('recording:cancel', { sessionId }),
+  recordingFinalize: (payload) => ipcRenderer.invoke('recording:finalize', payload),
+  recordingSavePhoto: (pngBase64, filenameBase) => ipcRenderer.invoke('recording:save-photo', { pngBase64, filenameBase }),
+  recordingOpenFolder: (filePath) => ipcRenderer.invoke('recording:open-folder', { filePath }),
+  onRecordingProgress: (callback) => {
+    const handler = (_event, pct) => callback(pct);
+    ipcRenderer.on('recording:progress', handler);
+    return () => {
+      ipcRenderer.removeListener('recording:progress', handler);
+    };
+  }
 });
 
 // Prevent mouse side buttons (back/forward) from triggering navigation in the browser

@@ -16,6 +16,14 @@ export class AudioSystem {
       this.ctx = AudioContextClass ? new AudioContextClass() : null;
     }
 
+    this.masterGain = null;
+    this._recordingDest = null;
+    this._connectedMediaElements = new WeakSet();
+    if (this.ctx && typeof this.ctx.createGain === 'function') {
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.connect(this.ctx.destination);
+    }
+
     this.speedOfSound = AUDIO_CONFIG.physics.speedOfSound; // units/second, assuming 1 unit = 1 meter
 
     this.sources = {
@@ -78,6 +86,66 @@ export class AudioSystem {
   destroy() {
     for (const unsubscribe of this.eventSubscriptions) {
       unsubscribe();
+    }
+  }
+
+  /**
+   * Return the master output node (masterGain if available, else ctx.destination).
+   */
+  getOutputNode() {
+    return this.masterGain || (this.ctx ? this.ctx.destination : null);
+  }
+
+  /**
+   * Create or return a MediaStreamAudioDestinationNode connected to masterGain
+   * for recording both SFX and routed timeline music tracks.
+   */
+  getOrCreateRecordingDestination() {
+    if (!this.ctx || typeof this.ctx.createMediaStreamDestination !== 'function') {
+      return null;
+    }
+    if (!this._recordingDest) {
+      this._recordingDest = this.ctx.createMediaStreamDestination();
+      if (this.masterGain) {
+        this.masterGain.connect(this._recordingDest);
+      }
+    }
+    return this._recordingDest;
+  }
+
+  /**
+   * Disconnect the recording destination node after recording completes.
+   */
+  disconnectRecordingDestination() {
+    if (this._recordingDest && this.masterGain) {
+      try {
+        this.masterGain.disconnect(this._recordingDest);
+      } catch {}
+    }
+    this._recordingDest = null;
+  }
+
+  /**
+   * Route an HTMLAudioElement into the WebAudio masterGain graph (once per element).
+   * @param {HTMLAudioElement} audioElement
+   */
+  connectMediaElement(audioElement) {
+    if (
+      !audioElement ||
+      !this.ctx ||
+      typeof this.ctx.createMediaElementSource !== 'function' ||
+      this._connectedMediaElements.has(audioElement)
+    ) {
+      return false;
+    }
+    try {
+      const sourceNode = this.ctx.createMediaElementSource(audioElement);
+      sourceNode.connect(this.getOutputNode());
+      this._connectedMediaElements.add(audioElement);
+      return true;
+    } catch (err) {
+      console.warn('Could not connect audio element to AudioSystem masterGain:', err);
+      return false;
     }
   }
 
@@ -241,7 +309,7 @@ export class AudioSystem {
         bufferSource.connect(gainNode);
       }
 
-      gainNode.connect(this.ctx.destination);
+      gainNode.connect(this.getOutputNode());
       bufferSource.start(0);
     };
 
@@ -262,7 +330,7 @@ export class AudioSystem {
         bufferSource.connect(gainNode);
       }
 
-      gainNode.connect(this.ctx.destination);
+      gainNode.connect(this.getOutputNode());
 
       // Start scheduling
       bufferSource.start(this.ctx.currentTime + delay);
@@ -322,7 +390,7 @@ export class AudioSystem {
         bufferSource.connect(gainNode);
       }
 
-      gainNode.connect(this.ctx.destination);
+      gainNode.connect(this.getOutputNode());
       bufferSource.start(0);
     };
 
@@ -343,7 +411,7 @@ export class AudioSystem {
         bufferSource.connect(gainNode);
       }
 
-      gainNode.connect(this.ctx.destination);
+      gainNode.connect(this.getOutputNode());
       bufferSource.start(this.ctx.currentTime + delay);
     } else {
       playLogic();

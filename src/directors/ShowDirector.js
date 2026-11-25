@@ -34,6 +34,7 @@ export class ShowDirector {
         const url = seq._blobUrl || `/${seq.url}`;
         try {
             const audio = new Audio(url);
+            audio.crossOrigin = 'anonymous';
             audio.volume = seq.volume !== undefined ? seq.volume : 1.0;
             this.audioPlayers.set(seq, audio);
         } catch (e) {
@@ -86,6 +87,20 @@ export class ShowDirector {
     this.isPlaying = false;
     this.audioPlayers.forEach(audio => audio.pause());
     if (this.droneSequencer) this.droneSequencer.pause();
+  }
+
+  /**
+   * Route all loaded timeline audio elements into an AudioSystem masterGain graph
+   * so full-show recording captures synchronized background music.
+   * @param {Object} audioSystem
+   */
+  connectAudioPlayersToSystem(audioSystem) {
+    if (!audioSystem || typeof audioSystem.connectMediaElement !== 'function') {
+      return;
+    }
+    this.audioPlayers.forEach((audio) => {
+      audioSystem.connectMediaElement(audio);
+    });
   }
 
   stop() {

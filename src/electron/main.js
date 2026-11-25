@@ -23,6 +23,7 @@ import {
   savePattern,
   deletePattern
 } from './patternStorage.js';
+import { registerRecordingHandlers } from './recordingHandlers.js';
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -1024,6 +1025,14 @@ ipcMain.handle('patterns:delete', async (_event, slug) => {
 
 ipcMain.handle('patterns:get-path', async () => {
   return getPatternsDir();
+});
+
+registerRecordingHandlers({
+  ipcMain,
+  app,
+  dialog,
+  shell,
+  getMainWindow: () => mainWindow
 });
 
 

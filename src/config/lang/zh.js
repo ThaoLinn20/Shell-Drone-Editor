@@ -260,6 +260,24 @@ export default {
       appliedToast: "已从模式库应用模式",
       deletedToast: "已从模式库删除模式"
     },
+    fullRecord: {
+      button: "录制全场",
+      buttonTitle: "以高清画质和完整音频录制整场剧本",
+      popoverTitle: "录制整场剧本",
+      qualityLabel: "输出画质",
+      includeAudio: "包含完整演出音频",
+      hideUi: "录制时隐藏时间轴",
+      hotkeysHint: "C: 拍摄 PNG 照片 | V: 暂停或继续 | Esc: 取消",
+      startButton: "开始录制",
+      pause: "暂停",
+      resume: "继续",
+      photo: "拍照",
+      stopAndSave: "停止并保存",
+      finalizing: "正在编码 MP4...",
+      saved: "演出视频已保存",
+      canceled: "已取消录制",
+      unsupported: "当前环境不支持视频录制"
+    },
     presetHub: {
       title: "烟花预设库",
       subtitle: "浏览、自定义横幅和预览视频并管理自定义礼花弹",
