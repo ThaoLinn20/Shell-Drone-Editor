@@ -211,7 +211,7 @@ describe('PresetHubModal Component', () => {
       shapeType: 'ring',
       dynamicsType: 'willow',
       color: '#ffd700',
-      scale: 1.5,
+      shellSize: 1.5,
       particleCountMultiplier: 1.2,
       starLifeMultiplier: 1.8,
       effects: ['strobe'],

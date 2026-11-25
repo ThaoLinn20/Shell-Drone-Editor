@@ -15,6 +15,7 @@ import {
   customConfirm
 } from '../editor/ui/utils/Modal.js';
 import { showToast } from '../utils/Toast.js';
+import { applyPresetComposition } from '../utils/presetComposition.js';
 import { WaveformGenerator } from '../utils/WaveformGenerator.js';
 import { TimelineTourGuide } from './guides/TimelineTourGuide.js';
 import { TimelineContextMenu } from './TimelineContextMenu.js';
@@ -1489,61 +1490,7 @@ export class TimelineEditor {
 
     this.saveHistoryState();
     for (const ev of targets) {
-      if (ev.type === 'sequence') {
-        ev.preset = preset.id || preset.slug;
-        if (preset.composition) {
-          const comp = preset.composition;
-          if (comp.shapeType || comp.shape) {
-            ev.shapeType = comp.shapeType || comp.shape;
-          }
-          if (comp.dynamicsType || comp.dynamics) {
-            ev.dynamicsType = comp.dynamicsType || comp.dynamics;
-          }
-          if (comp.color) {
-            ev.color = comp.color;
-          }
-          if (Array.isArray(comp.effects || comp.activeEffects)) {
-            ev.effects = [...(comp.effects || comp.activeEffects)];
-          }
-          if (typeof comp.scale === 'number') {
-            ev.scale = comp.scale;
-          }
-          if (typeof comp.particleCountMultiplier === 'number') {
-            ev.particleCountMultiplier = comp.particleCountMultiplier;
-          }
-          if (typeof comp.starLifeMultiplier === 'number') {
-            ev.starLifeMultiplier = comp.starLifeMultiplier;
-          }
-          if (typeof comp.multiNested === 'boolean') {
-            ev.multiNested = comp.multiNested;
-          }
-          if (Array.isArray(comp.stages)) {
-            ev.stages = JSON.parse(JSON.stringify(comp.stages));
-          }
-          if (comp.secondBurst) {
-            ev.secondBurst = {
-              ...comp.secondBurst
-            };
-          }
-          if (comp.sound && typeof comp.sound === 'object') {
-            ev.sound = {
-              ...comp.sound
-            };
-            if (comp.sound.launch !== undefined) {
-              ev.launchSound = comp.sound.launch;
-            }
-            if (comp.sound.burst !== undefined) {
-              ev.burstSound = comp.sound.burst;
-            }
-            if (comp.sound.crackle !== undefined) {
-              ev.crackleSound = comp.sound.crackle;
-            }
-            if (comp.sound.volumeMultiplier !== undefined) {
-              ev.soundVolume = comp.sound.volumeMultiplier;
-            }
-          }
-        }
-      }
+      applyPresetComposition(ev, preset);
     }
     this.renderTracks();
     if (this.inspector && this.inspector.selectedEvent) {
