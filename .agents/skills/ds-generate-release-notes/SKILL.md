@@ -10,10 +10,10 @@ When the user asks you to generate release notes or create a new release, execut
 **CRITICAL RULES:**
 1. **NO ICONS OR EMOJIS**: Do not use any emojis (like rocket, bug, fire, etc.) anywhere in the output, release notes, commit messages, or Facebook post. Keep everything strictly text-only and professional.
 2. **ENGLISH ONLY FOR RELEASE_NOTES.md**: The generated `RELEASE_NOTES.md` MUST be written entirely in English, regardless of the language used in the commit messages or the user's prompt.
-3. **BILINGUAL FACEBOOK POST (VIETNAMESE WITH ACCENTS + ENGLISH)**: The post in `docs/details/facebook-detail-release-update.md` must be written in proper accented Vietnamese (Tiếng Việt có dấu đầy đủ) followed by a matching English version, suitable for social media groups, fanpages, and international audiences.
+3. **CONCISE VIETNAMESE FACEBOOK POST (TIẾNG VIỆT CÓ DẤU)**: The post in `docs/details/facebook-detail-release-update.md` must be written concisely in proper accented Vietnamese (Tiếng Việt có dấu đầy đủ) in a single compact section (no long bilingual duplicate), suitable for social media groups and fanpages.
 4. **NO LINKS IN FACEBOOK POST (AVOID REACH PENALTY)**: Absolutely DO NOT include any URLs or links in the Facebook announcement text (including links causes Facebook's algorithm to penalize reach). Always guide users to grab the download links in the comment section below the post.
-5. **SHORT & PUNCHY BULLET POINTS**: Keep each bullet point in the Facebook post very concise (1 short punchy sentence or phrase per bullet), avoiding long paragraphs or walls of text for maximum readability.
-6. **MANDATORY HASHTAGS IN FACEBOOK POST**: Always append the official hashtags `#FDShowStudio #firework` at the end of the Facebook post.
+5. **HEADLINE-ONLY BULLET POINTS (NO COLON EXPLANATIONS)**: Keep each bullet point in the Facebook post strictly to the short main point / headline only (for example `- Thư viện Pattern cho Sweep Custom Curve`), without adding `: <explanation>` after it.
+6. **MANDATORY HASHTAGS IN FACEBOOK POST**: Always append the official hashtags `#FDShowStudio #fireworksimulator` at the end of the Facebook post.
 7. **MANDATORY SECTIONS IN RELEASE_NOTES.md**: You must use exactly the main sections defined below (Downloads, Features, Bug Fixes, Updates, Chores). If a section has no relevant commits, you may omit that section.
 8. **NON-TECHNICAL DESCRIPTIONS**: All descriptions must be extremely concise, simple, and easy to understand for non-technical users. Avoid coding jargon (such as 'instanced rendering', 'draw calls', 'vertex shader', 'buffer allocation') and instead focus on user-facing benefits (e.g., write 'Improved display performance when spawning many fireworks' instead of 'implemented instanced shell rendering to reduce draw calls').
 9. **NEVER RELEASE BROKEN BUILDS**: Every release MUST pass the full test suite (`npm test`) and production build (`npm run build` / `npm run electron:build`) BEFORE committing, tagging, or publishing.
@@ -94,13 +94,12 @@ Structure the output using Markdown IN ENGLISH. Use exactly this structure:
 ```
 
 ## 8. Format the Facebook Announcement Post (facebook-detail-release-update.md)
-Generate a bilingual promotional announcement post in `docs/details/facebook-detail-release-update.md`.
+Generate a concise announcement post in `docs/details/facebook-detail-release-update.md`.
 It must strictly follow these rules:
-1. **Vietnamese version with full accents (Tiếng Việt có dấu đầy đủ)**.
-2. **English version**.
-3. **NO URLs OR LINKS**: Do NOT include any HTTP/HTTPS links in the post text. Direct readers to the comment section.
-4. **Mandatory Hashtags**: End with `#FDShowStudio #firework`.
-5. **No Emojis**: Keep it text-only and clean.
+1. **Concise Vietnamese with full accents (Tiếng Việt có dấu đầy đủ, ngắn gọn, 1 bản duy nhất)**.
+2. **NO URLs OR LINKS**: Do NOT include any HTTP/HTTPS links in the post text. Direct readers to the comment section.
+3. **Mandatory Hashtags**: End with `#FDShowStudio #fireworksimulator`.
+4. **No Emojis**: Keep it text-only and clean.
 
 Template:
 
@@ -110,38 +109,21 @@ Template:
 Chào cả nhà, bản cập nhật [New Version Tag] của FDShowStudio đã chính thức ra mắt với nhiều tính năng mới hấp dẫn cùng các cải tiến tối ưu giúp trải nghiệm tạo show mượt mà và trực quan hơn!
 
 Các điểm mới nổi bật:
-- [Tính năng 1: Mô tả ngắn gọn, lợi ích nổi bật]
-- [Tính năng 2: Mô tả ngắn gọn, lợi ích nổi bật]
-- [Sửa lỗi & Tối ưu: Khắc phục các lỗi đã biết, tối ưu hiển thị và độ ổn định]
+- [Ý chính 1]
+- [Ý chính 2]
+- [Sửa lỗi & tối ưu nổi bật]
 
 Toàn bộ link tải bản cài đặt (.exe) và bản chạy ngay (.zip) mình để chi tiết ngay dưới phần bình luận nhé!
 
 Mọi người tải về trải nghiệm và để lại góp ý nhé!
 
-#FDShowStudio #firework
-
----
-
-# New Release Announcement: FDShowStudio [New Version Tag]
-
-Hello creators! The latest update [New Version Tag] of FDShowStudio is officially available, bringing exciting new capabilities and optimizations for designing spectacular light shows!
-
-Key Highlights:
-- [Feature 1: Clear benefit and user value]
-- [Feature 2: Clear benefit and user value]
-- [Fixes & Performance: Smoother performance and bug fixes]
-
-All download links (Installer .exe and Portable .zip) are available in the first comment below!
-
-Download now and bring your creative firework and drone choreographies to life!
-
-#FDShowStudio #firework
+#FDShowStudio #fireworksimulator
 ```
 
 ## 9. Save the Release Notes Files
 Use the file writing tool to save both release files:
 - Completely OVERWRITE `RELEASE_NOTES.md` with the English technical release notes.
-- Completely OVERWRITE `docs/details/facebook-detail-release-update.md` with the bilingual Facebook announcement post without links.
+- Completely OVERWRITE `docs/details/facebook-detail-release-update.md` with the concise Vietnamese Facebook announcement post without links.
 
 ## 10. Stage, Commit, Tag, Push, and Publish Release Assets
 After tests pass, the local Electron build is verified, and release files are saved:

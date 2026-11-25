@@ -14,7 +14,12 @@ import {
   generateWavePreset
 } from '../utils/SplineMath.js';
 import { t } from '../config/lang/i18n.js';
+import { LAUNCH_ZONE_CONFIG } from '@shell-drone/firework-engine';
 import { createSvgIcon, createIconButton } from './IconHelper.js';
+import {
+  createSavePatternPopover,
+  openPatternLibrary
+} from './waveCurveLibraryHelper.js';
 
 export class WaveCurveModal {
   /**
@@ -272,7 +277,62 @@ export class WaveCurveModal {
     });
     presetBar.appendChild(mirrorBtn);
 
+    const savePopover = createSavePatternPopover({
+      getPatternData: () => ({
+        points: this.getCleanPoints(),
+        shellCount: this.shellCount,
+        mortarsLocked: this.mortarsLocked
+      })
+    });
+
+    const savePatternBtn = document.createElement('button');
+    savePatternBtn.type = 'button';
+    savePatternBtn.className = 'wave-curve-modal-save-btn';
+    savePatternBtn.textContent = t('editor.patternLibrary.saveToLibrary') || 'Save to Library';
+    savePatternBtn.style.height = '26px';
+    savePatternBtn.style.padding = '0 10px';
+    savePatternBtn.style.fontSize = '11px';
+    savePatternBtn.style.fontWeight = '600';
+    savePatternBtn.style.background = 'rgba(63, 185, 80, 0.15)';
+    savePatternBtn.style.color = '#3fb950';
+    savePatternBtn.style.border = '1px solid rgba(63, 185, 80, 0.4)';
+    savePatternBtn.style.borderRadius = '4px';
+    savePatternBtn.style.cursor = 'pointer';
+    savePatternBtn.addEventListener('click', () => savePopover.toggle());
+    presetBar.appendChild(savePatternBtn);
+
+    const libraryBtn = document.createElement('button');
+    libraryBtn.type = 'button';
+    libraryBtn.className = 'wave-curve-modal-library-btn';
+    libraryBtn.textContent = t('editor.patternLibrary.openLibrary') || 'Pattern Library';
+    libraryBtn.style.height = '26px';
+    libraryBtn.style.padding = '0 10px';
+    libraryBtn.style.fontSize = '11px';
+    libraryBtn.style.fontWeight = '600';
+    libraryBtn.style.background = 'rgba(88, 166, 255, 0.15)';
+    libraryBtn.style.color = '#58a6ff';
+    libraryBtn.style.border = '1px solid rgba(88, 166, 255, 0.4)';
+    libraryBtn.style.borderRadius = '4px';
+    libraryBtn.style.cursor = 'pointer';
+    libraryBtn.addEventListener('click', () => {
+      openPatternLibrary({
+        currentShellCount: this.shellCount,
+        onApplyPattern: (resampledPoints, targetCount) => {
+          this.shellCount = targetCount;
+          this.wavePreset = 'custom';
+          if (this.presetSelect) this.presetSelect.value = 'custom';
+          this.points = resampledPoints;
+          this.selectedIndex = 0;
+          syncShotsBtn.textContent = (t('editor.inspector.waveCurve.syncShots') || 'Sync Shots') + ` (${this.shellCount})`;
+          this.render();
+          this.renderSidebar();
+        }
+      });
+    });
+    presetBar.appendChild(libraryBtn);
+
     canvasWrap.appendChild(presetBar);
+    canvasWrap.appendChild(savePopover.element);
     body.appendChild(canvasWrap);
 
     // Sidebar section for numeric controls & point list
@@ -465,7 +525,7 @@ export class WaveCurveModal {
         b.addEventListener('click', () => {
           this.selectedApexIndices.forEach((idx) => {
             const p = this.points[idx];
-            p.y = Math.max(0.05, Math.min(1.0, p.y + deltaRatio));
+            p.y = Math.max(0.0, Math.min(1.0, p.y + deltaRatio));
             if (!this.mortarsLocked) {
               p.launchX = p.x;
               p.angle = 0.0;
@@ -615,7 +675,9 @@ export class WaveCurveModal {
     if (!pt) return;
 
     const deg = Math.round(pt.angle * 180 / Math.PI);
-    const heightMeters = Math.round(75 + pt.y * (300 - 75));
+    const minBurstY = LAUNCH_ZONE_CONFIG.minBurstY ?? 0.5;
+    const maxBurstY = LAUNCH_ZONE_CONFIG.maxBurstY ?? 300;
+    const heightMeters = Math.round(minBurstY + pt.y * (maxBurstY - minBurstY));
 
     const card = document.createElement('div');
     card.style.display = 'flex';
@@ -721,7 +783,7 @@ export class WaveCurveModal {
       (t('editor.inspector.waveCurve.burstApex') || 'Burst Apex') + ` (${heightMeters}m)`,
       `${Math.round(pt.y * 100)}%`,
       pt.y,
-      0.05,
+      0,
       1,
       0.01,
       (val) => {
@@ -1008,7 +1070,7 @@ export class WaveCurveModal {
           const idx = apexIndices[0];
           const pt = this.points[idx];
           const normX = Math.max(0.0, Math.min(1.0, (pos.x - pad) / drawW));
-          const normY = Math.max(0.05, Math.min(1.0, (groundY - pos.y) / drawH));
+          const normY = Math.max(0.0, Math.min(1.0, (groundY - pos.y) / drawH));
 
           if (idx === 0) {
             const maxX = this.points.length > 1 ? this.points[1].x - 0.01 : 1.0;
@@ -1033,7 +1095,7 @@ export class WaveCurveModal {
             const initPt = this.dragTarget.initialPoints[idx];
             const pt = this.points[idx];
 
-            pt.y = Math.max(0.05, Math.min(1.0, initPt.y + deltaNormY));
+            pt.y = Math.max(0.0, Math.min(1.0, initPt.y + deltaNormY));
 
             if (idx === 0) {
               const maxX = this.points.length > 1 ? this.points[1].x - 0.01 : 1.0;
@@ -1135,6 +1197,8 @@ export class WaveCurveModal {
     const gridAltitudes = [0.25, 0.50, 0.75, 1.0];
     ctx.strokeStyle = '#1b232f';
     ctx.lineWidth = 1;
+    const minBurstY = LAUNCH_ZONE_CONFIG.minBurstY ?? 0.5;
+    const maxBurstY = LAUNCH_ZONE_CONFIG.maxBurstY ?? 300;
     gridAltitudes.forEach((ratio) => {
       const y = groundY - ratio * drawH;
       ctx.beginPath();
@@ -1142,7 +1206,7 @@ export class WaveCurveModal {
       ctx.lineTo(w - pad, y);
       ctx.stroke();
 
-      const meters = Math.round(75 + ratio * (300 - 75));
+      const meters = Math.round(minBurstY + ratio * (maxBurstY - minBurstY));
       ctx.fillStyle = '#38444d';
       ctx.font = '9px monospace';
       ctx.fillText(`${meters}m (${Math.round(ratio * 100)}%)`, pad + 4, y - 3);

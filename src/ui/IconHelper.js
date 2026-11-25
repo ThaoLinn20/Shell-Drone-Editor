@@ -79,6 +79,15 @@ export function createSvgIcon(type, size = 14) {
         '<path d="M8 7 L2 12 L8 17 Z"></path>' +
         '<path d="M16 7 L22 12 L16 17 Z"></path>';
       break;
+    case 'save':
+      svg.innerHTML = '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>' +
+        '<polyline points="17 21 17 13 7 13 7 21"></polyline>' +
+        '<polyline points="7 3 7 8 15 8"></polyline>';
+      break;
+    case 'library':
+      svg.innerHTML = '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>' +
+        '<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>';
+      break;
     default:
       break;
   }

@@ -17,6 +17,10 @@ import {
 import { WaveCurveModal } from './WaveCurveModal.js';
 import { createSvgIcon, createIconButton } from './IconHelper.js';
 import { t } from '../config/lang/i18n.js';
+import {
+  createSavePatternPopover,
+  openPatternLibrary
+} from './waveCurveLibraryHelper.js';
 
 export class WaveCurveEditor {
   /**
@@ -92,10 +96,11 @@ export class WaveCurveEditor {
 
     this.container.appendChild(this.canvas);
 
-    // Unified control row: Preset Dropdown (left) & compact icon buttons (right)
+    // Unified control row: Preset Dropdown & compact icon buttons (wraps cleanly in narrow inspector)
     const controlRow = document.createElement('div');
     controlRow.className = 'wave-curve-control-row';
     controlRow.style.display = 'flex';
+    controlRow.style.flexWrap = 'wrap';
     controlRow.style.alignItems = 'center';
     controlRow.style.justifyContent = 'space-between';
     controlRow.style.gap = '6px';
@@ -104,8 +109,8 @@ export class WaveCurveEditor {
     // Preset dropdown select
     const presetSelect = document.createElement('select');
     presetSelect.className = 'wave-curve-preset-select';
-    presetSelect.style.flex = '1';
-    presetSelect.style.minWidth = '0';
+    presetSelect.style.flex = '1 1 110px';
+    presetSelect.style.minWidth = '110px';
     presetSelect.style.height = '26px';
     presetSelect.style.padding = '0 6px';
     presetSelect.style.fontSize = '11px';
@@ -224,6 +229,47 @@ export class WaveCurveEditor {
       onClick: () => this.mirrorCurve()
     });
 
+    const savePopover = createSavePatternPopover({
+      getPatternData: () => ({
+        points: this.getCleanPoints(),
+        shellCount: this.shellCount,
+        mortarsLocked: this.mortarsLocked
+      })
+    });
+
+    const savePatternBtn = createIconButton({
+      icon: 'save',
+      iconSize: 13,
+      color: '#3fb950',
+      hoverColor: '#ffffff',
+      hoverBg: '#238636',
+      title: t('editor.patternLibrary.savePattern') || 'Save Pattern to Library',
+      onClick: () => savePopover.toggle()
+    });
+
+    const openLibraryBtn = createIconButton({
+      icon: 'library',
+      iconSize: 13,
+      color: '#58a6ff',
+      hoverColor: '#ffffff',
+      hoverBg: 'rgba(56, 139, 253, 0.3)',
+      title: t('editor.patternLibrary.openLibrary') || 'Pattern Library',
+      onClick: () => {
+        openPatternLibrary({
+          currentShellCount: this.shellCount,
+          onApplyPattern: (resampledPoints, targetCount) => {
+            this.shellCount = targetCount;
+            this.wavePreset = 'custom';
+            if (this.presetSelect) this.presetSelect.value = 'custom';
+            this.points = resampledPoints;
+            this.selectedIndex = 0;
+            this.render();
+            this.onChange(this.getCleanPoints(), this.shellCount, this.wavePreset);
+          }
+        });
+      }
+    });
+
     const expandBtn = createIconButton({
       icon: 'expand',
       iconSize: 13,
@@ -239,10 +285,13 @@ export class WaveCurveEditor {
     iconGroup.appendChild(lockBtn);
     iconGroup.appendChild(resetMortarsBtn);
     iconGroup.appendChild(mirrorBtn);
+    iconGroup.appendChild(savePatternBtn);
+    iconGroup.appendChild(openLibraryBtn);
     iconGroup.appendChild(expandBtn);
     controlRow.appendChild(iconGroup);
 
     this.container.appendChild(controlRow);
+    this.container.appendChild(savePopover.element);
 
     // Hint label
     const hint = document.createElement('div');
@@ -440,7 +489,7 @@ export class WaveCurveEditor {
     const drawW = this.canvas.width - this.padding * 2;
     const drawH = this.canvas.height - this.padding * 2;
     const normX = Math.max(0.0, Math.min(1.0, (pixelX - this.padding) / drawW));
-    const normY = Math.max(0.05, Math.min(1.0, (this.canvas.height - this.padding - pixelY) / drawH));
+    const normY = Math.max(0.0, Math.min(1.0, (this.canvas.height - this.padding - pixelY) / drawH));
     return { normX, normY };
   }
 
@@ -654,7 +703,7 @@ export class WaveCurveEditor {
             const initPt = this.dragTarget.initialPoints[idx];
             const pt = this.points[idx];
 
-            pt.y = Math.max(0.05, Math.min(1.0, initPt.y + deltaNormY));
+            pt.y = Math.max(0.0, Math.min(1.0, initPt.y + deltaNormY));
 
             if (idx === 0) {
               const maxX = this.points.length > 1 ? this.points[1].x - 0.01 : 1.0;

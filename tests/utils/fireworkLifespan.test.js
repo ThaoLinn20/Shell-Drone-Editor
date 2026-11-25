@@ -64,14 +64,22 @@ describe('Firework Lifespan & 3-Phase Lifecycle Model', () => {
     });
 
     it('calculates lift time based on ratioY interpolation', () => {
-      // ratioY = 0.5 => burstHeight = 75 + 0.5 * 225 = 187.5m
+      // ratioY = 0.5 => burstHeight = 0.5 + 0.5 * 299.5 = 150.25m
       const midShell = getFireworkLifespan({
         time: 1.0,
         ratioY: 0.5,
         duration: 2.0
       });
-      expect(midShell.liftTime).toBe(2.89);
-      expect(midShell.burstStartTime).toBe(3.89);
+      expect(midShell.liftTime).toBe(2.59);
+      expect(midShell.burstStartTime).toBe(3.59);
+
+      // ratioY = 0 => burstHeight = 0.5m (water level => 0s lift time)
+      const waterShell = getFireworkLifespan({
+        time: 1.0,
+        ratioY: 0,
+        duration: 2.0
+      });
+      expect(waterShell.liftTime).toBe(0);
     });
 
     it('calculates zero lift time for instantBurst events (mines and ground bouquets)', () => {
@@ -115,7 +123,7 @@ describe('Firework Lifespan & 3-Phase Lifecycle Model', () => {
     });
 
     it('calculates dynamic flight time and burst window for wave curve events based on wavePoints', () => {
-      // 1. Low wave points (all at y = 0.05 => 86.25m, liftTime ~ 1.96s)
+      // 1. Low wave points (all at y = 0.05 => 15.475m, liftTime ~ 0.82s)
       const lowWaveEvent = {
         time: 2.0,
         pattern: 'sweep-custom-curve',
@@ -132,11 +140,11 @@ describe('Firework Lifespan & 3-Phase Lifecycle Model', () => {
         starLifeMultiplier: 1.0
       };
       const lowLifespan = getFireworkLifespan(lowWaveEvent);
-      expect(lowLifespan.liftTime).toBe(1.96);
+      expect(lowLifespan.liftTime).toBe(0.82);
       expect(lowLifespan.burstDuration).toBe(2.0);
       expect(lowLifespan.fadeoutDuration).toBe(2.0);
-      expect(lowLifespan.burstStartTime).toBe(3.96);
-      expect(lowLifespan.burstEndTime).toBe(5.96);
+      expect(lowLifespan.burstStartTime).toBe(2.82);
+      expect(lowLifespan.burstEndTime).toBe(4.82);
 
       // 2. High wave points (all at y = 1.0 => 300m, liftTime ~ 3.66s)
       const highWaveEvent = {
@@ -173,12 +181,12 @@ describe('Firework Lifespan & 3-Phase Lifecycle Model', () => {
         ]
       };
       const archLifespan = getFireworkLifespan(archEvent);
-      // First burst: Shell 0 bursts at delay 0.0 + lift 1.96s = 1.96s
-      expect(archLifespan.liftTime).toBe(1.96);
+      // First burst: Shell 0 bursts at delay 0.0 + lift 0.82s = 0.82s
+      expect(archLifespan.liftTime).toBe(0.82);
       // Last burst: Shell 2 bursts at delay 1.0 + lift 3.66s = 4.66s
-      // Burst window: 4.66s - 1.96s = 2.70s
-      expect(archLifespan.burstDuration).toBe(2.7);
-      expect(archLifespan.burstStartTime).toBe(2.96);
+      // Burst window: 4.66s - 0.82s = 3.84s
+      expect(archLifespan.burstDuration).toBe(3.84);
+      expect(archLifespan.burstStartTime).toBe(1.82);
       expect(archLifespan.burstEndTime).toBe(5.66);
     });
   });

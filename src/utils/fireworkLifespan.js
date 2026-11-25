@@ -9,6 +9,8 @@
  * All parameters are analytical and derived at runtime without altering stored show schemas.
  */
 
+import { LAUNCH_ZONE_CONFIG } from '@shell-drone/firework-engine';
+
 /**
  * Calculates the 3-phase lifespan for any firework event.
  *
@@ -61,13 +63,14 @@ export function getFireworkLifespan(event = {}) {
 
   if (!isInstant && !isComet) {
     const gravity = 30; // abs(FIREWORK_CONFIG.GRAVITY) = 30 m/s^2
-    const minBurstY = 75;
-    const maxBurstY = 300;
-    const groundY = 0.5;
+    const minBurstY = LAUNCH_ZONE_CONFIG.minBurstY ?? 0.5;
+    const randomMinBurstY = LAUNCH_ZONE_CONFIG.randomMinBurstY ?? 75;
+    const maxBurstY = LAUNCH_ZONE_CONFIG.maxBurstY ?? 300;
+    const groundY = LAUNCH_ZONE_CONFIG.center?.y ?? 0.5;
 
     const calculateLiftTimeForHeight = (height) => {
-      const h = Math.max(height - groundY, 5);
-      return 0.8190025 * Math.sqrt((2 * h) / gravity);
+      const h = Math.max(height - groundY, 0);
+      return h > 0 ? 0.8190025 * Math.sqrt((2 * h) / gravity) : 0;
     };
 
     if (hasWavePoints) {
@@ -91,7 +94,7 @@ export function getFireworkLifespan(event = {}) {
           ptY = Number.isFinite(evalPt?.y) ? evalPt.y : 0.5;
         }
 
-        const burstHeight_i = minBurstY + ptY * (maxBurstY - minBurstY);
+        const burstHeight_i = Math.max(minBurstY, minBurstY + ptY * (maxBurstY - minBurstY));
         const liftTime_i = calculateLiftTimeForHeight(burstHeight_i);
         const burstMoment_i = delay + liftTime_i;
 
@@ -109,9 +112,9 @@ export function getFireworkLifespan(event = {}) {
     } else {
       let burstHeight;
       if (typeof event.burstHeight === 'number') {
-        burstHeight = event.burstHeight;
+        burstHeight = Math.max(minBurstY, event.burstHeight);
       } else if (typeof event.ratioY === 'number') {
-        burstHeight = minBurstY + event.ratioY * (maxBurstY - minBurstY);
+        burstHeight = Math.max(minBurstY, minBurstY + event.ratioY * (maxBurstY - minBurstY));
       } else {
         const presetSize = Math.max(
           1,
@@ -121,7 +124,7 @@ export function getFireworkLifespan(event = {}) {
           )
         );
         const sizeT = (presetSize - 1) / 5;
-        burstHeight = minBurstY + (0.42 + sizeT * 0.32) * (maxBurstY - minBurstY);
+        burstHeight = randomMinBurstY + (0.42 + sizeT * 0.32) * (maxBurstY - randomMinBurstY);
       }
 
       liftTime = Math.round(calculateLiftTimeForHeight(burstHeight) * 100) / 100;

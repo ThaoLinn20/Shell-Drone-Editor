@@ -111,11 +111,11 @@ describe('SmokeSystem', () => {
     expect(smokeSystem.puffs.length).toBeGreaterThan(0);
     const launchPuff = smokeSystem.puffs[0];
     expect(launchPuff.category).toBe('launch');
-    expect(launchPuff.position.x).toBeGreaterThanOrEqual(8);
-    expect(launchPuff.position.x).toBeLessThanOrEqual(12);
-    expect(launchPuff.drag).toBeDefined();
-    expect(launchPuff.life).toBeGreaterThanOrEqual(FIREWORK_CONFIG.SMOKE.trailLifeMin);
-    expect(launchPuff.life).toBeLessThanOrEqual(FIREWORK_CONFIG.SMOKE.trailLifeMax);
+    expect(launchPuff.position.x).toBeGreaterThanOrEqual(6);
+    expect(launchPuff.position.x).toBeLessThanOrEqual(14);
+    expect(launchPuff.drag).toBe(FIREWORK_CONFIG.SMOKE.launchDrag);
+    expect(launchPuff.life).toBeGreaterThanOrEqual(FIREWORK_CONFIG.SMOKE.launchLifeMin);
+    expect(launchPuff.life).toBeLessThanOrEqual(FIREWORK_CONFIG.SMOKE.launchLifeMax);
   });
 
   it('should apply exponential drag and wind lerp on update', () => {
