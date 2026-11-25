@@ -50,7 +50,7 @@ export class TimelineEditor {
     this.hotkeyManager = hotkeyManager;
     this.sequences = JSON.parse(JSON.stringify(demoShow)); // Deep clone to edit safely
     this.pixelsPerSecond = 50;
-    this.rowHeight = 30;
+    this.rowHeight = 15;
     this.minBlockWidth = 20;
     this.visible = true;
     this.dragOffsetX = 0;
@@ -521,14 +521,8 @@ export class TimelineEditor {
     presetHubBtn.title =
       t('editor.timelinePanel.presetsBtnTooltip') ||
       'Browse and manage firework presets library';
-    presetHubBtn.style.background = 'rgba(0, 229, 255, 0.15)';
-    presetHubBtn.style.color = '#00e5ff';
-    presetHubBtn.style.border = '1px solid rgba(0, 229, 255, 0.35)';
-    presetHubBtn.style.borderRadius = '4px';
-    presetHubBtn.style.padding = '6px 10px';
-    presetHubBtn.style.fontSize = '12px';
-    presetHubBtn.style.fontWeight = '600';
-    presetHubBtn.style.cursor = 'pointer';
+    presetHubBtn.style.background = '#00838f';
+    presetHubBtn.style.color = '#ffffff';
     presetHubBtn.addEventListener('click', () => {
       this.openPresetHub();
     });
@@ -539,14 +533,8 @@ export class TimelineEditor {
     recordShowBtn.type = 'button';
     recordShowBtn.textContent = t('editor.fullRecord.button') || 'Record Show';
     recordShowBtn.title = t('editor.fullRecord.buttonTitle') || 'Record full show video in high quality with audio';
-    recordShowBtn.style.background = 'rgba(239, 68, 68, 0.16)';
-    recordShowBtn.style.color = '#fca5a5';
-    recordShowBtn.style.border = '1px solid rgba(239, 68, 68, 0.45)';
-    recordShowBtn.style.borderRadius = '4px';
-    recordShowBtn.style.padding = '6px 10px';
-    recordShowBtn.style.fontSize = '12px';
-    recordShowBtn.style.fontWeight = '600';
-    recordShowBtn.style.cursor = 'pointer';
+    recordShowBtn.style.background = '#c62828';
+    recordShowBtn.style.color = '#ffffff';
     recordShowBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.toggleFullShowRecordPopover(recordShowBtn);
@@ -649,12 +637,17 @@ export class TimelineEditor {
     this.trackContainer.appendChild(this.ruler);
 
     // Tracks area
+    const rowPitch = this.rowHeight + 5;
     this.tracksArea = document.createElement('div');
     this.tracksArea.style.position = 'absolute';
     this.tracksArea.style.top = '20px';
     this.tracksArea.style.left = '0';
     this.tracksArea.style.width = '10000px';
     this.tracksArea.style.height = '1000px';
+    this.tracksArea.style.backgroundImage = `linear-gradient(to bottom, transparent ${rowPitch - 1}px, rgba(148, 163, 184, 0.22) ${rowPitch - 1}px)`;
+    this.tracksArea.style.backgroundSize = `100% ${rowPitch}px`;
+    this.tracksArea.style.backgroundRepeat = 'repeat';
+    this.tracksArea.style.backgroundPosition = '0 3px';
 
     // Drag events
     window.addEventListener('mousemove', (e) => this.onDrag(e));
@@ -719,15 +712,15 @@ export class TimelineEditor {
     this.tracksArea.addEventListener('dragover', (e) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'copy';
-      this.tracksArea.style.background = 'rgba(255, 255, 255, 0.05)';
+      this.tracksArea.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
     });
     this.tracksArea.addEventListener('dragleave', (e) => {
       e.preventDefault();
-      this.tracksArea.style.background = '';
+      this.tracksArea.style.backgroundColor = '';
     });
     this.tracksArea.addEventListener('drop', (e) => {
       e.preventDefault();
-      this.tracksArea.style.background = '';
+      this.tracksArea.style.backgroundColor = '';
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         const file = e.dataTransfer.files[0];
         if (file.type.startsWith('audio/') || file.name.endsWith('.mp3')) {
@@ -749,7 +742,72 @@ export class TimelineEditor {
     // Draw ruler ticks
     this.renderRuler();
 
+    leftPanel.style.position = 'relative';
     leftPanel.appendChild(this.trackContainer);
+
+    const zoomControl = document.createElement('div');
+    zoomControl.className = 'timeline-zoom-controls';
+    zoomControl.style.position = 'absolute';
+    zoomControl.style.right = '18px';
+    zoomControl.style.bottom = '18px';
+    zoomControl.style.zIndex = '60';
+    zoomControl.style.display = 'flex';
+    zoomControl.style.alignItems = 'center';
+    zoomControl.style.gap = '2px';
+    zoomControl.style.padding = '2px';
+    zoomControl.style.borderRadius = '6px';
+    zoomControl.style.background = 'rgba(15, 23, 42, 0.88)';
+    zoomControl.style.border = '1px solid rgba(255, 255, 255, 0.16)';
+    zoomControl.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.45)';
+
+    const makeZoomBtn = (titleText, svgPath, onClick) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.title = titleText;
+      if (typeof btn.setAttribute === 'function') {
+        btn.setAttribute('aria-label', titleText);
+      }
+      btn.style.width = '24px';
+      btn.style.height = '24px';
+      btn.style.padding = '0';
+      btn.style.display = 'inline-flex';
+      btn.style.alignItems = 'center';
+      btn.style.justifyContent = 'center';
+      btn.style.borderRadius = '4px';
+      btn.style.border = 'none';
+      btn.style.background = 'transparent';
+      btn.style.color = '#e2e8f0';
+      btn.style.cursor = 'pointer';
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">${svgPath}</svg>`;
+      btn.addEventListener('mouseenter', () => {
+        btn.style.background = 'rgba(255, 255, 255, 0.12)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.background = 'transparent';
+      });
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onClick();
+      });
+      return btn;
+    };
+
+    const zoomOutBtn = makeZoomBtn(
+      t('editor.timelinePanel.zoomOut') || 'Zoom Out Timeline',
+      '<line x1="5" y1="12" x2="19" y2="12"/>',
+      () => this.stepZoom(-1)
+    );
+    const zoomInBtn = makeZoomBtn(
+      t('editor.timelinePanel.zoomIn') || 'Zoom In Timeline',
+      '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+      () => this.stepZoom(1)
+    );
+
+    zoomControl.appendChild(zoomOutBtn);
+    zoomControl.appendChild(zoomInBtn);
+    leftPanel.appendChild(zoomControl);
+    this.zoomControl = zoomControl;
+
     this.container.appendChild(leftPanel);
 
     // Property Inspector Container (docked to viewport top-right)
@@ -1249,10 +1307,52 @@ export class TimelineEditor {
       this.pixelsPerSecond
     );
     idx = (idx + 1) % zoomLevels.length;
-    this.pixelsPerSecond = zoomLevels[idx];
+    this.setZoom(zoomLevels[idx]);
+  }
+
+  stepZoom(direction) {
+    const zoomLevels = [
+      10,
+      15,
+      25,
+      35,
+      50,
+      75,
+      100,
+      150,
+      200
+    ];
+    let currentIdx = zoomLevels.findIndex((lvl) => lvl >= this.pixelsPerSecond);
+    if (currentIdx < 0) currentIdx = zoomLevels.length - 1;
+    const nextIdx = Math.max(
+      0,
+      Math.min(zoomLevels.length - 1, currentIdx + direction)
+    );
+    this.setZoom(zoomLevels[nextIdx]);
+  }
+
+  setZoom(nextPixelsPerSecond) {
+    const prevPps = this.pixelsPerSecond || 50;
+    const nextPps = Math.max(10, Math.min(200, nextPixelsPerSecond));
+    if (prevPps === nextPps) return;
+
+    const scrollLeft = this.trackContainer ? this.trackContainer.scrollLeft : 0;
+    const viewWidth = this.trackContainer ? this.trackContainer.clientWidth : 0;
+    const centerTime = (scrollLeft + viewWidth * 0.5) / prevPps;
+
+    this.pixelsPerSecond = nextPps;
     this.renderRuler();
     this.renderTracks();
     this.anchorHead.style.left = (this.anchorTime * this.pixelsPerSecond) + 'px';
+    if (this.playhead && this.showDirector) {
+      this.playhead.style.left = ((this.showDirector.elapsedTime || 0) * this.pixelsPerSecond) + 'px';
+    }
+    if (this.trackContainer) {
+      this.trackContainer.scrollLeft = Math.max(
+        0,
+        centerTime * this.pixelsPerSecond - viewWidth * 0.5
+      );
+    }
   }
 
   copySelected() {
@@ -2153,7 +2253,7 @@ export class TimelineEditor {
       block.style.top = (row * (this.rowHeight + 5) + 5) + 'px';
       block.style.width = width + 'px';
       block.style.height = this.rowHeight + 'px';
-      block.style.borderRadius = '4px';
+      block.style.borderRadius = '3px';
       block.style.cursor = 'grab';
       block.style.boxSizing = 'border-box';
       block.style.border = this.inspector.selectedEvent === seq
@@ -2163,8 +2263,9 @@ export class TimelineEditor {
             : '1px solid rgba(0,0,0,0.5)');
       block.style.display = 'flex';
       block.style.alignItems = isFirework ? 'stretch' : 'center';
-      block.style.padding = isFirework ? '0' : '0 5px';
-      block.style.fontSize = '11px';
+      block.style.padding = isFirework ? '0' : '0 4px';
+      block.style.fontSize = '9px';
+      block.style.lineHeight = '1';
       block.style.overflow = 'hidden';
       block.style.whiteSpace = 'nowrap';
       block.style.userSelect = 'none';

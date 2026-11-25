@@ -161,6 +161,8 @@ export default {
       importBtnTooltip: "Mở kho kịch bản từ thư mục, Google Drive hoặc tệp JSON",
       presetsBtn: "Thư viện Preset",
       presetsBtnTooltip: "Duyệt và quản lý thư viện mẫu pháo hoa",
+      zoomOut: "Thu nhỏ Timeline",
+      zoomIn: "Phóng to Timeline",
       newBtn: "Tạo mới",
       newBtnTooltip: "Tạo kịch bản mới rỗng Ctrl+Alt+N",
       newScriptTitle: "Tạo kịch bản mới",

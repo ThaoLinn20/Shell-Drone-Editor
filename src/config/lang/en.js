@@ -161,6 +161,8 @@ export default {
       importBtnTooltip: "Open script library from folder, Google Drive, or JSON file",
       presetsBtn: "Presets",
       presetsBtnTooltip: "Browse and manage firework presets library",
+      zoomOut: "Zoom Out Timeline",
+      zoomIn: "Zoom In Timeline",
       newBtn: "New",
       newBtnTooltip: "Create new blank script Ctrl+Alt+N",
       newScriptTitle: "New Script",

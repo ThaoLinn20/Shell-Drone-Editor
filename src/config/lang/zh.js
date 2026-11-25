@@ -153,6 +153,8 @@ export default {
       importBtn: "导入剧本",
       presetsBtn: "预设库",
       presetsBtnTooltip: "浏览并管理烟花预设库",
+      zoomOut: "缩小时间轴",
+      zoomIn: "放大时间轴",
       newBtn: "新建",
       newBtnTooltip: "新建空白剧本 Ctrl+Alt+N",
       newScriptTitle: "新建剧本",

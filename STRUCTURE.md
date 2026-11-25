@@ -11,12 +11,16 @@
   - `animate()`: Advances the formation director and renders the scene each frame.
 - **[src/electron/main.js](./src/electron/main.js)**: Owns the Electron window, app menus, IPC handlers, and screen switching.
   - `createWindow()`: Creates the BrowserWindow, menu, startup URL, and navigation guards.
+- **[src/electron/recordingHandlers.js](./src/electron/recordingHandlers.js)**: Handles disk-streamed show recording chunks, FFmpeg MP4 transcoding, and PNG photo saves over Electron IPC.
+  - `registerRecordingHandlers(deps)`: Registers `recording:start`, `recording:write-chunk`, `recording:finalize`, `recording:cancel`, `recording:save-photo`, and `recording:open-folder`.
+- **[src/electron/presetStorage.js](./src/electron/presetStorage.js)** & **[src/electron/patternStorage.js](./src/electron/patternStorage.js)**: Manage local filesystem bundles for custom firework presets and sweep curve patterns.
 
 ### Show Orchestration
 - **[src/directors/ShowDirector.js](./src/directors/ShowDirector.js)**: Schedules timed show events, syncs audio and drone playback, and delegates event execution.
   - `loadScript(scriptConfig)`: Sorts events, resets playback, and prepares audio and drone sequences.
   - `seek(time)`: Jumps to a new playback time and resynchronizes dependent systems.
   - `play()`, `pause()`, `stop()`, `update(deltaTime)`, `executeEvent(evt)`: Control playback state and dispatch due events.
+  - `connectAudioPlayersToSystem(audioSystem)`: Routes timeline HTMLAudioElements into the WebAudio `masterGain` graph for recording.
 - **[src/directors/ShowEventDispatcher.js](./src/directors/ShowEventDispatcher.js)**: Routes show event objects to the correct firework, comet, sequence, or finale handler.
   - `register(eventType, handlerFn)`: Registers a handler for a given event type.
   - `dispatch(evt, context)`: Looks up the handler for an event and executes it.
@@ -37,8 +41,9 @@
 - **[src/systems/TrailSystem.js](./src/systems/TrailSystem.js)**: Owns trail particle emission and trail cleanup.
 - **[src/systems/SmokeSystem.js](./src/systems/SmokeSystem.js)**: Spawns and updates smoke around launch and burst events.
 - **[src/systems/SkyLightReactionSystem.js](./src/systems/SkyLightReactionSystem.js)**: Applies temporary sky and ambient light reactions to large events.
-- **[src/systems/AudioSystem.js](./src/systems/AudioSystem.js)**: Handles audio preloading, playback, and spatial response.
+- **[src/systems/AudioSystem.js](./src/systems/AudioSystem.js)**: Handles audio preloading, playback, spatial response, and WebAudio master mixing for recording.
   - `preload()`: Downloads and caches audio files for show playback.
+  - `getOrCreateRecordingDestination()`, `connectMediaElement(audioElement)`: Exposes a `MediaStreamAudioDestinationNode` mixing firework SFX and timeline music.
 - **[src/systems/MovementSystem.js](./src/systems/MovementSystem.js)**: Reads input state and moves the viewer camera.
 - **[src/systems/DroneSystem.js](./src/systems/DroneSystem.js)**: Updates drone instances, transitions, and arrival lighting.
 - **[src/systems/PhysicSystem.js](./src/systems/PhysicSystem.js)**: Placeholder for additional physics simulation.
@@ -53,9 +58,15 @@
 - **[src/core/CameraManager.js](./src/core/CameraManager.js)**: Owns the shared perspective camera and resize behavior.
   - `onResize()`: Updates aspect ratio and projection state.
 - **[src/core/SceneManager.js](./src/core/SceneManager.js)**: Builds the Three.js scene, atmosphere, and other shared scene objects.
-- **[src/core/Renderer.js](./src/core/Renderer.js)**: Wraps the WebGL renderer and resize wiring.
+- **[src/core/Renderer.js](./src/core/Renderer.js)**: Wraps the WebGL renderer, resize locking, and resize listener wiring.
   - `addResizeListener(callback)`: Registers a resize callback.
   - `render(scene, camera)`: Draws the current scene.
+- **[src/core/PresetCaptureService.js](./src/core/PresetCaptureService.js)**: Captures isolated 480p WebM previews and JPEG banners for single firework blocks in automatic or manual (`C`/`V`) modes.
+  - `captureBlock(event)`, `captureManualPhoto(event)`, `captureManualVideo(event)`: Run isolated block capture sessions and restore editor state.
+  - `onAfterRender()`: Captures synchronous frames and updates recording/guidance HUDs.
+- **[src/core/FullShowRecordingService.js](./src/core/FullShowRecordingService.js)**: Records full timeline scripts at 1080p/2K/4K 60fps with `FDShowStudio` watermark, full WebAudio mix, `V` pause/resume, and `C` PNG snapshots.
+  - `start(options)`, `togglePause()`, `capturePhoto()`, `stopAndSave()`, `cancel()`: Manage the full-show recording lifecycle and floating HUD.
+- **[src/core/PresetRegistry.js](./src/core/PresetRegistry.js)** & **[src/core/PatternRegistry.js](./src/core/PatternRegistry.js)**: Manage merged built-in and custom preset/pattern catalogs with Electron IPC and browser fallbacks.
 - **[src/core/PostProcessingPipeline.js](./src/core/PostProcessingPipeline.js)**: Configures optional post-processing passes.
   - `setSize(width, height, pixelRatio)`: Resizes the post-processing chain.
   - `render()`: Renders the active post-processing pipeline.
@@ -134,10 +145,13 @@
 - **[src/editor/ui/panels/StepPanel.js](./src/editor/ui/panels/StepPanel.js)**: Edits transition duration and speed profiles.
 - **[src/editor/ui/templates/EditorTemplates.js](./src/editor/ui/templates/EditorTemplates.js)**: Holds standard HTML panel render templates.
 - **[src/editor/ui/utils/Modal.js](./src/editor/ui/utils/Modal.js)**: Displays custom layout alert and confirm dialogs.
-- **[src/ui/TimelineEditor.js](./src/ui/TimelineEditor.js)**: Shows the show timeline overlay, event blocks, and playback controls.
+- **[src/ui/TimelineEditor.js](./src/ui/TimelineEditor.js)**: Shows the show timeline overlay, compact event block rows, zoom controls, full-show recording popover, and playback controls.
   - `toggle()`: Opens or closes the show playback editor overlay.
   - `tapBeat()`: Places a yellow beat marker at the current playhead position.
-- **[src/ui/PropertyInspector.js](./src/ui/PropertyInspector.js)**: Edits event properties and timing fields in the show editor.
+  - `stepZoom(direction)`, `setZoom(nextPixelsPerSecond)`: Adjusts timeline horizontal scale while preserving viewport center.
+  - `autoCapturePresetFromEvent(targetEvent)`, `toggleFullShowRecordPopover(anchorEl)`: Triggers single-block preset capture or full-show recording.
+- **[src/ui/modals/PresetHubModal.js](./src/ui/modals/PresetHubModal.js)**: Displays the Firework Preset Library grid, filter-aware card metadata, hover video previews, and preset creation/edit drawer with manual retake/re-record actions.
+- **[src/ui/PropertyInspector.js](./src/ui/PropertyInspector.js)**: Edits event properties, timing fields, and one-click `Save to Library` auto-capture in the show editor.
 - **[src/formation/FormationDirector.js](./src/formation/FormationDirector.js)**: Drives the static formation designer scene, selection, and persistence.
   - `handleCanvasClick(event)`, `performBoxSelection(startX, startY, endX, endY)`, `onContextMenu(event)`, `saveDirectly()`, `updateMeshFromState()`: Handle formation editing actions and sync the mesh.
   - `loadReferenceImage(file)`: Loads a background guide image into the scene.
@@ -164,6 +178,10 @@
   - `getRecentScripts()`, `addRecentScript(meta)`, `removeRecentScript(filePath)`, `clearRecentScripts()`, `formatRelativeTime(timestamp, t)`: Access, record, clean, and format recent show scripts.
 - **[src/utils/timelineTransform.js](./src/utils/timelineTransform.js)**: Multi-selection timeline transformation math.
   - `distributeSpacing(events)`, `distributeStarts(events)`, `stretchEvents(events, deltaSpan, anchorTime)`: Distribute idle gaps, distribute start times, and stretch relative time distances between event blocks.
+- **[src/utils/presetCaptureTiming.js](./src/utils/presetCaptureTiming.js)**: Computes isolated block recording and peak-burst snapshot timestamps from `getFireworkLifespan`.
+  - `computePresetCaptureWindow(event)`: Returns `recordStartTime`, `snapshotTime`, `recordEndTime`, and `burstAltitude`.
+- **[src/utils/fullShowRecordingHelper.js](./src/utils/fullShowRecordingHelper.js)**: Defines 1080p/2K/4K quality presets and computes total show duration.
+  - `getFullShowQualityPreset(key)`, `computeShowEndTime(scriptConfig, tailMarginSec)`: Resolve recording parameters and automatic stop time.
 
 ## 2. Entry Points
 - **Browser show viewer**: [index.html](./index.html) loads [src/main.js](./src/main.js).
@@ -193,6 +211,19 @@ graph TD
     Main --> SkyLight[src/systems/SkyLightReactionSystem.js]
     Main --> AudioSystem[src/systems/AudioSystem.js]
     Main --> DroneSystem[src/systems/DroneSystem.js]
+    Main --> PresetCapture[src/core/PresetCaptureService.js]
+    Main --> FullRecord[src/core/FullShowRecordingService.js]
+
+    ElectronMain --> RecordingHandlers[src/electron/recordingHandlers.js]
+    ElectronMain --> PresetStorage[src/electron/presetStorage.js]
+    PresetCapture --> PresetCaptureTiming[src/utils/presetCaptureTiming.js]
+    FullRecord --> FullRecordHelper[src/utils/fullShowRecordingHelper.js]
+    FullRecord --> AudioSystem
+    FullRecord --> Preload
+    TimelineEditor --> PresetHub[src/ui/modals/PresetHubModal.js]
+    TimelineEditor --> PresetCapture
+    TimelineEditor --> FullRecord
+    PresetHub --> PresetRegistry[src/core/PresetRegistry.js]
 
     ShowDirector --> Dispatcher[src/directors/ShowEventDispatcher.js]
     ShowDirector --> FireworkSeq

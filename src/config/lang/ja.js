@@ -153,6 +153,8 @@ export default {
       importBtn: "シナリオ読み込み",
       presetsBtn: "プリセット",
       presetsBtnTooltip: "花火プリセットライブラリを表示および管理",
+      zoomOut: "タイムラインを縮小",
+      zoomIn: "タイムラインを拡大",
       newBtn: "新規作成",
       newBtnTooltip: "新しい空のスクリプトを作成 Ctrl+Alt+N",
       newScriptTitle: "新しいスクリプト",
