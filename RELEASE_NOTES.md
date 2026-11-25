@@ -21,3 +21,19 @@
 
 ## Chores
 - Updated and expanded automated tests for pattern library persistence, water-level burst calculations, comet visual effect multipliers, and launch smoke behavior.
+
+
+---
+
+# Update v3.5.7
+
+## Downloads
+- Windows Installer (.exe): [FDShowStudio-Setup-3.5.7.exe](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/v3.5.7/FDShowStudio-Setup-3.5.7.exe)
+- Portable Archive (.zip): [FDShowStudio-3.5.7-win.zip](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/v3.5.7/FDShowStudio-3.5.7-win.zip)
+- All Release Assets: [GitHub Releases v3.5.7](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/tag/v3.5.7)
+
+## Bug Fixes
+- Complete Custom Preset Saving & Applying: Saving custom firework and comet presets now preserves all shell sizes, terminal flare settings, cascade ring parameters, launch trail modes, and modifier toggles, and applying them cleanly replaces prior event effects without leaving stale flags behind.
+
+## Chores
+- Added project architecture dependency brain (`IMPACT_MAP.md`) and automated round-trip preset composition tests.
