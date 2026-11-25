@@ -489,7 +489,7 @@ export class WaveCurveEditor {
     const drawW = this.canvas.width - this.padding * 2;
     const drawH = this.canvas.height - this.padding * 2;
     const normX = Math.max(0.0, Math.min(1.0, (pixelX - this.padding) / drawW));
-    const normY = Math.max(0.05, Math.min(1.0, (this.canvas.height - this.padding - pixelY) / drawH));
+    const normY = Math.max(0.0, Math.min(1.0, (this.canvas.height - this.padding - pixelY) / drawH));
     return { normX, normY };
   }
 
@@ -703,7 +703,7 @@ export class WaveCurveEditor {
             const initPt = this.dragTarget.initialPoints[idx];
             const pt = this.points[idx];
 
-            pt.y = Math.max(0.05, Math.min(1.0, initPt.y + deltaNormY));
+            pt.y = Math.max(0.0, Math.min(1.0, initPt.y + deltaNormY));
 
             if (idx === 0) {
               const maxX = this.points.length > 1 ? this.points[1].x - 0.01 : 1.0;

@@ -14,6 +14,7 @@ import {
   generateWavePreset
 } from '../utils/SplineMath.js';
 import { t } from '../config/lang/i18n.js';
+import { LAUNCH_ZONE_CONFIG } from '@shell-drone/firework-engine';
 import { createSvgIcon, createIconButton } from './IconHelper.js';
 import {
   createSavePatternPopover,
@@ -524,7 +525,7 @@ export class WaveCurveModal {
         b.addEventListener('click', () => {
           this.selectedApexIndices.forEach((idx) => {
             const p = this.points[idx];
-            p.y = Math.max(0.05, Math.min(1.0, p.y + deltaRatio));
+            p.y = Math.max(0.0, Math.min(1.0, p.y + deltaRatio));
             if (!this.mortarsLocked) {
               p.launchX = p.x;
               p.angle = 0.0;
@@ -674,7 +675,9 @@ export class WaveCurveModal {
     if (!pt) return;
 
     const deg = Math.round(pt.angle * 180 / Math.PI);
-    const heightMeters = Math.round(75 + pt.y * (300 - 75));
+    const minBurstY = LAUNCH_ZONE_CONFIG.minBurstY ?? 0.5;
+    const maxBurstY = LAUNCH_ZONE_CONFIG.maxBurstY ?? 300;
+    const heightMeters = Math.round(minBurstY + pt.y * (maxBurstY - minBurstY));
 
     const card = document.createElement('div');
     card.style.display = 'flex';
@@ -780,7 +783,7 @@ export class WaveCurveModal {
       (t('editor.inspector.waveCurve.burstApex') || 'Burst Apex') + ` (${heightMeters}m)`,
       `${Math.round(pt.y * 100)}%`,
       pt.y,
-      0.05,
+      0,
       1,
       0.01,
       (val) => {
@@ -1067,7 +1070,7 @@ export class WaveCurveModal {
           const idx = apexIndices[0];
           const pt = this.points[idx];
           const normX = Math.max(0.0, Math.min(1.0, (pos.x - pad) / drawW));
-          const normY = Math.max(0.05, Math.min(1.0, (groundY - pos.y) / drawH));
+          const normY = Math.max(0.0, Math.min(1.0, (groundY - pos.y) / drawH));
 
           if (idx === 0) {
             const maxX = this.points.length > 1 ? this.points[1].x - 0.01 : 1.0;
@@ -1092,7 +1095,7 @@ export class WaveCurveModal {
             const initPt = this.dragTarget.initialPoints[idx];
             const pt = this.points[idx];
 
-            pt.y = Math.max(0.05, Math.min(1.0, initPt.y + deltaNormY));
+            pt.y = Math.max(0.0, Math.min(1.0, initPt.y + deltaNormY));
 
             if (idx === 0) {
               const maxX = this.points.length > 1 ? this.points[1].x - 0.01 : 1.0;
@@ -1194,6 +1197,8 @@ export class WaveCurveModal {
     const gridAltitudes = [0.25, 0.50, 0.75, 1.0];
     ctx.strokeStyle = '#1b232f';
     ctx.lineWidth = 1;
+    const minBurstY = LAUNCH_ZONE_CONFIG.minBurstY ?? 0.5;
+    const maxBurstY = LAUNCH_ZONE_CONFIG.maxBurstY ?? 300;
     gridAltitudes.forEach((ratio) => {
       const y = groundY - ratio * drawH;
       ctx.beginPath();
@@ -1201,7 +1206,7 @@ export class WaveCurveModal {
       ctx.lineTo(w - pad, y);
       ctx.stroke();
 
-      const meters = Math.round(75 + ratio * (300 - 75));
+      const meters = Math.round(minBurstY + ratio * (maxBurstY - minBurstY));
       ctx.fillStyle = '#38444d';
       ctx.font = '9px monospace';
       ctx.fillText(`${meters}m (${Math.round(ratio * 100)}%)`, pad + 4, y - 3);
