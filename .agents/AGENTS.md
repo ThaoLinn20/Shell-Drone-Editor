@@ -21,6 +21,10 @@
 ## Terminology & Glossary
 - **Terminology Reference**: Always refer to [GLOSSARY.md](../GLOSSARY.md) for naming conventions and definitions of timeline/editor components (such as Playhead, Anchor Head, Beat, Snap-to-beat). Do not invent new terms or mix names (e.g. do not call Anchor Head "playhead cursor" or "timeline pointer").
 
+## Architecture & Dependency Impact Brain
+- **Consult `IMPACT_MAP.md` Before Editing**: Before planning or modifying shared pipelines, event schemas, presets, Electron IPC, or engine modules, ALWAYS read [IMPACT_MAP.md](../IMPACT_MAP.md) to trace cross-file dependencies and blast radius (including `../firework-engine`, `FireworkSequencer.js`, `presetComposition.js`, `PropertyInspector.js`, and localization files).
+- **Keep `IMPACT_MAP.md` Synchronized**: Whenever introducing a new cross-module coupling, IPC channel, schema field group, or shared helper, update [IMPACT_MAP.md](../IMPACT_MAP.md) so future changes remain impact-aware.
+
 ## Documentation & Markdown Rules
 - **Relative Markdown Links**: Always prioritize using relative links (for example, `./src/main.js`) instead of absolute file paths (such as `file:///...`) when writing links inside workspace documentation and files (such as `STRUCTURE.md`).
 

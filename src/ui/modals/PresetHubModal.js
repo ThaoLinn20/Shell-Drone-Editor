@@ -6,6 +6,11 @@ import {
 import { presetRegistry } from '../../core/PresetRegistry.js';
 import { showToast } from '../../utils/Toast.js';
 import { resolveAssetUrl } from '../../utils/assetUrl.js';
+import {
+  extractPresetComposition,
+  createDefaultPresetComposition,
+  deepCloneJson
+} from '../../utils/presetComposition.js';
 
 export class PresetHubModal {
   constructor(options = {}) {
@@ -772,12 +777,7 @@ export class PresetHubModal {
     let defaultName = 'New Custom Firework';
     let defaultSummary = '';
     let initialTags = ['shell'];
-    let soundConfig = {
-      volumeMultiplier: 1.0,
-      launch: 'standard',
-      burst: 'standard',
-      crackle: 'standard'
-    };
+    let defaultCategory = 'shell';
 
     if (sel) {
       const shape = sel.shapeType || 'sphere';
@@ -785,60 +785,16 @@ export class PresetHubModal {
       defaultName = sel.name || sel.label || `${shape}_${dynamics}`;
       defaultSummary = `Custom firework preset based on ${shape} with ${dynamics}.`;
       initialTags = [shape, dynamics];
-
-      if (sel.sound && typeof sel.sound === 'object') {
-        soundConfig = {
-          volumeMultiplier: sel.sound.volumeMultiplier !== undefined
-            ? Number(sel.sound.volumeMultiplier)
-            : 1.0,
-          launch: sel.sound.launch || '',
-          burst: sel.sound.burst || '',
-          crackle: sel.sound.crackle || ''
-        };
-      } else {
-        soundConfig = {
-          volumeMultiplier: sel.soundVolume !== undefined
-            ? Number(sel.soundVolume)
-            : 1.0,
-          launch: sel.launchSound || '',
-          burst: sel.burstSound || '',
-          crackle: sel.crackleSound || ''
-        };
-      }
-
-      composition = {
-        shapeType: shape,
-        dynamicsType: dynamics,
-        color: sel.color || '#ffaa00',
-        scale: sel.scale ?? 1.0,
-        particleCountMultiplier: sel.particleCountMultiplier ?? 1.0,
-        starLifeMultiplier: sel.starLifeMultiplier ?? 1.0,
-        effects: Array.isArray(sel.effects) ? [...sel.effects] : [],
-        multiNested: Boolean(sel.multiNested),
-        stages: Array.isArray(sel.stages) ? JSON.parse(JSON.stringify(sel.stages)) : [],
-        secondBurst: sel.secondBurst ? { ...sel.secondBurst } : null,
-        sound: soundConfig
-      };
+      defaultCategory = sel.type === 'cometsequence' ? 'comet' : 'shell';
+      composition = extractPresetComposition(sel);
     } else {
-      composition = {
-        shapeType: 'sphere',
-        dynamicsType: 'standard',
-        color: '#ffaa00',
-        scale: 1.0,
-        particleCountMultiplier: 1.0,
-        starLifeMultiplier: 1.0,
-        effects: [],
-        multiNested: false,
-        stages: [],
-        secondBurst: null,
-        sound: soundConfig
-      };
+      composition = createDefaultPresetComposition();
     }
 
     const newPreset = {
       slug: `custom_shell_${Date.now()}`,
       name: defaultName,
-      category: 'shell',
+      category: defaultCategory,
       tags: initialTags,
       summary: defaultSummary,
       composition,
@@ -1065,7 +1021,7 @@ export class PresetHubModal {
         category: catInput.value.trim() || 'shell',
         tags,
         summary: sumTextarea.value.trim(),
-        composition: preset.composition || null,
+        composition: preset.composition ? deepCloneJson(preset.composition) : null,
         isCustom: true
       };
 
