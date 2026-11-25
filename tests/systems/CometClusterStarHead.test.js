@@ -98,11 +98,12 @@ describe('Comet Cluster Firework Star Head Rendering', () => {
     const { ShellPresetFactory } = await import('../../src/factories/ShellPresetFactory.js');
 
     const templateNoTrail = getTemplateForPreset('comet_cluster_notrail');
-    expect(templateNoTrail.effects).toContain('no-trail');
+    expect(templateNoTrail.effects).toEqual([]);
 
     const factory = new ShellPresetFactory();
     const presetNoTrail = factory.createPresetByKey('comet_cluster_notrail');
-    expect(presetNoTrail.effects).toContain('no-trail');
+    expect(presetNoTrail.noTrail).toBe(false);
+    expect(presetNoTrail.effects).toEqual([]);
 
     // Create a comet with stacked effects (crackle + crossette + strobe + flow)
     const comet = new CometEntity({

@@ -1238,8 +1238,8 @@ export default {
         preset: {
           text_word: "テキスト単語",
           random: "ランダム",
-          comet_cluster: "彗星群",
-          comet_cluster_notrail: "無軌跡彗星群",
+          comet_cluster: "クラシック彗星群",
+          comet_cluster_notrail: "★ 彗星群",
           comet_cluster_cc: "変色彗星群",
           comet_cluster_thick: "太軌跡彗星群",
           comet_cluster_detached: "超高輝度分離ビーム彗星群",

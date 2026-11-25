@@ -1237,8 +1237,8 @@ export default {
         preset: {
           text_word: "文字单词",
           random: "随机",
-          comet_cluster: "彗星集群",
-          comet_cluster_notrail: "无拖尾彗星集群",
+          comet_cluster: "经典彗星集群",
+          comet_cluster_notrail: "★ 彗星集群",
           comet_cluster_cc: "变色彗星集群",
           comet_cluster_thick: "粗拖尾彗星集群",
           comet_cluster_detached: "超亮分段彗星光束集群",

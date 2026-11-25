@@ -1250,8 +1250,8 @@ export default {
         preset: {
           text_word: "Text Word",
           random: "Random",
-          comet_cluster: "Comet Cluster",
-          comet_cluster_notrail: "Comet Cluster No Trail",
+          comet_cluster: "Comet Cluster Classic",
+          comet_cluster_notrail: "★ Comet Cluster",
           comet_cluster_cc: "Comet Cluster Color Change",
           comet_cluster_thick: "Comet Cluster Thick Trail",
           comet_cluster_detached: "Comet Cluster Detached Beam",

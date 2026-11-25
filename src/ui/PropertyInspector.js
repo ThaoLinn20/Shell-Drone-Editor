@@ -1408,6 +1408,8 @@ export class PropertyInspector {
         const cometKeys = nonRandom
           .filter((k) => isCometKey(k))
           .sort((a, b) => {
+            if (a === 'comet_cluster_notrail') return -1;
+            if (b === 'comet_cluster_notrail') return 1;
             const labelA = getEnglishOptionLabel('preset', a);
             const labelB = getEnglishOptionLabel('preset', b);
             return labelA.localeCompare(labelB, 'en', { sensitivity: 'base' });

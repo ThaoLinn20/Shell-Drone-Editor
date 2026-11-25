@@ -1250,8 +1250,8 @@ export default {
         preset: {
           text_word: "Chữ cái và từ ngữ",
           random: "Ngẫu nhiên",
-          comet_cluster: "Cụm sao chổi",
-          comet_cluster_notrail: "Cụm sao chổi không vệt",
+          comet_cluster: "Cụm sao chổi cổ điển",
+          comet_cluster_notrail: "★ Cụm sao chổi",
           comet_cluster_cc: "Cụm sao chổi đổi màu",
           comet_cluster_thick: "Cụm sao chổi vệt dày",
           comet_cluster_detached: "Cụm sao chổi tia rời siêu sáng",
