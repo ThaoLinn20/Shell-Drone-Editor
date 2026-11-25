@@ -346,4 +346,45 @@ describe('PresetHubModal Component', () => {
       '3'
     );
   });
+
+  it('keeps media preview unobstructed and adapts badges by filter and grid density', () => {
+    const customPreset = {
+      id: 'custom_test_shell',
+      name: 'Custom Test Shell',
+      category: 'shell',
+      isCustom: true,
+      summary: 'Test summary'
+    };
+
+    modal.selectedCategory = 'all';
+    modal.selectedSource = 'all';
+    modal.columnsSetting = '5';
+    const card5 = modal.createPresetCard(customPreset);
+
+    const media5 = card5.querySelector('.preset-card-media');
+    expect(media5.querySelector('.preset-card-badges')).toBeNull();
+    expect(card5.querySelector('.preset-card-badge-category')).not.toBeNull();
+    expect(card5.querySelector('.preset-card-badge-custom')).not.toBeNull();
+
+    // Filter-aware: when category and source are narrowed, redundant badges are hidden
+    modal.selectedCategory = 'shell';
+    modal.selectedSource = 'custom';
+    const filteredCard = modal.createPresetCard(customPreset);
+    expect(filteredCard.querySelector('.preset-card-badges')).toBeNull();
+
+    // Dense grid (10 columns): uses compact dot for custom presets when source is all
+    modal.selectedCategory = 'all';
+    modal.selectedSource = 'all';
+    modal.columnsSetting = '10';
+    const denseCard = modal.createPresetCard(customPreset);
+    const denseMedia = denseCard.querySelector('.preset-card-media');
+    expect(denseMedia.querySelector('.preset-card-custom-dot')).toBeNull();
+    expect(denseCard.querySelector('.preset-card-custom-dot')).not.toBeNull();
+    expect(denseCard.querySelector('.preset-card-badges')).toBeNull();
+
+    // Dense grid with source filtered to custom: dot is also omitted
+    modal.selectedSource = 'custom';
+    const denseFilteredCard = modal.createPresetCard(customPreset);
+    expect(denseFilteredCard.querySelector('.preset-card-custom-dot')).toBeNull();
+  });
 });

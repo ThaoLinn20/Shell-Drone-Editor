@@ -617,37 +617,6 @@ export class PresetHubModal {
       });
     }
 
-    // Badges on Media
-    const badgesRow = document.createElement('div');
-    badgesRow.style.position = 'absolute';
-    badgesRow.style.top = '8px';
-    badgesRow.style.left = '8px';
-    badgesRow.style.display = 'flex';
-    badgesRow.style.gap = '4px';
-
-    const catBadge = document.createElement('span');
-    catBadge.style.fontSize = '9px';
-    catBadge.style.fontWeight = 'bold';
-    catBadge.style.textTransform = 'uppercase';
-    catBadge.style.padding = '2px 6px';
-    catBadge.style.borderRadius = '3px';
-    catBadge.style.background = 'rgba(0, 0, 0, 0.7)';
-    catBadge.style.color = '#38bdf8';
-    catBadge.textContent = preset.category || 'shell';
-    badgesRow.appendChild(catBadge);
-
-    if (preset.isCustom) {
-      const customBadge = document.createElement('span');
-      customBadge.style.fontSize = '9px';
-      customBadge.style.fontWeight = 'bold';
-      customBadge.style.padding = '2px 6px';
-      customBadge.style.borderRadius = '3px';
-      customBadge.style.background = '#10b981';
-      customBadge.style.color = '#000000';
-      customBadge.textContent = t('editor.presetHub.customBadge') || 'CUSTOM';
-      badgesRow.appendChild(customBadge);
-    }
-    mediaWrap.appendChild(badgesRow);
     card.appendChild(mediaWrap);
 
     // Card Details
@@ -657,6 +626,10 @@ export class PresetHubModal {
     details.style.flexDirection = 'column';
     details.style.gap = isDenseGrid ? '4px' : '6px';
     details.style.flex = '1';
+    details.style.minWidth = '0';
+
+    const showCatBadge = this.selectedCategory === 'all';
+    const showCustomBadge = Boolean(preset.isCustom) && this.selectedSource === 'all';
 
     const title = document.createElement('div');
     title.textContent = preset.name;
@@ -666,7 +639,93 @@ export class PresetHubModal {
     title.style.whiteSpace = 'nowrap';
     title.style.overflow = 'hidden';
     title.style.textOverflow = 'ellipsis';
-    details.appendChild(title);
+    title.style.minWidth = '0';
+
+    const buildBadgesRow = () => {
+      const badgesRow = document.createElement('div');
+      badgesRow.className = 'preset-card-badges';
+      badgesRow.style.display = 'flex';
+      badgesRow.style.flexWrap = 'wrap';
+      badgesRow.style.alignItems = 'center';
+      badgesRow.style.gap = '5px';
+
+      if (showCatBadge) {
+        const catBadge = document.createElement('span');
+        catBadge.className = 'preset-card-badge-category';
+        catBadge.style.fontSize = '9px';
+        catBadge.style.fontWeight = '600';
+        catBadge.style.textTransform = 'uppercase';
+        catBadge.style.letterSpacing = '0.03em';
+        catBadge.style.padding = '1px 6px';
+        catBadge.style.borderRadius = '4px';
+        catBadge.style.background = 'rgba(56, 189, 248, 0.1)';
+        catBadge.style.border = '1px solid rgba(56, 189, 248, 0.22)';
+        catBadge.style.color = '#7dd3fc';
+        catBadge.textContent = preset.category || 'shell';
+        badgesRow.appendChild(catBadge);
+      }
+
+      if (showCustomBadge) {
+        const customBadge = document.createElement('span');
+        customBadge.className = 'preset-card-badge-custom';
+        customBadge.style.fontSize = '9px';
+        customBadge.style.fontWeight = '600';
+        customBadge.style.padding = '1px 6px';
+        customBadge.style.borderRadius = '4px';
+        customBadge.style.background = 'rgba(16, 185, 129, 0.14)';
+        customBadge.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+        customBadge.style.color = '#34d399';
+        customBadge.textContent = t('editor.presetHub.customBadge') || 'CUSTOM';
+        badgesRow.appendChild(customBadge);
+      }
+
+      return badgesRow;
+    };
+
+    if (isDenseGrid) {
+      if (showCustomBadge) {
+        const titleRow = document.createElement('div');
+        titleRow.style.display = 'flex';
+        titleRow.style.alignItems = 'center';
+        titleRow.style.gap = '5px';
+        titleRow.style.minWidth = '0';
+
+        const customDot = document.createElement('span');
+        customDot.className = 'preset-card-custom-dot';
+        customDot.title = t('editor.presetHub.customBadge') || 'Custom';
+        customDot.style.width = '7px';
+        customDot.style.height = '7px';
+        customDot.style.borderRadius = '50%';
+        customDot.style.background = '#10b981';
+        customDot.style.flexShrink = '0';
+
+        title.style.flex = '1';
+        titleRow.appendChild(customDot);
+        titleRow.appendChild(title);
+        details.appendChild(titleRow);
+      } else {
+        details.appendChild(title);
+      }
+    } else if (isSingleColumn) {
+      const titleRow = document.createElement('div');
+      titleRow.style.display = 'flex';
+      titleRow.style.alignItems = 'center';
+      titleRow.style.justifyContent = 'space-between';
+      titleRow.style.gap = '8px';
+      titleRow.style.minWidth = '0';
+
+      title.style.flex = '1';
+      titleRow.appendChild(title);
+      if (showCatBadge || showCustomBadge) {
+        titleRow.appendChild(buildBadgesRow());
+      }
+      details.appendChild(titleRow);
+    } else {
+      details.appendChild(title);
+      if (showCatBadge || showCustomBadge) {
+        details.appendChild(buildBadgesRow());
+      }
+    }
 
     if (preset.summary && !isDenseGrid) {
       const desc = document.createElement('div');
