@@ -26,9 +26,10 @@ This document is the architectural dependency and blast-radius map for `shell-dr
 
 ### B. Custom Preset Save & Apply Pipeline (Round-Trip Contract)
 1. **Schema Single Source of Truth**: [presetComposition.js](./src/utils/presetComposition.js) owns `extractPresetComposition(event)` and `applyPresetComposition(event, preset)`.
-2. **Save Flow**: [PresetHubModal.js](./src/ui/modals/PresetHubModal.js) -> `extractPresetComposition` -> [PresetRegistry.js](./src/core/PresetRegistry.js) -> Electron IPC (`presets:save`) in [src/electron/main.js](./src/electron/main.js) & [presetStorage.js](./src/electron/presetStorage.js).
-3. **Apply Flow**: [PresetHubModal.js](./src/ui/modals/PresetHubModal.js) -> [TimelineEditor.js](./src/ui/TimelineEditor.js) (`applyPresetFromHub`) -> `applyPresetComposition(ev, preset)` -> [PropertyInspector.js](./src/ui/PropertyInspector.js).
-4. **Blast Radius**: Adding any new firework/comet parameter to `PropertyInspector` or `FireworkSequencer` requires registering it in `presetComposition.js` so saving/applying custom presets never drops it.
+2. **Automated 480p Capture**: [PresetCaptureService.js](./src/core/PresetCaptureService.js) + [presetCaptureTiming.js](./src/utils/presetCaptureTiming.js) (reusing [fireworkLifespan.js](./src/utils/fireworkLifespan.js)) isolate a single block in [ShowDirector.js](./src/directors/ShowDirector.js), capture 854x480 WebM + JPEG via `onAfterRender()` in [src/main.js](./src/main.js), and pass media to [PresetHubModal.js](./src/ui/modals/PresetHubModal.js) via `preset-hub:auto-capture`.
+3. **Save Flow**: [PresetHubModal.js](./src/ui/modals/PresetHubModal.js) -> `extractPresetComposition` -> [PresetRegistry.js](./src/core/PresetRegistry.js) -> Electron IPC (`presets:save`) in [src/electron/main.js](./src/electron/main.js) & [presetStorage.js](./src/electron/presetStorage.js) (supporting `.png`/`.jpg`/`.webp` and `.mp4`/`.webm`).
+4. **Apply Flow**: [PresetHubModal.js](./src/ui/modals/PresetHubModal.js) -> [TimelineEditor.js](./src/ui/TimelineEditor.js) (`applyPresetFromHub`) -> `applyPresetComposition(ev, preset)` -> [PropertyInspector.js](./src/ui/PropertyInspector.js).
+5. **Blast Radius**: Adding any new firework/comet parameter to `PropertyInspector` or `FireworkSequencer` requires registering it in `presetComposition.js` so saving/applying custom presets never drops it.
 
 ### C. Sweep Curve & Pattern Library Pipeline
 1. **Curve Editors**: [WaveCurveEditor.js](./src/ui/WaveCurveEditor.js) and [WaveCurveModal.js](./src/ui/WaveCurveModal.js) share curve math from [SplineMath.js](./src/utils/SplineMath.js) and save/load helpers from [waveCurveLibraryHelper.js](./src/ui/waveCurveLibraryHelper.js).

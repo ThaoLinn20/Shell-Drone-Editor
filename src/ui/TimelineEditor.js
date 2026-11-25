@@ -102,8 +102,12 @@ export class TimelineEditor {
     });
     this.guideHubModal = new GuideHubModal(this);
     this.presetHubModal = null;
+    this.presetCaptureService = null;
     globalEventBus.on('preset-hub:open', () => {
       this.openPresetHub();
+    });
+    globalEventBus.on('preset-hub:auto-capture', (event) => {
+      this.autoCapturePresetFromEvent(event);
     });
     this.initDOM();
     this.tourGuide = new TimelineTourGuide(this);
@@ -1466,12 +1470,51 @@ export class TimelineEditor {
     if (!this.presetHubModal) {
       this.presetHubModal = new PresetHubModal({
         timelineEditor: this,
+        presetCaptureService: this.presetCaptureService,
         onApply: (preset) => {
           this.applyPresetFromHub(preset);
         }
       });
+    } else if (this.presetCaptureService && !this.presetHubModal.presetCaptureService) {
+      this.presetHubModal.presetCaptureService = this.presetCaptureService;
     }
     this.presetHubModal.show();
+  }
+
+  async autoCapturePresetFromEvent(targetEvent = null) {
+    const eventToCapture = targetEvent ||
+      (this.selectedEvents && this.selectedEvents[0]) ||
+      this.inspector?.selectedEvent;
+
+    if (!eventToCapture) {
+      showToast(
+        t('editor.presetHub.selectEventToCapture') || 'Select a firework block on the timeline first',
+        'warning'
+      );
+      return;
+    }
+
+    if (!this.presetCaptureService) {
+      this.openPresetHub();
+      return;
+    }
+
+    if (this.presetHubModal && this.presetHubModal.isVisible) {
+      this.presetHubModal.hide();
+    }
+
+    const captureResult = await this.presetCaptureService.captureBlock(eventToCapture);
+    if (!captureResult) {
+      return;
+    }
+
+    this.openPresetHub();
+    if (this.presetHubModal) {
+      this.presetHubModal.openCreateDrawer(
+        eventToCapture,
+        captureResult
+      );
+    }
   }
 
   applyPresetFromHub(preset) {

@@ -210,8 +210,24 @@ export function savePresetBundle(presetsDir, payload) {
 
   // If base64 banner is provided (from canvas snapshot or paste)
   if (payload.bannerBase64) {
-    const bannerPath = path.join(bundleDir, `${slug}.png`);
-    const data = payload.bannerBase64.replace(/^data:image\/\w+;base64,/, '');
+    let bannerExt = '.png';
+    if (payload.bannerBase64.startsWith('data:image/jpeg')) {
+      bannerExt = '.jpg';
+    } else if (payload.bannerBase64.startsWith('data:image/webp')) {
+      bannerExt = '.webp';
+    }
+
+    for (const oldExt of IMAGE_EXTENSIONS) {
+      if (oldExt !== bannerExt) {
+        const oldPath = path.join(bundleDir, `${slug}${oldExt}`);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+    }
+
+    const bannerPath = path.join(bundleDir, `${slug}${bannerExt}`);
+    const data = payload.bannerBase64.replace(/^data:[^,]+,/, '');
     fs.writeFileSync(
       bannerPath,
       Buffer.from(data, 'base64')
@@ -220,8 +236,21 @@ export function savePresetBundle(presetsDir, payload) {
 
   // If base64 video is provided
   if (payload.videoBase64) {
-    const videoPath = path.join(bundleDir, `${slug}.mp4`);
-    const data = payload.videoBase64.replace(/^data:video\/\w+;base64,/, '');
+    const videoExt = payload.videoBase64.startsWith('data:video/webm')
+      ? '.webm'
+      : '.mp4';
+
+    for (const oldExt of VIDEO_EXTENSIONS) {
+      if (oldExt !== videoExt) {
+        const oldPath = path.join(bundleDir, `${slug}${oldExt}`);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+    }
+
+    const videoPath = path.join(bundleDir, `${slug}${videoExt}`);
+    const data = payload.videoBase64.replace(/^data:[^,]+,/, '');
     fs.writeFileSync(
       videoPath,
       Buffer.from(data, 'base64')

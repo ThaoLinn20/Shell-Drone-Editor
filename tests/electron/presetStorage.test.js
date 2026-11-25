@@ -131,4 +131,31 @@ describe('presetStorage module', () => {
     expect(delRes.success).toBe(true);
     expect(fs.existsSync(bundleDir)).toBe(false);
   });
+
+  it('strips codec parameters in data URLs when saving webm video and jpeg banner', () => {
+    const rawVideoBytes = Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x01, 0x02]);
+    const rawImageBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+
+    const res = savePresetBundle(
+      tempPresetsDir,
+      {
+        slug: 'test_codec_strip',
+        name: 'Test Codec Strip',
+        bannerBase64: `data:image/jpeg;base64,${rawImageBytes.toString('base64')}`,
+        videoBase64: `data:video/webm;codecs=vp9;base64,${rawVideoBytes.toString('base64')}`
+      }
+    );
+
+    expect(res.success).toBe(true);
+
+    const savedVideo = fs.readFileSync(
+      path.join(tempPresetsDir, 'test_codec_strip', 'test_codec_strip.webm')
+    );
+    const savedBanner = fs.readFileSync(
+      path.join(tempPresetsDir, 'test_codec_strip', 'test_codec_strip.jpg')
+    );
+
+    expect(savedVideo.equals(rawVideoBytes)).toBe(true);
+    expect(savedBanner.equals(rawImageBytes)).toBe(true);
+  });
 });

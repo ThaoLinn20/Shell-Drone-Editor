@@ -15,6 +15,7 @@ import {
 export class PresetHubModal {
   constructor(options = {}) {
     this.timelineEditor = options.timelineEditor || null;
+    this.presetCaptureService = options.presetCaptureService || null;
     this.onApply = options.onApply || null;
     this.isVisible = false;
     this.searchQuery = '';
@@ -327,6 +328,15 @@ export class PresetHubModal {
   }
 
   show() {
+    if (
+      typeof document !== 'undefined' &&
+      document.pointerLockElement &&
+      typeof document.exitPointerLock === 'function'
+    ) {
+      try {
+        document.exitPointerLock();
+      } catch {}
+    }
     this.isVisible = true;
     this.overlay.style.display = 'flex';
     this.applyGridColumns();
@@ -827,8 +837,9 @@ export class PresetHubModal {
     this.drawer.style.display = 'flex';
   }
 
-  openDrawerForNew() {
-    const sel = this.timelineEditor?.inspector?.selectedEvent ||
+  openDrawerForNew(targetEvent = null, captureResult = null) {
+    const sel = targetEvent ||
+      this.timelineEditor?.inspector?.selectedEvent ||
       this.timelineEditor?.selectedEvents?.[0] ||
       null;
 
@@ -857,11 +868,47 @@ export class PresetHubModal {
       tags: initialTags,
       summary: defaultSummary,
       composition,
-      isCustom: true
+      isCustom: true,
+      _sourceEvent: sel ? deepCloneJson(sel) : null
     };
+
+    if (captureResult) {
+      if (captureResult.bannerBase64) {
+        newPreset.bannerBase64 = captureResult.bannerBase64;
+      }
+      if (captureResult.videoBase64) {
+        newPreset.videoBase64 = captureResult.videoBase64;
+        newPreset.hasVideo = true;
+      }
+    }
+
     this.activeEditingPreset = newPreset;
     this.renderDrawerForm(newPreset, true);
     this.drawer.style.display = 'flex';
+  }
+
+  openCreateDrawer(targetEvent = null, captureResult = null) {
+    this.openDrawerForNew(targetEvent, captureResult);
+  }
+
+  _resolveSourceEventForPreset(preset) {
+    if (preset?._sourceEvent) {
+      return deepCloneJson(preset._sourceEvent);
+    }
+    const sel = this.timelineEditor?.inspector?.selectedEvent ||
+      this.timelineEditor?.selectedEvents?.[0] ||
+      null;
+    if (sel) {
+      return deepCloneJson(sel);
+    }
+    const comp = preset?.composition || createDefaultPresetComposition();
+    return {
+      type: preset?.category === 'comet' ? 'cometsequence' : 'sequence',
+      time: 0,
+      duration: 2.0,
+      burstHeight: 140,
+      ...deepCloneJson(comp)
+    };
   }
 
   closeDrawer() {
@@ -981,8 +1028,9 @@ export class PresetHubModal {
     bannerPreview.style.objectFit = 'cover';
     bannerPreview.style.borderRadius = '4px';
     bannerPreview.style.background = '#070b12';
-    bannerPreview.style.display = preset.bannerUrl ? 'block' : 'none';
-    if (preset.bannerUrl) bannerPreview.src = preset.bannerUrl;
+    const initialBannerSrc = preset.bannerBase64 || preset.bannerUrl || '';
+    bannerPreview.style.display = initialBannerSrc ? 'block' : 'none';
+    if (initialBannerSrc) bannerPreview.src = initialBannerSrc;
     bannerBox.appendChild(bannerPreview);
 
     const bannerBtnRow = document.createElement('div');
@@ -1029,6 +1077,30 @@ export class PresetHubModal {
 
     bannerBtnRow.appendChild(uploadBannerBtn);
     bannerBtnRow.appendChild(captureCanvasBtn);
+
+    if (this.presetCaptureService) {
+      const retakePhotoBtn = createModalButton(
+        t('editor.presetHub.retakePhoto') || 'Retake Photo',
+        'secondary'
+      );
+      retakePhotoBtn.style.fontSize = '10px';
+      retakePhotoBtn.style.padding = '4px 8px';
+      retakePhotoBtn.title = t('editor.presetHub.retakePhotoTitle') || 'Replay block and press C to snap a new photo';
+      retakePhotoBtn.addEventListener('click', async () => {
+        const sourceEvent = this._resolveSourceEventForPreset(preset);
+        this.hide();
+        const result = await this.presetCaptureService.captureManualPhoto(sourceEvent);
+        this.show();
+        if (result && result.bannerBase64) {
+          preset.bannerBase64 = result.bannerBase64;
+        }
+        this.activeEditingPreset = preset;
+        this.renderDrawerForm(preset, isNew);
+        this.drawer.style.display = 'flex';
+      });
+      bannerBtnRow.appendChild(retakePhotoBtn);
+    }
+
     bannerBox.appendChild(bannerBtnRow);
     form.appendChild(bannerBox);
 
@@ -1040,8 +1112,31 @@ export class PresetHubModal {
 
     const videoLbl = document.createElement('label');
     videoLbl.className = 'inspector-label';
-    videoLbl.textContent = t('editor.presetHub.fields.video') || 'Preview Video (MP4 / WebM)';
+    videoLbl.textContent = t('editor.presetHub.fields.video') || 'Preview Video';
     videoBox.appendChild(videoLbl);
+
+    const videoPreview = document.createElement('video');
+    videoPreview.autoplay = true;
+    videoPreview.loop = true;
+    videoPreview.muted = true;
+    videoPreview.playsInline = true;
+    videoPreview.style.width = '100%';
+    videoPreview.style.height = '100px';
+    videoPreview.style.objectFit = 'cover';
+    videoPreview.style.borderRadius = '4px';
+    videoPreview.style.background = '#070b12';
+    const initialVideoSrc = preset.videoBase64 || preset.videoUrl || '';
+    videoPreview.style.display = initialVideoSrc ? 'block' : 'none';
+    if (initialVideoSrc) {
+      videoPreview.src = preset.videoBase64
+        ? preset.videoBase64
+        : resolveAssetUrl(preset.videoUrl);
+    }
+    videoBox.appendChild(videoPreview);
+
+    const videoBtnRow = document.createElement('div');
+    videoBtnRow.style.display = 'flex';
+    videoBtnRow.style.gap = '6px';
 
     const uploadVideoBtn = createModalButton(
       t('editor.presetHub.chooseVideo') || 'Choose Video File...',
@@ -1055,10 +1150,76 @@ export class PresetHubModal {
       if (res && !res.canceled && res.url) {
         preset.videoUrl = res.url;
         preset.hasVideo = true;
+        videoPreview.src = resolveAssetUrl(res.url);
+        videoPreview.style.display = 'block';
         showToast(t('editor.presetHub.videoUploaded') || 'Video preview updated', 'success');
       }
     });
-    videoBox.appendChild(uploadVideoBtn);
+    videoBtnRow.appendChild(uploadVideoBtn);
+
+    if (this.presetCaptureService) {
+      const autoCaptureBtn = createModalButton(
+        t('editor.presetHub.autoCaptureBlock') || 'Auto-Capture Block',
+        'secondary'
+      );
+      autoCaptureBtn.style.fontSize = '10px';
+      autoCaptureBtn.style.padding = '4px 8px';
+      autoCaptureBtn.addEventListener('click', async () => {
+        const activeEvent = this.timelineEditor?.inspector?.selectedEvent ||
+          this.timelineEditor?.selectedEvents?.[0] ||
+          null;
+        if (!activeEvent) {
+          showToast(
+            t('editor.presetHub.selectEventToCapture') || 'Select a firework block on the timeline first',
+            'warning'
+          );
+          return;
+        }
+        this.hide();
+        const result = await this.presetCaptureService.captureBlock(activeEvent);
+        this.show();
+        if (result) {
+          if (result.bannerBase64) {
+            preset.bannerBase64 = result.bannerBase64;
+            bannerPreview.src = result.bannerBase64;
+            bannerPreview.style.display = 'block';
+          }
+          if (result.videoBase64) {
+            preset.videoBase64 = result.videoBase64;
+            preset.hasVideo = true;
+            videoPreview.src = result.videoBase64;
+            videoPreview.style.display = 'block';
+          }
+          this.renderDrawerForm(preset, isNew);
+          this.drawer.style.display = 'flex';
+        }
+      });
+      videoBtnRow.appendChild(autoCaptureBtn);
+
+      const rerecordVideoBtn = createModalButton(
+        t('editor.presetHub.rerecordVideo') || 'Re-record Video',
+        'secondary'
+      );
+      rerecordVideoBtn.style.fontSize = '10px';
+      rerecordVideoBtn.style.padding = '4px 8px';
+      rerecordVideoBtn.title = t('editor.presetHub.rerecordVideoTitle') || 'Replay block and press V to start and stop recording';
+      rerecordVideoBtn.addEventListener('click', async () => {
+        const sourceEvent = this._resolveSourceEventForPreset(preset);
+        this.hide();
+        const result = await this.presetCaptureService.captureManualVideo(sourceEvent);
+        this.show();
+        if (result && result.videoBase64) {
+          preset.videoBase64 = result.videoBase64;
+          preset.hasVideo = true;
+        }
+        this.activeEditingPreset = preset;
+        this.renderDrawerForm(preset, isNew);
+        this.drawer.style.display = 'flex';
+      });
+      videoBtnRow.appendChild(rerecordVideoBtn);
+    }
+
+    videoBox.appendChild(videoBtnRow);
     form.appendChild(videoBox);
 
     // Save & Cancel Buttons

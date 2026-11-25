@@ -26,6 +26,7 @@ import { fileStorage } from './core/FileStorageAdapter.js';
 import { globalEventBus } from './core/EventBus.js';
 import { loadAndApplySettings } from './config/settings.js';
 import { initUpdateNotifier } from './ui/UpdateNotifier.js';
+import { PresetCaptureService } from './core/PresetCaptureService.js';
 
 // Initialize Core ECS Boilerplate
 const clock = new Clock();
@@ -105,6 +106,15 @@ const showDirector = new ShowDirector(fireworkSequencer, fireworkSystem);
 showDirector.droneSequencer = droneSequencer;
 const hotkeyManager = new HotkeyManager();
 const timelineEditor = new TimelineEditor(showDirector, hotkeyManager);
+const presetCaptureService = new PresetCaptureService({
+  renderer,
+  showDirector,
+  cameraManager,
+  sceneManager,
+  inputSystem,
+  timelineEditor
+});
+timelineEditor.presetCaptureService = presetCaptureService;
 
 // The show script loading is now handled in InputSystem
 
@@ -161,7 +171,7 @@ function animate() {
   );
   
   // Systems update
-  if (!inputSystem.isPaused()) {
+  if (!inputSystem.isPaused() || presetCaptureService.isCapturing) {
     movementSystem.update(clock.deltaTime);
     showDirector.update(clock.deltaTime);
     fireworkSequencer.update(clock.deltaTime);
@@ -200,6 +210,8 @@ function animate() {
       cameraManager.instance
     );
   }
+
+  presetCaptureService.onAfterRender();
 
   // Restore camera anchor position after render
   cameraManager.restoreShake();

@@ -1534,6 +1534,31 @@ export class PropertyInspector {
       input = customSelect.element;
 
       if (field.name === 'preset') {
+        const autoCaptureBtn = document.createElement('button');
+        autoCaptureBtn.className = 'preset-hub-auto-capture-btn';
+        autoCaptureBtn.type = 'button';
+        autoCaptureBtn.title = t('editor.presetHub.autoCaptureBlockTitle') || 'Auto-capture 480p preview and save to library';
+        autoCaptureBtn.textContent = t('editor.presetHub.saveToLibraryButton') || 'Save to Library';
+        autoCaptureBtn.style.padding = '2px 7px';
+        autoCaptureBtn.style.fontSize = '10px';
+        autoCaptureBtn.style.fontWeight = '600';
+        autoCaptureBtn.style.borderRadius = '3px';
+        autoCaptureBtn.style.border = '1px solid rgba(16, 185, 129, 0.45)';
+        autoCaptureBtn.style.background = 'rgba(16, 185, 129, 0.14)';
+        autoCaptureBtn.style.color = '#34d399';
+        autoCaptureBtn.style.cursor = 'pointer';
+        autoCaptureBtn.style.marginLeft = 'auto';
+        autoCaptureBtn.style.marginRight = '4px';
+
+        autoCaptureBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          globalEventBus.emit(
+            'preset-hub:auto-capture',
+            this.selectedEvent
+          );
+        });
+
         const hubBtn = document.createElement('button');
         hubBtn.className = 'preset-hub-open-btn';
         hubBtn.type = 'button';
@@ -1547,7 +1572,6 @@ export class PropertyInspector {
         hubBtn.style.background = 'rgba(0, 229, 255, 0.12)';
         hubBtn.style.color = '#00e5ff';
         hubBtn.style.cursor = 'pointer';
-        hubBtn.style.marginLeft = 'auto';
 
         hubBtn.addEventListener('click', (e) => {
           e.preventDefault();
@@ -1557,6 +1581,7 @@ export class PropertyInspector {
 
         label.style.display = 'flex';
         label.style.alignItems = 'center';
+        label.appendChild(autoCaptureBtn);
         label.appendChild(hubBtn);
       }
 
