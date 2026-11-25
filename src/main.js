@@ -39,6 +39,7 @@ const fireworkSystem = new FireworkSystem(sceneManager.instance, trailSystem, sm
 const skyLightReactionSystem = new SkyLightReactionSystem(sceneManager, smokeSystem);
 const cometSystem = new CometSystem(sceneManager.instance, trailSystem, smokeSystem);
 fireworkSystem.cometSystem = cometSystem;
+cometSystem.fireworkSystem = fireworkSystem;
 const audioSystem = new AudioSystem(cameraManager);
 audioSystem.preload();
 const postProcessing = renderingConfig.post.enabled
