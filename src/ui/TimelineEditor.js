@@ -141,6 +141,10 @@ export class TimelineEditor {
 
   initDOM() {
     this.container = document.createElement('div');
+    this.container.className = 'timeline-editor-container';
+    if (!this.visible) {
+      this.container.classList.add('is-collapsed');
+    }
     this.container.style.position = 'fixed';
     this.container.style.bottom = '0';
     this.container.style.left = '0';
@@ -149,11 +153,34 @@ export class TimelineEditor {
     this.container.style.background = 'rgba(10, 15, 20, 0.85)';
     this.container.style.backdropFilter = 'blur(10px)';
     this.container.style.borderTop = '1px solid #444';
-    this.container.style.display = this.visible ? 'flex' : 'none';
+    this.container.style.display = 'flex';
     this.container.style.flexDirection = 'row';
     this.container.style.zIndex = '1000';
     this.container.style.color = 'white';
     this.container.style.fontFamily = 'sans-serif';
+
+    this.timelineToggleTab = document.createElement('button');
+    this.timelineToggleTab.type = 'button';
+    this.timelineToggleTab.className = 'timeline-toggle-tab';
+    this.timelineToggleTab.title = this.visible
+      ? t('editor.timelinePanel.hideTimeline') || 'Hide Timeline'
+      : t('editor.timelinePanel.showTimeline') || 'Show Timeline';
+    this.timelineToggleTab.setAttribute(
+      'aria-label',
+      this.timelineToggleTab.title
+    );
+    this.timelineToggleTab.innerHTML = [
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"',
+      ' stroke="currentColor" stroke-width="2.2" stroke-linecap="round"',
+      ' stroke-linejoin="round">',
+      '<polyline points="6 9 12 15 18 9"></polyline>',
+      '</svg>'
+    ].join('');
+    this.timelineToggleTab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggle();
+    });
+    this.container.appendChild(this.timelineToggleTab);
 
     // Block orbit controls when hovering
     this.container.addEventListener('mouseenter', () => globalEventBus.emit('timeline:hover', true));
@@ -202,47 +229,70 @@ export class TimelineEditor {
 
     // Toolbar
     const toolbar = document.createElement('div');
-    toolbar.style.padding = '10px';
-    toolbar.style.background = '#222';
-    toolbar.style.borderBottom = '1px solid #444';
-    toolbar.style.display = 'flex';
-    toolbar.style.gap = '10px';
-    toolbar.style.alignItems = 'center';
+    toolbar.className = 'timeline-toolbar';
 
     const playBtn = document.createElement('button');
-    playBtn.textContent = t('editor.timelinePanel.playBtn');
+    playBtn.className = 'timeline-icon-btn timeline-icon-btn-play';
+    playBtn.type = 'button';
     playBtn.title = t('editor.timelinePanel.playBtnTooltip') ||
       'Play or pause script Space';
+    if (typeof playBtn.setAttribute === 'function') {
+      playBtn.setAttribute('aria-label', playBtn.title);
+    }
     playBtn.addEventListener('click', () => this.togglePlay());
     this.playBtn = playBtn;
+    this._updatePlayButtonIcon();
+
+    const rewindBtn = document.createElement('button');
+    rewindBtn.className = 'timeline-icon-btn';
+    rewindBtn.type = 'button';
+    rewindBtn.title = t('editor.timelinePanel.rewindBtnTooltip') ||
+      'Jump to start of timeline';
+    if (typeof rewindBtn.setAttribute === 'function') {
+      rewindBtn.setAttribute('aria-label', rewindBtn.title);
+    }
+    rewindBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="5" width="2.5" height="14"/><polygon points="19,5 9,12 19,19"/></svg>';
+    rewindBtn.addEventListener('click', () => {
+      this.setAnchorTime(0, true, 'rewind');
+    });
+    this.rewindBtn = rewindBtn;
 
     this.followBtn = document.createElement('button');
-    this.followBtn.textContent = t('editor.timelinePanel.followOn');
-    this.followBtn.title = t('editor.timelinePanel.followTooltip') ||
-      'Toggle auto scroll following Playhead';
-    this.followBtn.style.background = '#4CAF50';
-    this.followBtn.style.color = 'white';
-    this.followBtn.addEventListener('click', () => {
+    this.followBtn.className = 'timeline-follow-icon-btn';
+    this.followBtn.type = 'button';
+    this.followBtn.style.width = '24px';
+    this.followBtn.style.height = '24px';
+    this.followBtn.style.padding = '0';
+    this.followBtn.style.display = 'inline-flex';
+    this.followBtn.style.alignItems = 'center';
+    this.followBtn.style.justifyContent = 'center';
+    this.followBtn.style.borderRadius = '4px';
+    this.followBtn.style.border = 'none';
+    this.followBtn.style.cursor = 'pointer';
+    this.followBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="4" x2="5" y2="20"/><line x1="9" y1="12" x2="19" y2="12"/><polyline points="15 8 19 12 15 16"/></svg>';
+    this.followBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       this.autoScrollEnabled = !this.autoScrollEnabled;
-      this.followBtn.textContent = this.autoScrollEnabled ? t('editor.timelinePanel.followOn') : t('editor.timelinePanel.followOff');
-      this.followBtn.style.background = this.autoScrollEnabled ? '#4CAF50' : '#f44336';
+      this._updateFollowButtonUI();
     });
-
+    this._updateFollowButtonUI();
 
     const newBtn = document.createElement('button');
+    newBtn.className = 'timeline-project-menu-item';
+    newBtn.type = 'button';
     newBtn.textContent = t('editor.timelinePanel.newBtn') || 'New';
     newBtn.title = t('editor.timelinePanel.newBtnTooltip') || 'New blank script Ctrl+Alt+N';
-    newBtn.style.background = '#2e7d32';
-    newBtn.style.color = 'white';
     newBtn.addEventListener(
       'click',
       () => {
+        this.closeProjectMenu();
         this.createNewScript();
       }
     );
     this.newBtn = newBtn;
 
     const addBtn = document.createElement('button');
+    addBtn.className = 'timeline-btn timeline-btn-primary';
     addBtn.textContent = t('editor.timelinePanel.addSequence');
     addBtn.title = t('editor.timelinePanel.addSequenceTooltip') ||
       'Add sequence event at Anchor Head time';
@@ -250,14 +300,15 @@ export class TimelineEditor {
     this.addBtn = addBtn;
 
     const exportBtn = document.createElement('button');
-    exportBtn.textContent = t('editor.timelinePanel.exportBtn') || 'Export';
+    exportBtn.className = 'timeline-project-menu-item';
+    exportBtn.type = 'button';
+    exportBtn.textContent = t('editor.timelinePanel.exportShortBtn') || 'Export';
     exportBtn.title = t('editor.timelinePanel.exportBtnTooltip') ||
       'Export all sequences to JSON file';
-    exportBtn.style.background = '#0288d1';
-    exportBtn.style.color = 'white';
     exportBtn.addEventListener(
       'click',
       () => {
+        this.closeProjectMenu();
         this.exportSequence(false);
       }
     );
@@ -292,47 +343,36 @@ export class TimelineEditor {
     addFileDropdownContainer.style.display = 'inline-block';
 
     const addFileBtn = document.createElement('button');
+    addFileBtn.className = 'timeline-btn';
     addFileBtn.textContent = t('editor.timelinePanel.addDroneAudio') + ' ▾';
     addFileBtn.title = t('editor.timelinePanel.addDroneAudioTooltip') ||
       'Add Drone JSON or Audio MP3 WAV file to script';
-    addFileBtn.style.background = '#e65100';
-    addFileBtn.style.color = 'white';
 
     const dropdownMenu = document.createElement('div');
-    dropdownMenu.style.position = 'absolute';
-    dropdownMenu.style.top = '100%'; // Show below the button
-    dropdownMenu.style.left = '0';
-    dropdownMenu.style.background = '#2a2a2a';
-    dropdownMenu.style.border = '1px solid #555';
-    dropdownMenu.style.borderRadius = '4px';
-    dropdownMenu.style.boxShadow = '0 2px 10px rgba(0,0,0,0.5)';
+    dropdownMenu.className = 'timeline-project-menu';
+    dropdownMenu.style.position = 'fixed';
     dropdownMenu.style.display = 'none';
     dropdownMenu.style.flexDirection = 'column';
-    dropdownMenu.style.zIndex = '1005';
-    dropdownMenu.style.minWidth = '180px';
-    dropdownMenu.style.marginTop = '5px';
+    dropdownMenu.style.zIndex = '10005';
+    dropdownMenu.style.minWidth = '195px';
 
-    const addDroneOpt = document.createElement('div');
+    const addDroneOpt = document.createElement('button');
+    addDroneOpt.type = 'button';
+    addDroneOpt.className = 'timeline-project-menu-item';
     addDroneOpt.textContent = t('editor.timelinePanel.addDroneOpt');
-    addDroneOpt.style.padding = '10px 14px';
-    addDroneOpt.style.cursor = 'pointer';
-    addDroneOpt.style.fontSize = '12px';
-    addDroneOpt.style.borderBottom = '1px solid #444';
-    addDroneOpt.addEventListener('mouseenter', () => addDroneOpt.style.background = '#3e3e3e');
-    addDroneOpt.addEventListener('mouseleave', () => addDroneOpt.style.background = '');
     addDroneOpt.addEventListener('click', (e) => {
       e.stopPropagation();
       dropdownMenu.style.display = 'none';
       this.triggerJsonImport();
     });
 
-    const addAudioOpt = document.createElement('div');
+    const addMenuSep = document.createElement('div');
+    addMenuSep.className = 'timeline-project-menu-sep';
+
+    const addAudioOpt = document.createElement('button');
+    addAudioOpt.type = 'button';
+    addAudioOpt.className = 'timeline-project-menu-item';
     addAudioOpt.textContent = t('editor.timelinePanel.addAudioOpt');
-    addAudioOpt.style.padding = '10px 14px';
-    addAudioOpt.style.cursor = 'pointer';
-    addAudioOpt.style.fontSize = '12px';
-    addAudioOpt.addEventListener('mouseenter', () => addAudioOpt.style.background = '#3e3e3e');
-    addAudioOpt.addEventListener('mouseleave', () => addAudioOpt.style.background = '');
     addAudioOpt.addEventListener('click', (e) => {
       e.stopPropagation();
       dropdownMenu.style.display = 'none';
@@ -342,12 +382,25 @@ export class TimelineEditor {
     });
 
     dropdownMenu.appendChild(addDroneOpt);
+    dropdownMenu.appendChild(addMenuSep);
     dropdownMenu.appendChild(addAudioOpt);
 
     addFileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const isVisible = dropdownMenu.style.display === 'flex';
       const nextOpen = !isVisible;
+      if (nextOpen) {
+        this.closeProjectMenu();
+        if (this._recordPopover) {
+          this._recordPopover.remove();
+          this._recordPopover = null;
+        }
+        if (typeof addFileBtn.getBoundingClientRect === 'function') {
+          const rect = addFileBtn.getBoundingClientRect();
+          dropdownMenu.style.left = `${Math.max(8, rect.left)}px`;
+          dropdownMenu.style.top = `${Math.max(8, rect.bottom + 4)}px`;
+        }
+      }
       dropdownMenu.style.display = nextOpen ? 'flex' : 'none';
       globalEventBus.emit(
         'timeline:add-file-menu-toggled',
@@ -371,30 +424,38 @@ export class TimelineEditor {
     });
 
     addFileDropdownContainer.appendChild(addFileBtn);
-    addFileDropdownContainer.appendChild(dropdownMenu);
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.appendChild(dropdownMenu);
+    } else {
+      addFileDropdownContainer.appendChild(dropdownMenu);
+    }
     this.addFileBtn = addFileBtn;
     this.addFileDropdown = dropdownMenu;
     this.addAudioOpt = addAudioOpt;
 
     this.fileIndicatorContainer = document.createElement('div');
-    this.fileIndicatorContainer.style.display = 'inline-flex';
-    this.fileIndicatorContainer.style.alignItems = 'center';
-    this.fileIndicatorContainer.style.gap = '8px';
-    this.fileIndicatorContainer.style.marginLeft = '10px';
+    this.fileIndicatorContainer.className = 'timeline-status-pill';
 
     this.fileIndicator = document.createElement('span');
-    this.fileIndicator.style.color = '#00ffcc';
-    this.fileIndicator.style.fontSize = '12px';
+    this.fileIndicator.style.color = '#7dd3fc';
+    this.fileIndicator.style.fontSize = '11px';
     this.fileIndicator.style.fontFamily = 'monospace';
+    this.fileIndicator.style.maxWidth = '150px';
+    this.fileIndicator.style.overflow = 'hidden';
+    this.fileIndicator.style.textOverflow = 'ellipsis';
+    this.fileIndicator.style.whiteSpace = 'nowrap';
 
     this.saveStatusBadge = document.createElement('span');
     this.saveStatusBadge.style.display = 'inline-flex';
     this.saveStatusBadge.style.alignItems = 'center';
-    this.saveStatusBadge.style.gap = '5px';
-    this.saveStatusBadge.style.fontSize = '11px';
-    this.saveStatusBadge.style.padding = '2px 8px';
-    this.saveStatusBadge.style.borderRadius = '10px';
-    this.saveStatusBadge.style.fontWeight = '500';
+    this.saveStatusBadge.style.gap = '4px';
+    this.saveStatusBadge.style.height = '16px';
+    this.saveStatusBadge.style.boxSizing = 'border-box';
+    this.saveStatusBadge.style.fontSize = '9px';
+    this.saveStatusBadge.style.lineHeight = '1';
+    this.saveStatusBadge.style.padding = '0 6px';
+    this.saveStatusBadge.style.borderRadius = '999px';
+    this.saveStatusBadge.style.fontWeight = '600';
     this.saveStatusBadge.style.transition = 'all 0.3s ease';
 
     this.fileIndicatorContainer.appendChild(this.fileIndicator);
@@ -406,14 +467,10 @@ export class TimelineEditor {
     this.toolbar = toolbar;
 
     const helpBtn = document.createElement('button');
+    helpBtn.className = 'timeline-btn timeline-btn-accent';
     helpBtn.textContent = t('editor.timelineTour.helpBtn') || 'Guide';
     helpBtn.title = t('editor.timelineTour.helpBtnTooltip') ||
       'View basic Timeline guide';
-    helpBtn.style.background = '#273544';
-    helpBtn.style.color = '#00e5ff';
-    helpBtn.style.border = '1px solid #486581';
-    helpBtn.style.borderRadius = '4px';
-    helpBtn.style.cursor = 'pointer';
     helpBtn.addEventListener(
       'click',
       () => {
@@ -423,7 +480,10 @@ export class TimelineEditor {
     this.helpBtn = helpBtn;
 
     const langSelect = new CustomSelect({
-      options: SUPPORTED_LANGUAGES,
+      options: SUPPORTED_LANGUAGES.map((item) => ({
+        value: item.value,
+        label: item.value
+      })),
       value: getLanguage(),
       enableSearch: false,
       fieldName: 'timeline-language',
@@ -465,99 +525,178 @@ export class TimelineEditor {
     this.langSelect = langSelect;
 
     const bugBtn = document.createElement('button');
-    bugBtn.className = 'timeline-bug-guide-btn';
+    bugBtn.className = 'timeline-btn timeline-btn-bug timeline-bug-guide-btn';
     bugBtn.type = 'button';
     bugBtn.textContent = t('editor.timelineTour.bugBtn') || 'Bug';
     bugBtn.title = t('editor.timelineTour.bugTooltip') ||
       'If you cannot type into input fields, press the Windows key and click back into the app';
-    bugBtn.style.background = '#d32f2f';
-    bugBtn.style.color = '#ffffff';
-    bugBtn.style.border = '1px solid #b71c1c';
-    bugBtn.style.borderRadius = '4px';
-    bugBtn.style.padding = '3px 8px';
-    bugBtn.style.cursor = 'pointer';
-    bugBtn.style.fontSize = '12px';
-    bugBtn.style.fontWeight = 'bold';
-    bugBtn.style.fontFamily = 'inherit';
-    bugBtn.style.transition = 'all 0.15s ease';
-    bugBtn.addEventListener('mouseenter', () => {
-      bugBtn.style.background = '#e53935';
-    });
-    bugBtn.addEventListener('mouseleave', () => {
-      bugBtn.style.background = '#d32f2f';
-    });
     bugBtn.addEventListener('click', () => {
       this.openKnownIssuesModal();
     });
     this.bugBtn = bugBtn;
 
-    const rightActionsGroup = document.createElement('div');
-    rightActionsGroup.style.display = 'flex';
-    rightActionsGroup.style.alignItems = 'center';
-    rightActionsGroup.style.gap = '6px';
-    rightActionsGroup.style.marginLeft = 'auto';
-    rightActionsGroup.appendChild(helpBtn);
-    rightActionsGroup.appendChild(langSelect.element);
-    rightActionsGroup.appendChild(bugBtn);
+    const settingsBtn = document.createElement('button');
+    settingsBtn.className = 'timeline-icon-btn timeline-settings-btn';
+    settingsBtn.type = 'button';
+    settingsBtn.title = t('editor.timelinePanel.settingsTooltip') || 'Open Settings';
+    if (typeof settingsBtn.setAttribute === 'function') {
+      settingsBtn.setAttribute('aria-label', settingsBtn.title);
+    }
+    settingsBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+    settingsBtn.addEventListener('click', () => {
+      globalEventBus.emit('settings:open');
+    });
+    this.settingsBtn = settingsBtn;
 
     const libraryBtn = document.createElement('button');
+    libraryBtn.className = 'timeline-project-menu-item';
+    libraryBtn.type = 'button';
     libraryBtn.textContent =
-      t('editor.timelinePanel.importBtn') || 'Import Sequence';
+      t('editor.timelinePanel.importShortBtn') || 'Import';
     libraryBtn.title =
       t('editor.timelinePanel.importBtnTooltip') ||
       'Open script library from folder, Google Drive, or JSON file';
-    libraryBtn.style.background = '#1976d2';
-    libraryBtn.style.color = 'white';
     libraryBtn.addEventListener('click', () => {
+      this.closeProjectMenu();
       this.openShowLibrary();
     });
     this.libraryBtn = libraryBtn;
 
+    // Session/Project Menu (New, Import, Export, Language)
+    const projectMenuBtn = document.createElement('button');
+    projectMenuBtn.className = 'timeline-btn timeline-project-menu-btn';
+    projectMenuBtn.type = 'button';
+    projectMenuBtn.textContent = `${t('editor.timelinePanel.projectMenu') || 'Project'} ▾`;
+    projectMenuBtn.title = t('editor.timelinePanel.projectMenuTooltip') ||
+      'New script, import sequence, and language settings';
+
+    const projectMenuDropdown = document.createElement('div');
+    projectMenuDropdown.className = 'timeline-project-menu';
+    projectMenuDropdown.appendChild(newBtn);
+    projectMenuDropdown.appendChild(libraryBtn);
+    projectMenuDropdown.appendChild(exportBtn);
+
+    const menuSep = document.createElement('div');
+    menuSep.className = 'timeline-project-menu-sep';
+    projectMenuDropdown.appendChild(menuSep);
+
+    langSelect.element.style.width = '100%';
+    projectMenuDropdown.appendChild(langSelect.element);
+
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.appendChild(projectMenuDropdown);
+    }
+
+    this.projectMenuBtn = projectMenuBtn;
+    this.projectMenuDropdown = projectMenuDropdown;
+
+    projectMenuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = projectMenuDropdown.style.display === 'flex';
+      if (isOpen) {
+        this.closeProjectMenu();
+      } else {
+        this.ensureProjectMenuOpen();
+      }
+    });
+
+    if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+      document.addEventListener('click', (e) => {
+        if (
+          this.projectMenuDropdown &&
+          this.projectMenuDropdown.style.display === 'flex' &&
+          !this.projectMenuDropdown.contains(e.target) &&
+          e.target !== this.projectMenuBtn
+        ) {
+          this.closeProjectMenu();
+        }
+      });
+    }
+
     const presetHubBtn = document.createElement('button');
-    presetHubBtn.className = 'timeline-preset-hub-btn';
+    presetHubBtn.className = 'timeline-btn timeline-btn-accent timeline-preset-hub-btn';
     presetHubBtn.type = 'button';
     presetHubBtn.textContent =
       t('editor.timelinePanel.presetsBtn') || 'Presets';
     presetHubBtn.title =
       t('editor.timelinePanel.presetsBtnTooltip') ||
       'Browse and manage firework presets library';
-    presetHubBtn.style.background = '#00838f';
-    presetHubBtn.style.color = '#ffffff';
     presetHubBtn.addEventListener('click', () => {
       this.openPresetHub();
     });
     this.presetHubBtn = presetHubBtn;
 
     const recordShowBtn = document.createElement('button');
-    recordShowBtn.className = 'timeline-record-show-btn';
+    recordShowBtn.className = 'timeline-icon-btn timeline-btn-record timeline-record-show-btn';
     recordShowBtn.type = 'button';
-    recordShowBtn.textContent = t('editor.fullRecord.button') || 'Record Show';
-    recordShowBtn.title = t('editor.fullRecord.buttonTitle') || 'Record full show video in high quality with audio';
-    recordShowBtn.style.background = '#c62828';
-    recordShowBtn.style.color = '#ffffff';
+    recordShowBtn.innerHTML = [
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"',
+      ' stroke="currentColor" stroke-width="2" stroke-linecap="round"',
+      ' stroke-linejoin="round">',
+      '<polygon points="23 7 16 12 23 17 23 7"></polygon>',
+      '<rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>',
+      '</svg>'
+    ].join('');
+    const recordTooltip =
+      t('editor.fullRecord.buttonTitle') ||
+      'Record full show video in high quality with audio';
+    recordShowBtn.title = recordTooltip;
+    recordShowBtn.setAttribute('aria-label', recordTooltip);
     recordShowBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      this.closeProjectMenu();
       this.toggleFullShowRecordPopover(recordShowBtn);
     });
     this.recordShowBtn = recordShowBtn;
 
+    const makeDivider = () => {
+      const div = document.createElement('div');
+      div.className = 'timeline-toolbar-divider';
+      return div;
+    };
+
+    const projectGroup = document.createElement('div');
+    projectGroup.className = 'timeline-toolbar-group';
+    projectGroup.appendChild(projectMenuBtn);
+
+    const showLibraryBtn = document.createElement('button');
+    showLibraryBtn.className = 'timeline-btn timeline-show-library-btn';
+    showLibraryBtn.type = 'button';
+    showLibraryBtn.textContent =
+      t('editor.presetHub.libraryButton') || 'Library';
+    showLibraryBtn.title =
+      t('editor.timelinePanel.importBtnTooltip') ||
+      'Open script library from folder, Google Drive, or JSON file';
+    showLibraryBtn.addEventListener('click', () => {
+      this.openShowLibrary();
+    });
+    this.showLibraryBtn = showLibraryBtn;
+
     const dataActionsGroup = document.createElement('div');
-    dataActionsGroup.style.display = 'inline-flex';
-    dataActionsGroup.style.alignItems = 'center';
-    dataActionsGroup.style.gap = '10px';
-    dataActionsGroup.appendChild(newBtn);
+    dataActionsGroup.className = 'timeline-toolbar-group';
     dataActionsGroup.appendChild(addBtn);
-    dataActionsGroup.appendChild(presetHubBtn);
-    dataActionsGroup.appendChild(libraryBtn);
-    dataActionsGroup.appendChild(exportBtn);
-    dataActionsGroup.appendChild(recordShowBtn);
     dataActionsGroup.appendChild(addFileDropdownContainer);
+    dataActionsGroup.appendChild(showLibraryBtn);
+    dataActionsGroup.appendChild(presetHubBtn);
     this.dataActionsGroup = dataActionsGroup;
 
-    toolbar.appendChild(playBtn);
-    toolbar.appendChild(this.followBtn);
+    const centerTransport = document.createElement('div');
+    centerTransport.className = 'timeline-transport-center';
+    centerTransport.appendChild(rewindBtn);
+    centerTransport.appendChild(playBtn);
+    centerTransport.appendChild(recordShowBtn);
+
+    const rightActionsGroup = document.createElement('div');
+    rightActionsGroup.className = 'timeline-toolbar-group';
+    rightActionsGroup.style.marginLeft = 'auto';
+    rightActionsGroup.appendChild(helpBtn);
+    rightActionsGroup.appendChild(bugBtn);
+    rightActionsGroup.appendChild(settingsBtn);
+
+    toolbar.appendChild(projectGroup);
+    toolbar.appendChild(makeDivider());
     toolbar.appendChild(dataActionsGroup);
-    toolbar.appendChild(this.fileIndicatorContainer);
+    toolbar.appendChild(centerTransport);
     toolbar.appendChild(this.fileInput);
     toolbar.appendChild(this.mediaFileInput);
     toolbar.appendChild(rightActionsGroup);
@@ -574,8 +713,7 @@ export class TimelineEditor {
     this.trackContainer.addEventListener('wheel', () => {
       if (this.autoScrollEnabled) {
         this.autoScrollEnabled = false;
-        this.followBtn.textContent = 'Follow: OFF';
-        this.followBtn.style.background = '#f44336';
+        this._updateFollowButtonUI();
       }
     });
 
@@ -742,8 +880,20 @@ export class TimelineEditor {
     // Draw ruler ticks
     this.renderRuler();
 
-    leftPanel.style.position = 'relative';
-    leftPanel.appendChild(this.trackContainer);
+    const trackViewport = document.createElement('div');
+    trackViewport.style.position = 'relative';
+    trackViewport.style.flex = '1';
+    trackViewport.style.display = 'flex';
+    trackViewport.style.flexDirection = 'column';
+    trackViewport.style.overflow = 'hidden';
+
+    trackViewport.appendChild(this.trackContainer);
+
+    this.fileIndicatorContainer.style.position = 'absolute';
+    this.fileIndicatorContainer.style.top = '1px';
+    this.fileIndicatorContainer.style.right = '18px';
+    this.fileIndicatorContainer.style.zIndex = '60';
+    trackViewport.appendChild(this.fileIndicatorContainer);
 
     const zoomControl = document.createElement('div');
     zoomControl.className = 'timeline-zoom-controls';
@@ -803,9 +953,18 @@ export class TimelineEditor {
       () => this.stepZoom(1)
     );
 
+    const followSep = document.createElement('div');
+    followSep.style.width = '1px';
+    followSep.style.height = '14px';
+    followSep.style.background = 'rgba(255, 255, 255, 0.14)';
+    followSep.style.margin = '0 2px';
+
+    zoomControl.appendChild(this.followBtn);
+    zoomControl.appendChild(followSep);
     zoomControl.appendChild(zoomOutBtn);
     zoomControl.appendChild(zoomInBtn);
-    leftPanel.appendChild(zoomControl);
+    trackViewport.appendChild(zoomControl);
+    leftPanel.appendChild(trackViewport);
     this.zoomControl = zoomControl;
 
     this.container.appendChild(leftPanel);
@@ -1094,7 +1253,8 @@ export class TimelineEditor {
           this.hotkeyManager.setActiveContext('global');
         }
       } else {
-        this.container.style.display = this.visible ? 'flex' : 'none';
+        this.container.style.display = 'flex';
+        this.container.classList.toggle('is-collapsed', !this.visible);
         if (this.inspector && this.inspector.container) {
           if (this.visible && this.inspector.selectedEvent) {
             this.inspector.container.style.display = 'block';
@@ -1442,9 +1602,7 @@ export class TimelineEditor {
 
   updateFileIndicator() {
     if (this.fileIndicator) {
-      this.fileIndicator.textContent = this.filename
-        ? `Active: ${this.filename}`
-        : 'Active: demoShow.json';
+      this.fileIndicator.textContent = this.filename || 'demoShow.json';
     }
   }
 
@@ -1543,7 +1701,17 @@ export class TimelineEditor {
 
   toggle() {
     this.visible = !this.visible;
-    this.container.style.display = this.visible ? 'flex' : 'none';
+    if (!document.pointerLockElement) {
+      this.container.style.display = 'flex';
+    }
+    this.container.classList.toggle('is-collapsed', !this.visible);
+    if (this.timelineToggleTab) {
+      const label = this.visible
+        ? t('editor.timelinePanel.hideTimeline') || 'Hide Timeline'
+        : t('editor.timelinePanel.showTimeline') || 'Show Timeline';
+      this.timelineToggleTab.title = label;
+      this.timelineToggleTab.setAttribute('aria-label', label);
+    }
     if (this.inspector && this.inspector.container) {
       if (!this.visible) {
         this.inspector.container.style.display = 'none';
@@ -1584,6 +1752,29 @@ export class TimelineEditor {
   openShowLibrary() {
     if (this.showLibraryModal) {
       this.showLibraryModal.open();
+    }
+  }
+
+  ensureProjectMenuOpen() {
+    if (!this.projectMenuDropdown) return;
+    if (this.addFileDropdown) {
+      this.addFileDropdown.style.display = 'none';
+    }
+    if (this._recordPopover) {
+      this._recordPopover.remove();
+      this._recordPopover = null;
+    }
+    if (this.projectMenuBtn && typeof this.projectMenuBtn.getBoundingClientRect === 'function') {
+      const rect = this.projectMenuBtn.getBoundingClientRect();
+      this.projectMenuDropdown.style.left = `${Math.max(8, rect.left)}px`;
+      this.projectMenuDropdown.style.bottom = `${Math.max(8, (typeof window !== 'undefined' ? window.innerHeight : 720) - rect.top + 6)}px`;
+    }
+    this.projectMenuDropdown.style.display = 'flex';
+  }
+
+  closeProjectMenu() {
+    if (this.projectMenuDropdown) {
+      this.projectMenuDropdown.style.display = 'none';
     }
   }
 
@@ -1856,6 +2047,35 @@ export class TimelineEditor {
     return this.showDirector.previewEvents(targets);
   }
 
+  _updateFollowButtonUI() {
+    if (!this.followBtn) return;
+    const isOn = Boolean(this.autoScrollEnabled);
+    const label = isOn
+      ? (t('editor.timelinePanel.followOn') || 'Follow: ON')
+      : (t('editor.timelinePanel.followOff') || 'Follow: OFF');
+    this.followBtn.title = label;
+    if (typeof this.followBtn.setAttribute === 'function') {
+      this.followBtn.setAttribute('aria-label', label);
+    }
+    this.followBtn.style.background = isOn ? 'rgba(16, 185, 129, 0.2)' : 'transparent';
+    this.followBtn.style.color = isOn ? '#34d399' : '#94a3b8';
+  }
+
+  _updatePlayButtonIcon() {
+    if (!this.playBtn) return;
+    const isPlaying = Boolean(this.showDirector?.isPlaying);
+    this.playBtn.innerHTML = isPlaying
+      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>'
+      : '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>';
+    if (this.playBtn.classList) {
+      if (isPlaying) {
+        this.playBtn.classList.add('is-playing');
+      } else {
+        this.playBtn.classList.remove('is-playing');
+      }
+    }
+  }
+
   togglePlay() {
     if (this.showDirector.isPlaying) {
       this.showDirector.pause();
@@ -1868,6 +2088,7 @@ export class TimelineEditor {
       this.showDirector.play();
       globalEventBus.emit('timeline:playback-started');
     }
+    this._updatePlayButtonIcon();
   }
 
   getFlattenedSequences() {
@@ -1964,10 +2185,7 @@ export class TimelineEditor {
 
   seek(time) {
     this.autoScrollEnabled = true;
-    if (this.followBtn) {
-      this.followBtn.textContent = t('editor.timelinePanel.followOn');
-      this.followBtn.style.background = '#4CAF50';
-    }
+    this._updateFollowButtonUI();
 
     this.sequences = this.sequences.filter(s => !s._deleted);
     this.showDirector.loadScript(this.getFlattenedSequences());

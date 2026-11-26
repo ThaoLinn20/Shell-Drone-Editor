@@ -172,7 +172,7 @@ describe('TimelineEditor Language Selector', () => {
     ]);
   });
 
-  it('mounts langSelect next to helpBtn in the right-aligned toolbar group', () => {
+  it('mounts langSelect inside the Project menu and keeps helpBtn and bugBtn in the right-aligned group', () => {
     const editor = new TimelineEditor(
       mockShowDirector,
       mockHotkeyManager
@@ -182,13 +182,16 @@ describe('TimelineEditor Language Selector', () => {
     expect(editor.langSelect).toBeDefined();
     expect(editor.langSelect.value).toBe('en');
     expect(editor.langSelect.enableSearch).toBe(false);
+    expect(editor.projectMenuDropdown).toBeDefined();
+    expect(editor.projectMenuDropdown.children).toContain(editor.newBtn);
+    expect(editor.projectMenuDropdown.children).toContain(editor.libraryBtn);
+    expect(editor.projectMenuDropdown.children).toContain(editor.langSelect.element);
 
     const rightGroup = editor.helpBtn.parentElement;
     expect(rightGroup).toBeDefined();
     expect(rightGroup.style.marginLeft).toBe('auto');
-    expect(rightGroup.children[0]).toBe(editor.helpBtn);
-    expect(rightGroup.children[1]).toBe(editor.langSelect.element);
-    expect(rightGroup.children[2]).toBe(editor.bugBtn);
+    expect(rightGroup.children).toContain(editor.helpBtn);
+    expect(rightGroup.children).toContain(editor.bugBtn);
     expect(editor.bugBtn.textContent).toBe('Bug');
   });
 

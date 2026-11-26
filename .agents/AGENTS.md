@@ -68,6 +68,7 @@
   - Maintain a uniform compact button footprint (e.g. 26x26px or 28x28px) with subtle hover and active state transitions.
   - Place icon buttons in natural ergonomic locations (such as header corners, inline action bars, or compact toolbars).
   - Note: This UI control icon guideline is distinct from the communication rule "No Icons or Emojis", which strictly applies to text prose in assistant messages, release notes, documentation, and commit messages (prohibiting emotion emojis).
+- **Flat Borderless Toolbar & Action Buttons**: Do NOT design toolbar, HUD, or compact icon/action buttons as rounded bordered pills or boxed chips (avoid `border: 1px solid ...` and large `border-radius: 6px`, `8px`, or `999px` boxes around buttons such as close `x`, menu triggers, or inline actions). Follow the flat menu-bar style: `background: transparent`, `border: none`, crisp corners (`border-radius: 3px` or `0`), and subtle hover highlighting (`rgba(255, 255, 255, 0.08)` to `0.1`).
 
 ## Code Integrity & Regression Prevention
 - **Preserve Existing Features & Subsystems**: When modifying, optimizing, or refactoring code (such as adjusting particle effects, smoke dynamics, timeline controls, or audio triggers), NEVER arbitrarily delete, disable, or comment out existing capabilities, lifecycle events, or subsystem quotas (such as launch smoke, barge exhaust, independent quotas, or physics properties) unless the user explicitly commands their removal.

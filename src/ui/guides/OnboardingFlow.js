@@ -148,10 +148,13 @@ export class OnboardingFlow {
           : (t('editor.onboarding.step1Desc') ||
             'Click Download Scripts from Drive to open Google Drive and download sample show files to your computer.'),
         getTarget: () => {
-          return (
-            libraryModal?.driveBtn ||
-            this.timelineEditor?.libraryBtn
-          );
+          if (libraryModal?.driveBtn) {
+            return libraryModal.driveBtn;
+          }
+          if (typeof this.timelineEditor?.ensureProjectMenuOpen === 'function') {
+            this.timelineEditor.ensureProjectMenuOpen();
+          }
+          return this.timelineEditor?.libraryBtn;
         }
       };
     }

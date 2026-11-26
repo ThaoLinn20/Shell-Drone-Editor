@@ -66,7 +66,12 @@ export class CreateScriptGuideFlow {
           t('editor.createScriptGuide.step1Desc') ||
           'Click the New button to clear the timeline and start a fresh blank script.',
         progressText: '',
-        getTarget: () => editor?.newBtn || editor?.toolbar
+        getTarget: () => {
+          if (typeof editor?.ensureProjectMenuOpen === 'function') {
+            editor.ensureProjectMenuOpen();
+          }
+          return editor?.newBtn || editor?.toolbar;
+        }
       };
     }
 
@@ -191,7 +196,12 @@ export class CreateScriptGuideFlow {
           t('editor.createScriptGuide.step6Desc') ||
           'Click Export As to export your complete show script as a shareable JSON file.',
         progressText: '',
-        getTarget: () => editor?.exportBtn || editor?.toolbar
+        getTarget: () => {
+          if (typeof editor?.ensureProjectMenuOpen === 'function') {
+            editor.ensureProjectMenuOpen();
+          }
+          return editor?.exportBtn || editor?.toolbar;
+        }
       };
     }
 

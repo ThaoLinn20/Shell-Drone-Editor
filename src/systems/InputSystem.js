@@ -100,6 +100,17 @@ export class InputSystem {
     document.addEventListener('keyup', (event) => this.onKeyUp(event));
 
     this.eventSubscriptions.push(
+      globalEventBus.on('settings:open', () => {
+        if (!this.paused) {
+          this.pause();
+        } else {
+          if (this.controls && this.controls.isLocked) {
+            this.controls.unlock();
+          }
+          this.showPauseMenu();
+        }
+      }),
+
       globalEventBus.on('firework:launch', (detail) => {
         this.status.firework = detail.shellType;
         this.status.effect = detail.effectType;
@@ -163,14 +174,22 @@ export class InputSystem {
     this.statusOverlay.style.pointerEvents = 'none';
     document.body.appendChild(this.statusOverlay);
     this.updateStatusOverlay();
+    this.setupLeftHudToggle();
+    this.setupMoveModeHints();
 
     this.controls.addEventListener('lock', () => {
       this.instructions.style.display = 'none';
+      if (this.moveModeHints) {
+        this.moveModeHints.style.display = 'block';
+      }
       this.status.looking = false;
       this.updateStatusOverlay();
     });
     this.controls.addEventListener('unlock', () => {
       this.instructions.style.display = this.paused ? 'none' : '';
+      if (this.moveModeHints) {
+        this.moveModeHints.style.display = 'none';
+      }
       this.status.moving = false;
       this.status.direction = 'idle';
       if (this.paused) {
@@ -178,6 +197,141 @@ export class InputSystem {
       }
       this.updateStatusOverlay();
     });
+  }
+
+  setupMoveModeHints() {
+    this.moveModeHints = document.createElement('div');
+    this.moveModeHints.className = 'move-mode-hints';
+    this.moveModeHints.style.display = 'none';
+    this.renderMoveModeHints();
+    document.body.appendChild(this.moveModeHints);
+
+    globalEventBus.on('language:changed', () => {
+      this.renderMoveModeHints();
+    });
+  }
+
+  renderMoveModeHints() {
+    if (!this.moveModeHints) {
+      return;
+    }
+
+    const items = [
+      {
+        keys: 'W A S D',
+        label: t('editor.moveModeHintMove') || 'Move'
+      },
+      {
+        keys: 'Shift + W / S',
+        label: t('editor.moveModeHintVertical') || 'Fly Up / Down'
+      },
+      {
+        keys: t('editor.moveModeHintMouseKey') || 'Mouse',
+        label: t('editor.moveModeHintLook') || 'Look Around'
+      },
+      {
+        keys: 'Ctrl + T',
+        label: t('editor.moveModeHintTimeline') || 'Toggle Timeline'
+      },
+      {
+        keys: 'Shift + R',
+        label: t('editor.moveModeHintResetCam') || 'Reset Camera'
+      },
+      {
+        keys: 'Shift + Y',
+        label: t('editor.moveModeHintHud') || 'Toggle HUD'
+      },
+      {
+        keys: 'Esc',
+        label: t('editor.moveModeHintUnlock') || 'Unlock Mouse'
+      }
+    ];
+
+    const title = t('editor.moveModeHintsTitle') || 'Move Mode Shortcuts';
+    const rowsHtml = items
+      .map(
+        (item) =>
+          `<div class="move-mode-hint-row">` +
+          `<kbd class="move-mode-hint-key">${item.keys}</kbd>` +
+          `<span class="move-mode-hint-label">${item.label}</span>` +
+          `</div>`
+      )
+      .join('');
+
+    this.moveModeHints.innerHTML =
+      `<div class="move-mode-hints-title">${title}</div>` +
+      `<div class="move-mode-hints-list">${rowsHtml}</div>`;
+  }
+
+  setupLeftHudToggle() {
+    const storageKey = 'leftHudCollapsed';
+    const setCollapsed = (collapsed) => {
+      document.body.classList.toggle(
+        'left-hud-collapsed',
+        collapsed
+      );
+      try {
+        localStorage.setItem(
+          storageKey,
+          collapsed ? 'true' : 'false'
+        );
+      } catch {
+        // Ignore storage errors
+      }
+    };
+
+    try {
+      if (localStorage.getItem(storageKey) === 'true') {
+        setCollapsed(true);
+      }
+    } catch {
+      // Ignore storage errors
+    }
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'left-hud-close-btn';
+    closeBtn.title = t('common.hide') || 'Hide';
+    closeBtn.setAttribute(
+      'aria-label',
+      t('common.hide') || 'Hide'
+    );
+    closeBtn.innerHTML = [
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"',
+      ' stroke="currentColor" stroke-width="2" stroke-linecap="round"',
+      ' stroke-linejoin="round">',
+      '<line x1="18" y1="6" x2="6" y2="18"></line>',
+      '<line x1="6" y1="6" x2="18" y2="18"></line>',
+      '</svg>'
+    ].join('');
+    closeBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setCollapsed(true);
+    });
+    document.body.appendChild(closeBtn);
+    this.leftHudCloseBtn = closeBtn;
+
+    const expandBtn = document.createElement('button');
+    expandBtn.type = 'button';
+    expandBtn.className = 'left-hud-expand-btn';
+    expandBtn.title = t('common.show') || 'Show';
+    expandBtn.setAttribute(
+      'aria-label',
+      t('common.show') || 'Show'
+    );
+    expandBtn.innerHTML = [
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"',
+      ' stroke="currentColor" stroke-width="2" stroke-linecap="round"',
+      ' stroke-linejoin="round">',
+      '<polyline points="9 18 15 12 9 6"></polyline>',
+      '</svg>'
+    ].join('');
+    expandBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setCollapsed(false);
+    });
+    document.body.appendChild(expandBtn);
+    this.leftHudExpandBtn = expandBtn;
   }
 
   setupPauseMenu() {
