@@ -589,13 +589,28 @@ function findCompanionAudios(filePath, jsonContent) {
   }
 }
 
+function restoreWindowFocus(win) {
+  if (!win || win.isDestroyed()) return;
+  setTimeout(() => {
+    if (win.isDestroyed()) return;
+    win.blur();
+    setTimeout(() => {
+      if (win.isDestroyed()) return;
+      win.focus();
+      win.webContents.focus();
+    }, 50);
+  }, 50);
+}
+
 // IPC Handlers for native OS Dialogs (Notepad-style Direct Save)
 ipcMain.handle('open-file-dialog', async (event) => {
   try {
-    const result = await dialog.showOpenDialog(mainWindow, {
+    const win = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+    const result = await dialog.showOpenDialog(win, {
       properties: ['openFile'],
       filters: [{ name: 'JSON Files', extensions: ['json'] }]
     });
+    restoreWindowFocus(win);
     if (!result.canceled && result.filePaths.length > 0) {
       const filePath = result.filePaths[0];
       const content = fs.readFileSync(filePath, 'utf8');
@@ -620,10 +635,12 @@ ipcMain.handle('open-file-dialog', async (event) => {
 
 ipcMain.handle('save-file-dialog', async (event, { content, defaultName }) => {
   try {
-    const result = await dialog.showSaveDialog(mainWindow, {
+    const win = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+    const result = await dialog.showSaveDialog(win, {
       defaultPath: defaultName || 'untitled.json',
       filters: [{ name: 'JSON Files', extensions: ['json'] }]
     });
+    restoreWindowFocus(win);
     if (!result.canceled && result.filePath) {
       const filePath = result.filePath;
       fs.writeFileSync(filePath, content, 'utf8');
@@ -790,14 +807,16 @@ function scanDirectoryForScripts(rootDir, maxDepth = 2) {
   };
 }
 
-ipcMain.handle('select-scripts-folder', async () => {
+ipcMain.handle('select-scripts-folder', async (event) => {
   try {
+    const win = BrowserWindow.fromWebContents(event.sender) || mainWindow;
     const result = await dialog.showOpenDialog(
-      mainWindow,
+      win,
       {
         properties: ['openDirectory']
       }
     );
+    restoreWindowFocus(win);
     if (!result.canceled && result.filePaths.length > 0) {
       return result.filePaths[0];
     }
@@ -932,10 +951,12 @@ ipcMain.handle('presets:import-media', async (_event, { slug, mediaType }) => {
       ? [{ name: 'Videos', extensions: ['mp4', 'webm'] }]
       : [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp'] }];
 
-    const result = await dialog.showOpenDialog(mainWindow, {
+    const win = BrowserWindow.fromWebContents(event.sender) || mainWindow;
+    const result = await dialog.showOpenDialog(win, {
       properties: ['openFile'],
       filters
     });
+    restoreWindowFocus(win);
 
     if (result.canceled || result.filePaths.length === 0) {
       return { canceled: true };

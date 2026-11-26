@@ -18,6 +18,8 @@ import { WaveCurveEditor } from './WaveCurveEditor.js';
 import { DEFAULT_WAVE_POINTS, resampleWavePoints, generateWavePreset } from '../utils/SplineMath.js';
 import { ActiveEffectsTimeline } from './ActiveEffectsTimeline.js';
 import { FIREWORK_CONFIG } from '../config/fireworks.js';
+import { showToast } from '../utils/Toast.js';
+import { customConfirm } from '../editor/ui/utils/Modal.js';
 
 function formatOptionLabelFallback(rawKey) {
   if (rawKey === '' || rawKey === undefined || rawKey === null) return '';
@@ -3825,10 +3827,11 @@ export class PropertyInspector {
             }
           );
         } catch (err) {
-          alert(
+          showToast(
             (t('editor.inspector.fields.analyzeError') ||
-              'Loi khi phan tich am thanh: ') +
-            err.message
+              'Error analyzing audio: ') +
+            err.message,
+            'error'
           );
         } finally {
           autoBtn.disabled = false;
@@ -3848,13 +3851,12 @@ export class PropertyInspector {
       'Xoa tat ca nhip';
     clearBtn.addEventListener(
       'click',
-      () => {
-        if (
-          confirm(
-            t('editor.inspector.fields.confirmClearBeats') ||
-            'Ban co chac chan muon xoa toan bo diem nhip?'
-          )
-        ) {
+      async () => {
+        const confirmed = await customConfirm(
+          t('editor.inspector.fields.confirmClearBeats') ||
+          'Are you sure you want to clear all beats?'
+        );
+        if (confirmed) {
           this.triggerUpdate('beforeChange');
           event.beats = [];
           this.triggerUpdate();

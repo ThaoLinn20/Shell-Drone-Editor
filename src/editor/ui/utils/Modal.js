@@ -14,7 +14,7 @@ export function customAlert(message) {
     overlay.style.display = 'flex';
     overlay.style.alignItems = 'center';
     overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '99999';
+    overlay.style.zIndex = '100050';
     overlay.style.transition = 'opacity 0.2s ease';
     overlay.style.opacity = '0';
 
@@ -108,7 +108,7 @@ export function customPrompt(title, defaultValue = "") {
     overlay.style.display = 'flex';
     overlay.style.alignItems = 'center';
     overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '99999';
+    overlay.style.zIndex = '100050';
     overlay.style.transition = 'opacity 0.2s ease';
     overlay.style.opacity = '0';
 
@@ -257,7 +257,7 @@ export function customChoicePrompt(title, options) {
     overlay.style.display = 'flex';
     overlay.style.alignItems = 'center';
     overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '99999';
+    overlay.style.zIndex = '100050';
     overlay.style.transition = 'opacity 0.2s ease';
     overlay.style.opacity = '0';
 
@@ -366,7 +366,7 @@ export function customConfirm(
     overlay.style.display = 'flex';
     overlay.style.alignItems = 'center';
     overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '99999';
+    overlay.style.zIndex = '100050';
     overlay.style.transition = 'opacity 0.2s ease';
     overlay.style.opacity = '0';
 

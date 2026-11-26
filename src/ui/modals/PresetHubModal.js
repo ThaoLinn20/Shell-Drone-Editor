@@ -5,6 +5,7 @@ import {
 } from '../ModalShell.js';
 import { presetRegistry } from '../../core/PresetRegistry.js';
 import { showToast } from '../../utils/Toast.js';
+import { customConfirm } from '../../editor/ui/utils/Modal.js';
 import { resolveAssetUrl } from '../../utils/assetUrl.js';
 import {
   extractPresetComposition,
@@ -815,7 +816,7 @@ export class PresetHubModal {
         deleteBtn.style.width = '100%';
       }
       deleteBtn.addEventListener('click', async () => {
-        const confirmDelete = window.confirm(
+        const confirmDelete = await customConfirm(
           t('editor.presetHub.confirmDelete') || `Delete preset "${preset.name}" and all associated media files?`
         );
         if (confirmDelete) {

@@ -3,6 +3,7 @@ import { DOCS_CONFIG } from '../config/docs.js';
 import { fileStorage } from '../core/FileStorageAdapter.js';
 import { globalEventBus } from '../core/EventBus.js';
 import { showToast } from '../utils/Toast.js';
+import { customConfirm } from '../editor/ui/utils/Modal.js';
 import {
   getRecentScripts,
   removeRecentScript,
@@ -335,13 +336,11 @@ export class ShowLibraryModal {
     });
   }
 
-  handleClearRecentHistory() {
+  async handleClearRecentHistory() {
     const confirmMsg =
       t('editor.showLibrary.recentScriptsClearConfirm') ||
       'Are you sure you want to clear your recent scripts history?';
-    const confirmed = typeof window !== 'undefined' && window.confirm
-      ? window.confirm(confirmMsg)
-      : true;
+    const confirmed = await customConfirm(confirmMsg);
 
     if (!confirmed) {
       return;
@@ -497,11 +496,11 @@ export class ShowLibraryModal {
         this.close();
       }
     } catch (err) {
-      this.handleMissingRecentScript(item, err);
+      await this.handleMissingRecentScript(item, err);
     }
   }
 
-  handleMissingRecentScript(item, err = null) {
+  async handleMissingRecentScript(item, err = null) {
     const promptMsg =
       t(
         'editor.showLibrary.recentFileNotFoundPrompt',
@@ -509,9 +508,7 @@ export class ShowLibraryModal {
       ) ||
       `Cannot open ${item.filename || item.filePath}. The file may have been moved or deleted. Do you want to remove it from recent scripts?`;
 
-    const shouldRemove = typeof window !== 'undefined' && window.confirm
-      ? window.confirm(promptMsg)
-      : true;
+    const shouldRemove = await customConfirm(promptMsg);
 
     if (shouldRemove) {
       removeRecentScript(item.filePath);

@@ -1612,3 +1612,30 @@ body.left-hud-collapsed .left-hud-expand-btn {
   font-size: 12px;
   text-align: left;
 }
+
+.timeline-autosave-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  padding-left: 7px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.timeline-autosave-toggle:hover {
+  color: #ffffff;
+}
+
+.timeline-autosave-checkbox {
+  width: 11px;
+  height: 11px;
+  margin: 0;
+  accent-color: #38bdf8;
+  cursor: pointer;
+}
