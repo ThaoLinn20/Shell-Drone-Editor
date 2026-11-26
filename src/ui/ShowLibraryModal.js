@@ -3,7 +3,7 @@ import { DOCS_CONFIG } from '../config/docs.js';
 import { fileStorage } from '../core/FileStorageAdapter.js';
 import { globalEventBus } from '../core/EventBus.js';
 import { showToast } from '../utils/Toast.js';
-import { customConfirm } from '../editor/ui/utils/Modal.js';
+import { customConfirm } from './utils/Modal.js';
 import {
   getRecentScripts,
   removeRecentScript,

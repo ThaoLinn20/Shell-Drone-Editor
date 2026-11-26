@@ -1,4 +1,4 @@
-import { t } from '../../../config/lang/i18n.js';
+import { t } from '../../config/lang/i18n.js';
 
 export function customAlert(message) {
   return new Promise((resolve) => {
@@ -477,7 +477,9 @@ export function customConfirm(
 
     setTimeout(() => {
       overlay.style.opacity = '1';
-      cancelBtn.focus();
+      if (typeof cancelBtn.focus === 'function') {
+        cancelBtn.focus();
+      }
     }, 50);
 
     const handleKey = (e) => {

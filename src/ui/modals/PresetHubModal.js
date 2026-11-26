@@ -5,7 +5,7 @@ import {
 } from '../ModalShell.js';
 import { presetRegistry } from '../../core/PresetRegistry.js';
 import { showToast } from '../../utils/Toast.js';
-import { customConfirm } from '../../editor/ui/utils/Modal.js';
+import { customConfirm } from '../utils/Modal.js';
 import { resolveAssetUrl } from '../../utils/assetUrl.js';
 import {
   extractPresetComposition,

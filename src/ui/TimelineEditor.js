@@ -13,7 +13,7 @@ import { fileStorage } from '../core/FileStorageAdapter.js';
 import {
   customChoicePrompt,
   customConfirm
-} from '../editor/ui/utils/Modal.js';
+} from './utils/Modal.js';
 import { showToast } from '../utils/Toast.js';
 import { applyPresetComposition } from '../utils/presetComposition.js';
 import { WaveformGenerator } from '../utils/WaveformGenerator.js';
@@ -142,7 +142,7 @@ export class TimelineEditor {
   initDOM() {
     this.container = document.createElement('div');
     this.container.className = 'timeline-editor-container';
-    if (!this.visible) {
+    if (!this.visible && this.container.classList) {
       this.container.classList.add('is-collapsed');
     }
     this.container.style.position = 'fixed';
@@ -165,10 +165,12 @@ export class TimelineEditor {
     this.timelineToggleTab.title = this.visible
       ? t('editor.timelinePanel.hideTimeline') || 'Hide Timeline'
       : t('editor.timelinePanel.showTimeline') || 'Show Timeline';
-    this.timelineToggleTab.setAttribute(
-      'aria-label',
-      this.timelineToggleTab.title
-    );
+    if (typeof this.timelineToggleTab.setAttribute === 'function') {
+      this.timelineToggleTab.setAttribute(
+        'aria-label',
+        this.timelineToggleTab.title
+      );
+    }
     this.timelineToggleTab.innerHTML = [
       '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"',
       ' stroke="currentColor" stroke-width="2.2" stroke-linecap="round"',
@@ -680,7 +682,9 @@ export class TimelineEditor {
       t('editor.fullRecord.buttonTitle') ||
       'Record full show video in high quality with audio';
     recordShowBtn.title = recordTooltip;
-    recordShowBtn.setAttribute('aria-label', recordTooltip);
+    if (typeof recordShowBtn.setAttribute === 'function') {
+      recordShowBtn.setAttribute('aria-label', recordTooltip);
+    }
     recordShowBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.closeProjectMenu();
@@ -1747,13 +1751,17 @@ export class TimelineEditor {
     if (!document.pointerLockElement) {
       this.container.style.display = 'flex';
     }
-    this.container.classList.toggle('is-collapsed', !this.visible);
+    if (this.container.classList) {
+      this.container.classList.toggle('is-collapsed', !this.visible);
+    }
     if (this.timelineToggleTab) {
       const label = this.visible
         ? t('editor.timelinePanel.hideTimeline') || 'Hide Timeline'
         : t('editor.timelinePanel.showTimeline') || 'Show Timeline';
       this.timelineToggleTab.title = label;
-      this.timelineToggleTab.setAttribute('aria-label', label);
+      if (typeof this.timelineToggleTab.setAttribute === 'function') {
+        this.timelineToggleTab.setAttribute('aria-label', label);
+      }
     }
     if (this.inspector && this.inspector.container) {
       if (!this.visible) {

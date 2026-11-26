@@ -18,7 +18,7 @@ This document is the architectural dependency and blast-radius map for `shell-dr
 1. **UI Authoring**: [PropertyInspector.js](./src/ui/PropertyInspector.js) edits event properties on timeline blocks.
 2. **Timeline & Sequencing**: [FireworkSequencer.js](./src/directors/FireworkSequencer.js) expands patterns into timed launch tasks.
    - **Critical Coupling**: `playPattern` (shells) and `playCometSequence` (comets) are two separate branches inside `FireworkSequencer.js`. Any new effect flag, multiplier, or trail parameter added to one branch MUST be forwarded in the other.
-3. **Dispatch & Execution**: [ShowDirector.js](./src/directors/ShowDirector.js) -> [ShowEventDispatcher.js](./src/directors/ShowEventDispatcher.js) -> `FireworkSystem.js` / `CometSystem.js` (in `../firework-engine`).
+3. **Dispatch & Execution**: [ShowDirector.js](./src/directors/ShowDirector.js) -> [ShowEventDispatcher.js](./src/directors/ShowEventDispatcher.js) -> `FireworkSystem.js` / `CometSystem.js` (in `../firework-engine`). Legacy `droneshow` blocks in old show JSON files are safely skipped without crashing playback.
 4. **Star & Particle Routing**:
    - Regular shells -> `FireworkSystem.launchRandom` -> `ShellEntity` -> `BurstParticleFactory.createParticle` -> `FireworkSystem.updateBurstParticles`.
    - `comet_cluster_notrail` (`★ Comet Cluster`) -> `CometSystem.launchRandom` -> `CometSystem.spawnComet` pushes stars directly into `fireworkSystem.burstParticles` (requires `cometSystem.fireworkSystem = fireworkSystem` wired in [src/main.js](./src/main.js)).

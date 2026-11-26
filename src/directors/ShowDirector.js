@@ -17,9 +17,6 @@ export class ShowDirector {
     this.events = [...this.scriptConfig];
     this.elapsedTime = 0;
     this.sequencer.clear();
-    if (this.droneSequencer) {
-       this.droneSequencer.stop();
-    }
 
     // Cleanup old audio elements
     this.audioPlayers.forEach(audio => {
@@ -28,7 +25,7 @@ export class ShowDirector {
     });
     this.audioPlayers.clear();
 
-    // Init new audio elements and Drone Show
+    // Init new audio elements (legacy droneshow blocks are safely ignored)
     this.scriptConfig.forEach(seq => {
       if (seq.type === 'audio') {
         const url = seq._blobUrl || `/${seq.url}`;
@@ -39,10 +36,6 @@ export class ShowDirector {
             this.audioPlayers.set(seq, audio);
         } catch (e) {
             console.warn("Could not load audio", e);
-        }
-      } else if (seq.type === 'droneshow') {
-        if (this.droneSequencer) {
-            this.droneSequencer.loadSequence(seq, seq.time);
         }
       }
     });
@@ -60,11 +53,7 @@ export class ShowDirector {
     if (this.sequencer.cometSystem && this.sequencer.cometSystem.clear) {
       this.sequencer.cometSystem.clear();
     }
-    
-    if (this.droneSequencer) {
-       this.droneSequencer.seek(time);
-    }
-    
+
     // Sync audio times
     this.audioPlayers.forEach((audio, seq) => {
       const isTime = this.elapsedTime >= seq.time && this.elapsedTime < seq.time + (seq.duration || 0);
@@ -80,13 +69,11 @@ export class ShowDirector {
   play() {
     this.stopPreview();
     this.isPlaying = true;
-    if (this.droneSequencer) this.droneSequencer.play();
   }
 
   pause() {
     this.isPlaying = false;
     this.audioPlayers.forEach(audio => audio.pause());
-    if (this.droneSequencer) this.droneSequencer.pause();
   }
 
   /**
@@ -112,7 +99,6 @@ export class ShowDirector {
       audio.pause();
       audio.currentTime = 0;
     });
-    if (this.droneSequencer) this.droneSequencer.stop();
   }
 
   flattenPreviewEvents(sequences = [], parentTime = null) {

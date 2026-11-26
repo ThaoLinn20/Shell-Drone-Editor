@@ -505,26 +505,6 @@ export class InputSystem {
       if (tabDef.key === 'tools') {
         const toolsList = [
           {
-            title: t('editor.settingsTimelineEditor') || 'Timeline Editor',
-            description: 'Advanced multi-track timeline sequencer with audio waveforms and keyframes.',
-            btnText: t('editor.settingsTimelineEditor') || 'Timeline Editor',
-            bg: 'linear-gradient(180deg, #1e3c72 0%, #2a5298 100%)',
-            border: 'rgba(0, 243, 255, 0.3)',
-            action: () => {
-              window.location.href = 'editor.html';
-            }
-          },
-          {
-            title: t('editor.settingsStaticEditor') || 'Static Formation Editor',
-            description: '3D point cloud editor for creating custom drone shapes and holograms.',
-            btnText: t('editor.settingsStaticEditor') || 'Static Editor',
-            bg: 'linear-gradient(180deg, #aa3bff 0%, #8a1bef 100%)',
-            border: 'rgba(170, 59, 255, 0.3)',
-            action: () => {
-              window.location.href = 'formation.html';
-            }
-          },
-          {
             title: t('editor.settingsUserGuide') || 'User Guide',
             description: 'Complete user manual, shortcuts, and documentation for the system.',
             btnText: t('editor.settingsUserGuide') || 'User Guide',

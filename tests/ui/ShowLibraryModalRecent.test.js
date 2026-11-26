@@ -8,11 +8,17 @@ import {
 } from 'vitest';
 import { ShowLibraryModal } from '../../src/ui/ShowLibraryModal.js';
 import { fileStorage } from '../../src/core/FileStorageAdapter.js';
+import * as ModalUtils from '../../src/ui/utils/Modal.js';
 import {
   RECENT_SCRIPTS_STORAGE_KEY,
   addRecentScript,
   clearRecentScripts
 } from '../../src/utils/recentScripts.js';
+
+vi.mock('../../src/ui/utils/Modal.js', () => ({
+  customConfirm: vi.fn().mockResolvedValue(true),
+  customAlert: vi.fn().mockResolvedValue(undefined)
+}));
 
 describe('ShowLibraryModal Recent Scripts', () => {
   let mockTimelineEditor;
@@ -265,7 +271,8 @@ describe('ShowLibraryModal Recent Scripts', () => {
     });
 
     vi.spyOn(fileStorage, 'readScriptFile').mockResolvedValue(null);
-    window.confirm = vi.fn(() => true);
+    ModalUtils.customConfirm.mockClear();
+    ModalUtils.customConfirm.mockResolvedValue(true);
 
     await modal.open('recent');
 
@@ -279,8 +286,9 @@ describe('ShowLibraryModal Recent Scripts', () => {
     openBtn.click();
     await Promise.resolve();
     await Promise.resolve();
+    await Promise.resolve();
 
-    expect(window.confirm).toHaveBeenCalled();
+    expect(ModalUtils.customConfirm).toHaveBeenCalled();
     const stored = JSON.parse(mockStorage[RECENT_SCRIPTS_STORAGE_KEY] || '[]');
     expect(stored.some((item) => item.filePath === 'D:/shows/deleted_show.json')).toBe(false);
   });
@@ -311,7 +319,8 @@ describe('ShowLibraryModal Recent Scripts', () => {
     addRecentScript({ filePath: 'D:/shows/show_a.json' });
     addRecentScript({ filePath: 'D:/shows/show_b.json' });
 
-    window.confirm = vi.fn(() => true);
+    ModalUtils.customConfirm.mockClear();
+    ModalUtils.customConfirm.mockResolvedValue(true);
     await modal.open('recent');
 
     const headerRow = modal.listContainer.children.find(
@@ -322,6 +331,8 @@ describe('ShowLibraryModal Recent Scripts', () => {
     );
 
     clearBtn.click();
+    await Promise.resolve();
+    await Promise.resolve();
 
     const stored = JSON.parse(mockStorage[RECENT_SCRIPTS_STORAGE_KEY] || '[]');
     expect(stored.length).toBe(0);

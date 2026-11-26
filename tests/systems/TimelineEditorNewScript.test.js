@@ -100,7 +100,7 @@ describe('TimelineEditor New Script', () => {
 
     // Call createNewScript without confirmation prompt if sequences are already set
     // Mock customConfirm to resolve true
-    const modalMod = await import('../../src/editor/ui/utils/Modal.js');
+    const modalMod = await import('../../src/ui/utils/Modal.js');
     vi.spyOn(modalMod, 'customConfirm').mockResolvedValue(true);
 
     await editor.createNewScript();

@@ -262,7 +262,7 @@ describe('ShowLibraryModal and TimelineEditor show loading', () => {
 
     expect(modal.listContainer.children.length).toBe(1);
 
-    const loaded = editor.loadShowFromFileData(
+    const loaded = await editor.loadShowFromFileData(
       {
         filePath: 'D:/Shows/tet_show.json',
         filename: 'tet_show.json',

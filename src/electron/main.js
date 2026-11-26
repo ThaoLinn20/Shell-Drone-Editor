@@ -340,56 +340,6 @@ function createWindow() {
       ]
     },
     {
-      label: 'Editor Screens',
-      submenu: [
-        {
-          label: '1. Fireworks Display (Timeline Editor)',
-          accelerator: 'CmdOrCtrl+1',
-          click: () => {
-            if (mainWindow) {
-              const currentUrl = mainWindow.webContents.getURL();
-              if (isDev && currentUrl.startsWith('http')) {
-                const base = new URL(currentUrl).origin;
-                mainWindow.loadURL(`${base}/index.html`);
-              } else {
-                mainWindow.loadURL(`file://${path.join(__dirname, '../../dist/index.html')}`);
-              }
-            }
-          }
-        },
-        {
-          label: '2. Advanced Drone Editor (Animated)',
-          accelerator: 'CmdOrCtrl+2',
-          click: () => {
-            if (mainWindow) {
-              const currentUrl = mainWindow.webContents.getURL();
-              if (isDev && currentUrl.startsWith('http')) {
-                const base = new URL(currentUrl).origin;
-                mainWindow.loadURL(`${base}/editor.html`);
-              } else {
-                mainWindow.loadURL(`file://${path.join(__dirname, '../../dist/editor.html')}`);
-              }
-            }
-          }
-        },
-        {
-          label: '3. Static Formation Designer',
-          accelerator: 'CmdOrCtrl+3',
-          click: () => {
-            if (mainWindow) {
-              const currentUrl = mainWindow.webContents.getURL();
-              if (isDev && currentUrl.startsWith('http')) {
-                const base = new URL(currentUrl).origin;
-                mainWindow.loadURL(`${base}/formation.html`);
-              } else {
-                mainWindow.loadURL(`file://${path.join(__dirname, '../../dist/formation.html')}`);
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
       label: 'Window',
       submenu: [
         { role: 'minimize', label: 'Minimize' },

@@ -11,7 +11,7 @@ import {
 const customConfirmMock = vi.fn();
 
 vi.mock(
-  '../../src/editor/ui/utils/Modal.js',
+  '../../src/ui/utils/Modal.js',
   () => ({
     customChoicePrompt: vi.fn(),
     customConfirm: customConfirmMock

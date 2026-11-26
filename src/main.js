@@ -13,10 +13,7 @@ import { SmokeSystem } from './systems/SmokeSystem.js';
 import { AudioSystem } from './systems/AudioSystem.js';
 import { FireworkSequencer } from './directors/FireworkSequencer.js';
 import { ShowDirector } from './directors/ShowDirector.js';
-import { DroneSystem } from './systems/DroneSystem.js';
-import { DroneShowSequencer } from './directors/DroneShowSequencer.js';
 import { TimelineEditor } from './ui/TimelineEditor.js';
-import droneDemoData from '../config/sequences/droneDemo.json';
 import { PerformanceMonitor } from './core/PerformanceMonitor.js';
 import { renderingConfig } from './config/rendering.js';
 import './style.css';
@@ -96,15 +93,8 @@ const movementSystem = new MovementSystem(
 );
 cameraManager.movementSystem = movementSystem;
 
-const droneSystem = new DroneSystem(sceneManager);
-skyLightReactionSystem.droneSystem = droneSystem;
-const droneSequencer = new DroneShowSequencer(droneSystem);
-// Note: We no longer auto-play demo sequence because ShowDirector manages it
-
-
 const fireworkSequencer = new FireworkSequencer(fireworkSystem, cometSystem);
 const showDirector = new ShowDirector(fireworkSequencer, fireworkSystem);
-showDirector.droneSequencer = droneSequencer;
 const hotkeyManager = new HotkeyManager();
 const timelineEditor = new TimelineEditor(showDirector, hotkeyManager);
 const presetCaptureService = new PresetCaptureService({
@@ -190,16 +180,12 @@ function animate() {
     movementSystem.update(clock.deltaTime);
     showDirector.update(clock.deltaTime);
     fireworkSequencer.update(clock.deltaTime);
-    droneSequencer.update(clock.deltaTime);
-    droneSystem.update(clock.deltaTime);
     fireworkSystem.update(clock.deltaTime);
     cometSystem.update(clock.deltaTime);
     trailSystem.update(clock.deltaTime);
     skyLightReactionSystem.update(clock.deltaTime);
     smokeSystem.update(clock.deltaTime);
   } else {
-    droneSequencer.update(clock.deltaTime);
-    droneSystem.update(clock.deltaTime);
     skyLightReactionSystem.update(clock.deltaTime);
     smokeSystem.update(clock.deltaTime);
   }

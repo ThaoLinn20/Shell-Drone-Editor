@@ -19,7 +19,7 @@ import { DEFAULT_WAVE_POINTS, resampleWavePoints, generateWavePreset } from '../
 import { ActiveEffectsTimeline } from './ActiveEffectsTimeline.js';
 import { FIREWORK_CONFIG } from '../config/fireworks.js';
 import { showToast } from '../utils/Toast.js';
-import { customConfirm } from '../editor/ui/utils/Modal.js';
+import { customConfirm } from './utils/Modal.js';
 
 function formatOptionLabelFallback(rawKey) {
   if (rawKey === '' || rawKey === undefined || rawKey === null) return '';
