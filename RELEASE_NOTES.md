@@ -1,21 +1,23 @@
-# Release Notes - v3.6.0
+# Release Notes - v4.0.0
 
 ## Downloads
-- Windows Installer (.exe): [FDShowStudio-Setup-3.6.0.exe](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/v3.6.0/FDShowStudio-Setup-3.6.0.exe)
-- Portable Archive (.zip): [FDShowStudio-3.6.0-win.zip](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/v3.6.0/FDShowStudio-3.6.0-win.zip)
-- All Release Assets: [GitHub Releases v3.6.0](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/tag/v3.6.0)
+- Windows Installer (.exe): [FDShowStudio-Setup-4.0.0.exe](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/v4.0.0/FDShowStudio-Setup-4.0.0.exe)
+- Portable Archive (.zip): [FDShowStudio-4.0.0-win.zip](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/download/v4.0.0/FDShowStudio-4.0.0-win.zip)
+- All Release Assets: [GitHub Releases v4.0.0](https://github.com/ThaoLinn20/Shell-Drone-Editor/releases/tag/v4.0.0)
 
 ## Features
-- Added full show video recording in 1080p, 2K, and 4K at 60 frames per second with synchronized music and firework sound effects, an FDShowStudio corner watermark, V key pause or resume, and C key high-resolution photo capture.
-- Added one-click automatic preview recording and photo capture for individual firework blocks when saving directly to the Preset Library, alongside manual retake and re-record modes with on-screen key hints.
-- Added timeline zoom out and zoom in buttons in the bottom-right corner, compact half-height timeline blocks, and faint horizontal row guide lines for easier alignment.
+- Redesigned the timeline workspace with a cleaner menu-style toolbar, compact language switcher, and a centered slide drawer handle to show or hide the timeline smoothly.
+- Moved playback follow and timeline zoom controls to a compact bottom-right dock, moved the save status pill to the top-right ruler, and added an inline Auto Save checkbox.
+- Added a slide-left collapse toggle for the top-left performance and status overlay, plus a borderless bottom-left shortcut hint panel during 3D free-camera mode.
+- Added a quick Settings gear button directly on the timeline toolbar that opens settings even while editing on the timeline.
 
 ## Bug Fixes
-- Moved category and custom badges out of firework thumbnails into card details in the Preset Library so explosion previews are never covered, even in dense 10-column grids.
-- Fixed an issue where saved preset preview videos could fail to open and ensured mouse cursor control is properly released after manual preset captures.
+- Fixed the Windows desktop issue where keyboard input stopped working in property fields after importing or selecting show files.
+- Fixed confirmation dialogs appearing behind the Show Script Library window.
 
 ## Updates
-- Unified the appearance of the Presets and Record Show buttons with the rest of the Timeline Editor toolbar.
+- Focused FDShowStudio completely on 3D firework choreography by removing the legacy drone editing screens and subsystems while keeping older show files safe to open.
+- Updated the application icon with a transparent, crisp sunflower firework design for clear display on the Windows taskbar.
 
 ## Chores
-- Updated project architecture maps and release workflow automation.
+- Updated application metadata, documentation, and localization labels across English, Vietnamese, Chinese, and Japanese to reflect the firework-focused studio.
